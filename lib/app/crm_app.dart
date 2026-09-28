@@ -32,6 +32,8 @@ import '../features/hr/domain/repositories/attendance_repository.dart';
 import '../features/hr/domain/repositories/employee_document_repository.dart';
 import '../features/hr/domain/repositories/employee_kpi_repository.dart';
 import '../features/hr/domain/repositories/employee_repository.dart';
+import '../features/hr/data/repositories/mock_payroll_repository.dart';
+import '../features/hr/domain/repositories/payroll_repository.dart';
 import '../features/leads/presentation/services/lead_import_file_picker.dart';
 import '../features/leads/presentation/widgets/lead_export_dialog.dart';
 
@@ -49,6 +51,7 @@ class CrmApp extends StatefulWidget {
   final EmployeeDocumentRepository? employeeDocumentRepository;
   final AttendanceRepository? attendanceRepository;
   final EmployeeKpiRepository? employeeKpiRepository;
+  final PayrollRepository? payrollRepository;
 
   const CrmApp({
     super.key,
@@ -64,6 +67,7 @@ class CrmApp extends StatefulWidget {
     this.employeeDocumentRepository,
     this.attendanceRepository,
     this.employeeKpiRepository,
+    this.payrollRepository,
   }) : assert(
          authRepository == null || userManagementRepository != null,
          'userManagementRepository must be provided when authRepository is enabled',
@@ -93,6 +97,7 @@ class _CrmAppState extends State<CrmApp> {
   late final EmployeeDocumentRepository _employeeDocumentRepository;
   late final AttendanceRepository _attendanceRepository;
   late final EmployeeKpiRepository _employeeKpiRepository;
+  late final PayrollRepository _payrollRepository;
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
@@ -105,6 +110,8 @@ class _CrmAppState extends State<CrmApp> {
         widget.attendanceRepository ?? MockAttendanceRepository();
     _employeeKpiRepository =
         widget.employeeKpiRepository ?? MockEmployeeKpiRepository();
+    _payrollRepository =
+        widget.payrollRepository ?? MockPayrollRepository();
     if (widget.authRepository != null) {
       _authCubit = AuthCubit(widget.authRepository!);
     }
@@ -261,6 +268,10 @@ class _CrmAppState extends State<CrmApp> {
       );
       app = RepositoryProvider<EmployeeKpiRepository>.value(
         value: _employeeKpiRepository,
+        child: app,
+      );
+      app = RepositoryProvider<PayrollRepository>.value(
+        value: _payrollRepository,
         child: app,
       );
     }
