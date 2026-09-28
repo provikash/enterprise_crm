@@ -5,6 +5,7 @@ import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../data/repositories/mock_attendance_repository.dart';
 import '../../data/repositories/mock_employee_kpi_repository.dart';
+import '../../data/repositories/mock_payroll_repository.dart';
 import '../../domain/entities/employee.dart';
 import '../../domain/entities/employment_status.dart';
 import '../../domain/policies/hr_access_policy.dart';
@@ -12,12 +13,14 @@ import '../../domain/repositories/attendance_repository.dart';
 import '../../domain/repositories/employee_document_repository.dart';
 import '../../domain/repositories/employee_kpi_repository.dart';
 import '../../domain/repositories/employee_repository.dart';
+import '../../domain/repositories/payroll_repository.dart';
 import '../bloc/employee_directory_cubit.dart';
 import '../bloc/employee_directory_state.dart';
 import 'add_employee_screen.dart';
 import 'attendance_list_screen.dart';
 import 'employee_details_screen.dart';
 import 'employee_kpi_list_screen.dart';
+import 'payroll_overview_screen.dart';
 
 /// Main Employee Directory workspace screen in the HR module.
 ///
@@ -29,6 +32,7 @@ class EmployeeDirectoryScreen extends StatelessWidget {
   final EmployeeDocumentRepository? documentRepository;
   final AttendanceRepository? attendanceRepository;
   final EmployeeKpiRepository? kpiRepository;
+  final PayrollRepository? payrollRepository;
 
   const EmployeeDirectoryScreen({
     super.key,
@@ -37,6 +41,7 @@ class EmployeeDirectoryScreen extends StatelessWidget {
     this.documentRepository,
     this.attendanceRepository,
     this.kpiRepository,
+    this.payrollRepository,
   });
 
   @override
@@ -59,6 +64,7 @@ class EmployeeDirectoryScreen extends StatelessWidget {
         documentRepository: documentRepository,
         attendanceRepository: attendanceRepository,
         kpiRepository: kpiRepository,
+        payrollRepository: payrollRepository,
       ),
     );
   }
@@ -70,6 +76,7 @@ class _EmployeeDirectoryView extends StatefulWidget {
   final EmployeeDocumentRepository? documentRepository;
   final AttendanceRepository? attendanceRepository;
   final EmployeeKpiRepository? kpiRepository;
+  final PayrollRepository? payrollRepository;
 
   const _EmployeeDirectoryView({
     required this.user,
@@ -77,6 +84,7 @@ class _EmployeeDirectoryView extends StatefulWidget {
     this.documentRepository,
     this.attendanceRepository,
     this.kpiRepository,
+    this.payrollRepository,
   });
 
   @override
@@ -135,6 +143,24 @@ class _EmployeeDirectoryViewState extends State<_EmployeeDirectoryView> {
               );
             },
           ),
+          if (HrAccessPolicy.canViewPayroll(widget.user))
+            IconButton(
+              key: const Key('employee_directory_payroll_button'),
+              tooltip: 'Payroll Overview',
+              icon: const Icon(Icons.payments_outlined),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => PayrollOverviewScreen(
+                      user: widget.user,
+                      payrollRepository:
+                          widget.payrollRepository ?? MockPayrollRepository(),
+                      employeeRepository: widget.repository,
+                    ),
+                  ),
+                );
+              },
+            ),
           IconButton(
             key: const Key('employee_directory_refresh_button'),
             tooltip: 'Refresh',
