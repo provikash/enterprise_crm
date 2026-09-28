@@ -14,6 +14,7 @@ import '../bloc/payroll_overview_state.dart';
 import '../bloc/payroll_period_cubit.dart';
 import '../bloc/payroll_period_state.dart';
 import '../widgets/payroll_period_selector.dart';
+import 'payroll_details_screen.dart';
 
 /// Primary read-only screen for HR Payroll Overview.
 ///
@@ -112,6 +113,23 @@ class _PayrollOverviewScreenState extends State<PayrollOverviewScreen> {
   void _handleRefresh() {
     _periodCubit.reload();
     _overviewCubit.retry();
+  }
+
+  Future<void> _handleRecordTap(String recordId) async {
+    widget.onRecordTap?.call(recordId);
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PayrollDetailsScreen(
+          user: widget.user,
+          recordId: recordId,
+          payrollRepository: widget.payrollRepository,
+          employeeRepository: _employeeRepository,
+        ),
+      ),
+    );
+    if (mounted) {
+      _overviewCubit.retry();
+    }
   }
 
   String _formatCurrency(double? amount, String? currency) {
@@ -470,7 +488,7 @@ class _PayrollOverviewScreenState extends State<PayrollOverviewScreen> {
           ),
           child: InkWell(
             borderRadius: BorderRadius.circular(10),
-            onTap: () => widget.onRecordTap?.call(record.id),
+            onTap: () => _handleRecordTap(record.id),
             child: Padding(
               padding: const EdgeInsets.all(14.0),
               child: Column(
@@ -740,7 +758,7 @@ class _PayrollOverviewScreenState extends State<PayrollOverviewScreen> {
                     key: Key('payroll_record_action_${record.id}'),
                     icon: const Icon(Icons.arrow_forward, size: 18),
                     tooltip: 'View Details',
-                    onPressed: () => widget.onRecordTap?.call(record.id),
+                    onPressed: () => _handleRecordTap(record.id),
                   ),
                 ),
               ],
