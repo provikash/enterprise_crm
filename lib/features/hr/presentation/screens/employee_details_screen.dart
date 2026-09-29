@@ -231,7 +231,7 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
 
     return SingleChildScrollView(
       key: const Key('employee_details_content_scroll'),
-      padding: const EdgeInsets.all(24.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
       child: Center(
         child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 700),
@@ -515,7 +515,7 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
         side: BorderSide(color: colorScheme.outlineVariant),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -523,10 +523,12 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
               children: [
                 Icon(icon, size: 20, color: colorScheme.primary),
                 const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -546,7 +548,7 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 140,
+            width: 110,
             child: Text(
               label,
               style: const TextStyle(
@@ -555,6 +557,7 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
               ),
             ),
           ),
+          const SizedBox(width: 8),
           Expanded(
             child: Text(
               value,
