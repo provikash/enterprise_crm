@@ -90,6 +90,17 @@ class _PayrollOverviewScreenState extends State<PayrollOverviewScreen> {
   }
 
   @override
+  void didUpdateWidget(covariant PayrollOverviewScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.initialPeriodId != null &&
+        widget.initialPeriodId != oldWidget.initialPeriodId &&
+        HrAccessPolicy.canViewPayroll(widget.user)) {
+      _periodCubit.selectPeriod(widget.initialPeriodId!);
+      _overviewCubit.loadRecordsForPeriod(widget.initialPeriodId!);
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     if (_internalPeriodCubit) {

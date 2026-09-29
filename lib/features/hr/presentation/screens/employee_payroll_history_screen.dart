@@ -119,9 +119,6 @@ class _EmployeePayrollHistoryScreenState
       return const AccessRestrictedScreen();
     }
 
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return BlocProvider.value(
       value: _cubit,
       child: Scaffold(
