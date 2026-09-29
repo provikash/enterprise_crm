@@ -5,17 +5,20 @@ import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../data/repositories/mock_attendance_repository.dart';
 import '../../data/repositories/mock_employee_document_repository.dart';
+import '../../data/repositories/mock_payroll_repository.dart';
 import '../../domain/entities/employee.dart';
 import '../../domain/entities/employment_status.dart';
 import '../../domain/policies/hr_access_policy.dart';
 import '../../domain/repositories/attendance_repository.dart';
 import '../../domain/repositories/employee_document_repository.dart';
 import '../../domain/repositories/employee_repository.dart';
+import '../../domain/repositories/payroll_repository.dart';
 import '../bloc/employee_details_cubit.dart';
 import '../bloc/employee_details_state.dart';
 import 'edit_employee_screen.dart';
 import 'employee_attendance_history_screen.dart';
 import 'employee_documents_screen.dart';
+import 'employee_payroll_history_screen.dart';
 
 /// Employee Details screen displaying full information for a selected employee record.
 class EmployeeDetailsScreen extends StatelessWidget {
@@ -24,6 +27,7 @@ class EmployeeDetailsScreen extends StatelessWidget {
   final EmployeeRepository repository;
   final EmployeeDocumentRepository? documentRepository;
   final AttendanceRepository? attendanceRepository;
+  final PayrollRepository? payrollRepository;
 
   const EmployeeDetailsScreen({
     super.key,
@@ -32,6 +36,7 @@ class EmployeeDetailsScreen extends StatelessWidget {
     required this.repository,
     this.documentRepository,
     this.attendanceRepository,
+    this.payrollRepository,
   });
 
   @override
@@ -54,6 +59,7 @@ class EmployeeDetailsScreen extends StatelessWidget {
         repository: repository,
         documentRepository: documentRepository,
         attendanceRepository: attendanceRepository,
+        payrollRepository: payrollRepository,
       ),
     );
   }
@@ -65,6 +71,7 @@ class _EmployeeDetailsView extends StatefulWidget {
   final EmployeeRepository repository;
   final EmployeeDocumentRepository? documentRepository;
   final AttendanceRepository? attendanceRepository;
+  final PayrollRepository? payrollRepository;
 
   const _EmployeeDetailsView({
     required this.user,
@@ -72,6 +79,7 @@ class _EmployeeDetailsView extends StatefulWidget {
     required this.repository,
     this.documentRepository,
     this.attendanceRepository,
+    this.payrollRepository,
   });
 
   @override
@@ -432,6 +440,58 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
                   },
                 ),
               ),
+              if (HrAccessPolicy.canViewPayroll(widget.user)) ...[
+                const SizedBox(height: 16),
+
+                // Payroll History Card
+                Card(
+                  key: const Key('employee_details_payroll_card'),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    side: BorderSide(color: colorScheme.outlineVariant),
+                  ),
+                  child: ListTile(
+                    key: const Key('employee_payroll_tile'),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20.0,
+                      vertical: 8.0,
+                    ),
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.payments_outlined,
+                        color: colorScheme.onPrimaryContainer,
+                      ),
+                    ),
+                    title: const Text(
+                      'Payroll History',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: const Text(
+                      'View salary disbursements and compensation history',
+                    ),
+                    trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => EmployeePayrollHistoryScreen(
+                            user: widget.user,
+                            employee: employee,
+                            repository:
+                                widget.payrollRepository ??
+                                MockPayrollRepository(),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ],
           ),
         ),
