@@ -1,4 +1,5 @@
 import 'package:enterprise_crm/features/hr/domain/entities/payroll_calculation_input.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/payroll_component.dart';
 import 'package:enterprise_crm/features/hr/domain/value_objects/money.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -113,6 +114,52 @@ void main() {
       expect(i1, equals(i2));
       expect(i1.hashCode, equals(i2.hashCode));
       expect(i1, isNot(equals(i3)));
+    });
+
+    test('accepts itemized components and provides earnings and deductions getters', () {
+      final earning = PayrollComponent.earning(
+        id: 'comp_hra',
+        name: 'HRA',
+        amount: const Money(minorUnits: 1500000), // ₹15,000.00
+      );
+      final deduction = PayrollComponent.deduction(
+        id: 'comp_pt',
+        name: 'Professional Tax',
+        amount: const Money(minorUnits: 20000), // ₹200.00
+      );
+
+      final input = PayrollCalculationInput(
+        id: 'calc_1',
+        employeeId: 'emp_1',
+        payrollPeriodId: 'period_1',
+        baseSalary: const Money(minorUnits: 5000000),
+        components: [earning, deduction],
+      );
+
+      expect(input.components.length, equals(2));
+      expect(input.earnings.length, equals(1));
+      expect(input.earnings.first.id, equals('comp_hra'));
+      expect(input.deductions.length, equals(1));
+      expect(input.deductions.first.id, equals('comp_pt'));
+    });
+
+    test('validates currency consistency between baseSalary and attached components', () {
+      final usdEarning = PayrollComponent.earning(
+        id: 'comp_usd',
+        name: 'USD Bonus',
+        amount: const Money(minorUnits: 50000, currency: 'USD'),
+      );
+
+      expect(
+        () => PayrollCalculationInput(
+          id: 'calc_1',
+          employeeId: 'emp_1',
+          payrollPeriodId: 'period_1',
+          baseSalary: const Money(minorUnits: 5000000, currency: 'INR'),
+          components: [usdEarning],
+        ),
+        throwsArgumentError,
+      );
     });
 
     test('toString preserves privacy and does not dump sensitive details', () {

@@ -1,14 +1,19 @@
+import 'package:flutter/foundation.dart';
+
 import '../value_objects/money.dart';
+import 'payroll_component.dart';
 
 /// Immutable domain entity representing validated input data supplied to a
 /// payroll calculation operation in the Enterprise CRM HR module.
 ///
-/// Follows HR-7.2 and HR-7.3 domain contracts:
+/// Follows HR-7.2, HR-7.3, and HR-7.4 domain contracts:
 /// - Stably identified by a unique [id].
 /// - Stably references [Employee.id] via [employeeId].
 /// - Stably references [PayrollPeriod.id] via [payrollPeriodId].
 /// - Binds [baseSalary] represented as an exact [Money] value object.
 /// - Captures optional [unpaidLeaveDays] for attendance-based adjustments.
+/// - Supports optional itemized [components] (allowances, deductions, adjustments).
+/// - Enforces currency consistency between [baseSalary] and all attached [components].
 /// - Performs zero client-side calculation inside the entity.
 class PayrollCalculationInput {
   /// Unique identifier of this calculation input instance.
@@ -26,6 +31,9 @@ class PayrollCalculationInput {
   /// Number of unpaid absence / Loss of Pay days for the period (defaults to 0).
   final int unpaidLeaveDays;
 
+  /// Itemized payroll components (allowances, deductions, overrides) applicable to this run.
+  final List<PayrollComponent> components;
+
   /// Optional administrative notes or adjustment justifications.
   final String? remarks;
 
@@ -38,9 +46,11 @@ class PayrollCalculationInput {
     required this.payrollPeriodId,
     required this.baseSalary,
     this.unpaidLeaveDays = 0,
+    List<PayrollComponent>? components,
     this.remarks,
     DateTime? createdAt,
-  }) : createdAt = createdAt?.toUtc() {
+  })  : components = List.unmodifiable(components ?? const []),
+        createdAt = createdAt?.toUtc() {
     if (id.trim().isEmpty) {
       throw ArgumentError.value(id, 'id', 'Calculation input ID cannot be empty');
     }
@@ -65,7 +75,22 @@ class PayrollCalculationInput {
         'Unpaid leave days cannot be negative',
       );
     }
+    for (final comp in this.components) {
+      if (comp.currency != baseSalary.currency) {
+        throw ArgumentError(
+          'Payroll component currency (${comp.currency}) does not match base salary currency (${baseSalary.currency}) for component ID: ${comp.id}',
+        );
+      }
+    }
   }
+
+  /// Convenience getter for itemized earnings.
+  List<PayrollComponent> get earnings =>
+      components.where((c) => c.isEarning).toList();
+
+  /// Convenience getter for itemized deductions.
+  List<PayrollComponent> get deductions =>
+      components.where((c) => c.isDeduction).toList();
 
   /// Creates a copy of this calculation input with updated fields.
   PayrollCalculationInput copyWith({
@@ -74,6 +99,7 @@ class PayrollCalculationInput {
     String? payrollPeriodId,
     Money? baseSalary,
     int? unpaidLeaveDays,
+    List<PayrollComponent>? components,
     String? remarks,
     bool clearRemarks = false,
     DateTime? createdAt,
@@ -84,6 +110,7 @@ class PayrollCalculationInput {
       payrollPeriodId: payrollPeriodId ?? this.payrollPeriodId,
       baseSalary: baseSalary ?? this.baseSalary,
       unpaidLeaveDays: unpaidLeaveDays ?? this.unpaidLeaveDays,
+      components: components ?? this.components,
       remarks: clearRemarks ? null : (remarks ?? this.remarks),
       createdAt: createdAt ?? this.createdAt,
     );
@@ -95,10 +122,11 @@ class PayrollCalculationInput {
       other is PayrollCalculationInput &&
           runtimeType == other.runtimeType &&
           id == other.id &&
-          employeeId == employeeId &&
-          payrollPeriodId == payrollPeriodId &&
+          employeeId == other.employeeId &&
+          payrollPeriodId == other.payrollPeriodId &&
           baseSalary == other.baseSalary &&
           unpaidLeaveDays == other.unpaidLeaveDays &&
+          listEquals(components, other.components) &&
           remarks == other.remarks &&
           createdAt == other.createdAt;
 
@@ -109,6 +137,7 @@ class PayrollCalculationInput {
         payrollPeriodId,
         baseSalary,
         unpaidLeaveDays,
+        Object.hashAll(components),
         remarks,
         createdAt,
       );
