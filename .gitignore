@@ -32,6 +32,7 @@ migrate_working_dir/
 .pub/
 /build/
 /coverage/
+/doc
 
 # Symbolication related
 app.*.symbols
@@ -60,3 +61,5 @@ Enterprise_CRM_Team_Collaboration_Handoff.md
 INVENTORY_REQUIREMENTS.md
 MASTER_DEVELOPMENT_RULES.md
 SESSION_MEMORY.md
+
+HR_KPI_REQUIREMENTS.md

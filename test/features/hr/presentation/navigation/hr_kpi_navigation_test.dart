@@ -16,6 +16,7 @@ import 'package:enterprise_crm/features/hr/presentation/screens/employee_kpi_lis
 import 'package:enterprise_crm/features/hr/presentation/screens/add_employee_kpi_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/edit_employee_kpi_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/employee_kpi_details_screen.dart';
+import 'package:enterprise_crm/features/hr/presentation/screens/employee_kpi_summary_screen.dart';
 import 'package:enterprise_crm/features/leads/data/repositories/mock_lead_repository.dart';
 import 'package:enterprise_crm/features/auth/data/repositories/mock_user_lead_link_repository.dart';
 import 'package:flutter/material.dart';
@@ -222,6 +223,38 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(EmployeeKpiDetailsScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Admin in EmployeeKpiListScreen can navigate to EmployeeKpiSummaryScreen and back',
+      (tester) async {
+        await tester.pumpWidget(
+          MaterialApp(
+            home: EmployeeKpiListScreen(
+              user: MockAuthTestFixtures.admin,
+              kpiRepository: kpiRepository,
+              employeeRepository: employeeRepository,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        final summaryBtn = find.byKey(const Key('kpi_summary_button'));
+        expect(summaryBtn, findsOneWidget);
+        await tester.tap(summaryBtn);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(EmployeeKpiSummaryScreen), findsOneWidget);
+        expect(find.text('KPI Performance Summary'), findsOneWidget);
+
+        // Tap back
+        final backBtn = find.byType(BackButton);
+        expect(backBtn, findsOneWidget);
+        await tester.tap(backBtn);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(EmployeeKpiListScreen), findsOneWidget);
       },
     );
   });

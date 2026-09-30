@@ -13,6 +13,7 @@ import '../bloc/employee_kpi_list_cubit.dart';
 import '../bloc/employee_kpi_list_state.dart';
 import 'add_employee_kpi_screen.dart';
 import 'employee_kpi_details_screen.dart';
+import 'employee_kpi_summary_screen.dart';
 
 /// Screen displaying Employee Key Performance Indicators (KPIs).
 ///
@@ -190,6 +191,26 @@ class _EmployeeKpiListViewState extends State<_EmployeeKpiListView> {
     }
   }
 
+  Future<void> _navigateToSummary() async {
+    final effectiveKpiRepo = widget.kpiRepository;
+
+    final listState = context.read<EmployeeKpiListCubit>().state;
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => EmployeeKpiSummaryScreen(
+          user: widget.user,
+          kpiRepository: effectiveKpiRepo,
+          employeeRepository: widget.employeeRepository,
+          initialPeriodStart: listState.startDate,
+          initialPeriodEnd: listState.endDate,
+        ),
+      ),
+    );
+    if (mounted) {
+      context.read<EmployeeKpiListCubit>().reload();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -201,6 +222,12 @@ class _EmployeeKpiListViewState extends State<_EmployeeKpiListView> {
       appBar: AppBar(
         title: const Text('KPI Management'),
         actions: [
+          IconButton(
+            key: const Key('kpi_summary_button'),
+            tooltip: 'KPI Summary',
+            icon: const Icon(Icons.bar_chart_outlined),
+            onPressed: _navigateToSummary,
+          ),
           if (widget.user.isAdmin)
             IconButton(
               key: const Key('kpi_add_button'),
