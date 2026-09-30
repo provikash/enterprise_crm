@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../value_objects/money.dart';
 import 'payroll_component.dart';
+import 'payroll_record.dart';
 
 /// Immutable domain entity representing validated input data supplied to a
 /// payroll calculation operation in the Enterprise CRM HR module.
@@ -82,6 +83,79 @@ class PayrollCalculationInput {
         );
       }
     }
+  }
+
+  /// Factory converting an authoritative, stored HR-6 [PayrollRecord] into a
+  /// domain-compliant [PayrollCalculationInput] for in-memory simulation preview.
+  ///
+  /// Follows HR-7.8 integration specifications:
+  /// - Stably preserves [record.employeeId] and [record.payrollPeriodId].
+  /// - Maps stored [record.grossSalary] to [baseSalary] in integer minor units ([Money]).
+  ///   If [record.grossSalary] is null or non-positive, fallback [Money.zero] is used so
+  ///   the calculation engine can flag it cleanly with a diagnostic issue.
+  /// - Maps [record.totalAllowances] and [record.totalDeductions] to stored [PayrollComponent]s.
+  /// - Does NOT mutate or overwrite the stored [PayrollRecord].
+  factory PayrollCalculationInput.fromPayrollRecord(
+    PayrollRecord record, {
+    int unpaidLeaveDays = 0,
+    List<PayrollComponent>? additionalComponents,
+  }) {
+    final currency =
+        (record.currency != null && record.currency!.trim().isNotEmpty)
+            ? record.currency!.trim()
+            : Money.defaultCurrency;
+
+    final baseSalary = (record.grossSalary != null && record.grossSalary! > 0)
+        ? Money.fromMajorUnits(record.grossSalary!, currency: currency)
+        : Money.zero(currency: currency);
+
+    final components = <PayrollComponent>[];
+
+    // Total allowances mapping
+    if (record.totalAllowances != null && record.totalAllowances! > 0) {
+      components.add(
+        PayrollComponent.earning(
+          id: 'comp_allow_${record.id}',
+          name: 'Stored Allowances',
+          amount: Money.fromMajorUnits(
+            record.totalAllowances!,
+            currency: currency,
+          ),
+          source: PayrollComponentSource.stored,
+        ),
+      );
+    }
+
+    // Total deductions mapping
+    if (record.totalDeductions != null && record.totalDeductions! > 0) {
+      components.add(
+        PayrollComponent.deduction(
+          id: 'comp_ded_${record.id}',
+          name: 'Stored Deductions',
+          amount: Money.fromMajorUnits(
+            record.totalDeductions!,
+            currency: currency,
+          ),
+          source: PayrollComponentSource.stored,
+        ),
+      );
+    }
+
+    if (additionalComponents != null) {
+      components.addAll(additionalComponents);
+    }
+
+    return PayrollCalculationInput(
+      id: 'in_${record.id}',
+      employeeId: record.employeeId,
+      payrollPeriodId: record.payrollPeriodId,
+      baseSalary: baseSalary,
+      unpaidLeaveDays: unpaidLeaveDays,
+      components: components,
+      remarks:
+          'In-memory preview input synthesized from stored record ${record.id}',
+      createdAt: DateTime.now().toUtc(),
+    );
   }
 
   /// Convenience getter for itemized earnings.

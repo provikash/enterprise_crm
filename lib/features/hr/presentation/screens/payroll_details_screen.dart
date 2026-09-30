@@ -6,6 +6,7 @@ import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../data/repositories/mock_employee_repository.dart';
 import '../../data/repositories/mock_payroll_repository.dart';
 import '../../domain/entities/employee.dart';
+import '../../domain/entities/payroll_calculation_input.dart';
 import '../../domain/entities/payroll_period.dart';
 import '../../domain/entities/payroll_record.dart';
 import '../../domain/policies/hr_access_policy.dart';
@@ -13,6 +14,7 @@ import '../../domain/repositories/employee_repository.dart';
 import '../../domain/repositories/payroll_repository.dart';
 import '../bloc/payroll_details_cubit.dart';
 import '../bloc/payroll_details_state.dart';
+import 'payroll_calculation_preview_screen.dart';
 
 /// Screen displaying the complete read-only details of an individual Payroll Record.
 ///
@@ -91,6 +93,22 @@ class _PayrollDetailsScreenState extends State<PayrollDetailsScreen> {
     return formatted;
   }
 
+  void _navigateToPreview(PayrollRecord record) {
+    final input = PayrollCalculationInput.fromPayrollRecord(record);
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PayrollCalculationPreviewScreen(
+          user: widget.user,
+          input: input,
+          employeeRepository:
+              widget.employeeRepository ?? MockEmployeeRepository(),
+          payrollRepository:
+              widget.payrollRepository ?? MockPayrollRepository(),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!HrAccessPolicy.canViewPayroll(widget.user)) {
@@ -116,6 +134,21 @@ class _PayrollDetailsScreenState extends State<PayrollDetailsScreen> {
               icon: const Icon(Icons.refresh),
               tooltip: 'Refresh',
               onPressed: () => _cubit.retry(),
+            ),
+            BlocBuilder<PayrollDetailsCubit, PayrollDetailsState>(
+              builder: (context, state) {
+                if (state.status == PayrollDetailsStatus.loaded &&
+                    state.record != null) {
+                  return IconButton(
+                    key: const Key(
+                        'payroll_details_preview_calculation_action'),
+                    icon: const Icon(Icons.calculate_outlined),
+                    tooltip: 'Preview Calculation',
+                    onPressed: () => _navigateToPreview(state.record!),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
             ),
           ],
         ),
@@ -607,6 +640,16 @@ class _PayrollDetailsScreenState extends State<PayrollDetailsScreen> {
               colorScheme: colorScheme,
               isHighlight: true,
               highlightColor: colorScheme.primary,
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                key: const Key('payroll_details_preview_calculation_button'),
+                icon: const Icon(Icons.calculate_outlined, size: 18),
+                label: const Text('Preview Calculation'),
+                onPressed: () => _navigateToPreview(record),
+              ),
             ),
           ],
         ),

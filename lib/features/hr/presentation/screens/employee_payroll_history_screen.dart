@@ -6,12 +6,14 @@ import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../data/repositories/mock_employee_repository.dart';
 import '../../data/repositories/mock_payroll_repository.dart';
 import '../../domain/entities/employee.dart';
+import '../../domain/entities/payroll_calculation_input.dart';
 import '../../domain/entities/payroll_record.dart';
 import '../../domain/policies/hr_access_policy.dart';
 import '../../domain/repositories/employee_repository.dart';
 import '../../domain/repositories/payroll_repository.dart';
 import '../bloc/employee_payroll_history_cubit.dart';
 import '../bloc/employee_payroll_history_state.dart';
+import 'payroll_calculation_preview_screen.dart';
 import 'payroll_details_screen.dart';
 
 /// Screen presenting the dedicated Payroll History for an individual [Employee].
@@ -111,6 +113,21 @@ class _EmployeePayrollHistoryScreenState
     if (mounted) {
       _cubit.loadHistory(widget.employee.id);
     }
+  }
+
+  Future<void> _navigateToPreview(PayrollRecord record) async {
+    final input = PayrollCalculationInput.fromPayrollRecord(record);
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PayrollCalculationPreviewScreen(
+          user: widget.user,
+          input: input,
+          employeeRepository:
+              widget.employeeRepository ?? MockEmployeeRepository(),
+          payrollRepository: widget.repository ?? MockPayrollRepository(),
+        ),
+      ),
+    );
   }
 
   @override
@@ -427,6 +444,12 @@ class _EmployeePayrollHistoryScreenState
                         ),
                       ],
                     ),
+                  ),
+                  IconButton(
+                    key: Key('payroll_history_preview_button_${record.id}'),
+                    icon: const Icon(Icons.calculate_outlined, size: 20),
+                    tooltip: 'Preview Calculation',
+                    onPressed: () => _navigateToPreview(record),
                   ),
                   IconButton(
                     key: Key('payroll_history_record_action_${record.id}'),

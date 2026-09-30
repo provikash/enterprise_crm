@@ -5,6 +5,7 @@ import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../data/repositories/mock_employee_repository.dart';
 import '../../data/repositories/mock_payroll_repository.dart';
+import '../../domain/entities/payroll_calculation_input.dart';
 import '../../domain/entities/payroll_record.dart';
 import '../../domain/policies/hr_access_policy.dart';
 import '../../domain/repositories/employee_repository.dart';
@@ -14,6 +15,7 @@ import '../bloc/payroll_overview_state.dart';
 import '../bloc/payroll_period_cubit.dart';
 import '../bloc/payroll_period_state.dart';
 import '../widgets/payroll_period_selector.dart';
+import 'payroll_calculation_preview_screen.dart';
 import 'payroll_details_screen.dart';
 
 /// Primary read-only screen for HR Payroll Overview.
@@ -133,6 +135,23 @@ class _PayrollOverviewScreenState extends State<PayrollOverviewScreen> {
         builder: (_) => PayrollDetailsScreen(
           user: widget.user,
           recordId: recordId,
+          payrollRepository: widget.payrollRepository,
+          employeeRepository: _employeeRepository,
+        ),
+      ),
+    );
+    if (mounted) {
+      _overviewCubit.retry();
+    }
+  }
+
+  Future<void> _handlePreviewTap(PayrollRecord record) async {
+    final input = PayrollCalculationInput.fromPayrollRecord(record);
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PayrollCalculationPreviewScreen(
+          user: widget.user,
+          input: input,
           payrollRepository: widget.payrollRepository,
           employeeRepository: _employeeRepository,
         ),
@@ -652,6 +671,12 @@ class _PayrollOverviewScreenState extends State<PayrollOverviewScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      IconButton(
+                        key: Key('payroll_overview_preview_button_${record.id}'),
+                        icon: const Icon(Icons.calculate_outlined, size: 20),
+                        tooltip: 'Preview Calculation',
+                        onPressed: () => _handlePreviewTap(record),
+                      ),
                       Icon(
                         Icons.chevron_right,
                         size: 20,
@@ -765,11 +790,22 @@ class _PayrollOverviewScreenState extends State<PayrollOverviewScreen> {
                   Text(record.formattedPaymentDate ?? '—'),
                 ),
                 DataCell(
-                  IconButton(
-                    key: Key('payroll_record_action_${record.id}'),
-                    icon: const Icon(Icons.arrow_forward, size: 18),
-                    tooltip: 'View Details',
-                    onPressed: () => _handleRecordTap(record.id),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        key: Key('payroll_overview_preview_button_${record.id}'),
+                        icon: const Icon(Icons.calculate_outlined, size: 18),
+                        tooltip: 'Preview Calculation',
+                        onPressed: () => _handlePreviewTap(record),
+                      ),
+                      IconButton(
+                        key: Key('payroll_record_action_${record.id}'),
+                        icon: const Icon(Icons.arrow_forward, size: 18),
+                        tooltip: 'View Details',
+                        onPressed: () => _handleRecordTap(record.id),
+                      ),
+                    ],
                   ),
                 ),
               ],

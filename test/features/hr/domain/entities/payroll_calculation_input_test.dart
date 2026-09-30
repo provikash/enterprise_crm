@@ -1,5 +1,6 @@
 import 'package:enterprise_crm/features/hr/domain/entities/payroll_calculation_input.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/payroll_component.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/payroll_record.dart';
 import 'package:enterprise_crm/features/hr/domain/value_objects/money.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -172,6 +173,63 @@ void main() {
       expect(input.toString(), contains('calc_1'));
       expect(input.toString(), contains('emp_1'));
       expect(input.toString(), contains('period_1'));
+    });
+  });
+
+  group('PayrollCalculationInput.fromPayrollRecord Tests (HR-7.8)', () {
+    test('synthesizes valid calculation input from complete PayrollRecord', () {
+      final record = PayrollRecord(
+        id: 'rec_synth_01',
+        employeeId: 'emp_synth_01',
+        payrollPeriodId: 'period_2026_01',
+        grossSalary: 60000.0,
+        netSalary: 55000.0,
+        totalAllowances: 10000.0,
+        totalDeductions: 5000.0,
+        currency: 'INR',
+      );
+
+      final input = PayrollCalculationInput.fromPayrollRecord(record, unpaidLeaveDays: 2);
+
+      expect(input.id, equals('in_rec_synth_01'));
+      expect(input.employeeId, equals('emp_synth_01'));
+      expect(input.payrollPeriodId, equals('period_2026_01'));
+      expect(input.baseSalary, equals(const Money(minorUnits: 6000000)));
+      expect(input.unpaidLeaveDays, equals(2));
+      expect(input.components.length, equals(2));
+      expect(input.earnings.first.amount, equals(const Money(minorUnits: 1000000)));
+      expect(input.deductions.first.amount, equals(const Money(minorUnits: 500000)));
+    });
+
+    test('handles missing or null compensation safely with Money.zero', () {
+      final nullSalaryRecord = PayrollRecord(
+        id: 'rec_null_01',
+        employeeId: 'emp_null_01',
+        payrollPeriodId: 'period_2026_01',
+        grossSalary: null,
+        netSalary: null,
+      );
+
+      final input = PayrollCalculationInput.fromPayrollRecord(nullSalaryRecord);
+
+      expect(input.baseSalary, equals(const Money(minorUnits: 0)));
+      expect(input.components, isEmpty);
+      expect(input.unpaidLeaveDays, equals(0));
+    });
+
+    test('preserves custom currency from PayrollRecord', () {
+      final usdRecord = PayrollRecord(
+        id: 'rec_usd_01',
+        employeeId: 'emp_usd_01',
+        payrollPeriodId: 'period_2026_01',
+        grossSalary: 5000.0,
+        currency: 'USD',
+      );
+
+      final input = PayrollCalculationInput.fromPayrollRecord(usdRecord);
+
+      expect(input.baseSalary.currency, equals('USD'));
+      expect(input.baseSalary.minorUnits, equals(500000));
     });
   });
 }
