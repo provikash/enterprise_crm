@@ -243,5 +243,5 @@ class PayrollComponent {
 
   @override
   String toString() =>
-      'PayrollComponent(id: $id, name: $name, kind: $kind, amount: $amount, source: $source)';
+      'PayrollComponent(id: $id, name: $name, kind: $kind, currency: ${amount.currency}, source: $source)';
 }

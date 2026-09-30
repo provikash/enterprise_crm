@@ -189,5 +189,5 @@ class PayrollCalculationResult {
 
   @override
   String toString() =>
-      'PayrollCalculationResult(id: $calculationId, emp: $employeeId, period: $payrollPeriodId, net: $netPayable, valid: $isValid, preview: $isPreview)';
+      'PayrollCalculationResult(id: $calculationId, emp: $employeeId, period: $payrollPeriodId, valid: $isValid, preview: $isPreview)';
 }

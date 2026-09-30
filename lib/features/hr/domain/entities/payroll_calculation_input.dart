@@ -218,5 +218,5 @@ class PayrollCalculationInput {
 
   @override
   String toString() =>
-      'PayrollCalculationInput(id: $id, employeeId: $employeeId, periodId: $payrollPeriodId, baseSalary: $baseSalary, unpaidLeaveDays: $unpaidLeaveDays)';
+      'PayrollCalculationInput(id: $id, employeeId: $employeeId, periodId: $payrollPeriodId, componentsCount: ${components.length}, unpaidLeaveDays: $unpaidLeaveDays)';
 }

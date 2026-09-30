@@ -52,15 +52,20 @@ class PayrollCalculationPreviewScreen extends StatefulWidget {
 
 class _PayrollCalculationPreviewScreenState
     extends State<PayrollCalculationPreviewScreen> {
-  late final PayrollCalculationPreviewCubit _cubit;
+  PayrollCalculationPreviewCubit? _cubit;
   bool _internalCubit = false;
 
   @override
   void initState() {
     super.initState();
+    _initializeCubitIfNeeded();
+  }
+
+  void _initializeCubitIfNeeded() {
     if (HrAccessPolicy.canViewPayroll(widget.user)) {
       if (widget.cubit != null) {
         _cubit = widget.cubit!;
+        _internalCubit = false;
       } else {
         _internalCubit = true;
         _cubit = PayrollCalculationPreviewCubit(
@@ -77,16 +82,43 @@ class _PayrollCalculationPreviewScreenState
   }
 
   @override
+  void didUpdateWidget(PayrollCalculationPreviewScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final wasAuthorized = HrAccessPolicy.canViewPayroll(oldWidget.user);
+    final isAuthorized = HrAccessPolicy.canViewPayroll(widget.user);
+
+    if (wasAuthorized && !isAuthorized) {
+      if (_internalCubit) {
+        _cubit?.close();
+      }
+      _cubit = null;
+      return;
+    }
+
+    if (!wasAuthorized && isAuthorized) {
+      _initializeCubitIfNeeded();
+      return;
+    }
+
+    if (isAuthorized && oldWidget.input != widget.input) {
+      _cubit?.calculatePreview(
+        input: widget.input,
+        attendancePolicy: widget.initialAttendancePolicy,
+      );
+    }
+  }
+
+  @override
   void dispose() {
     if (_internalCubit) {
-      _cubit.close();
+      _cubit?.close();
     }
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!HrAccessPolicy.canViewPayroll(widget.user)) {
+    if (!HrAccessPolicy.canViewPayroll(widget.user) || _cubit == null) {
       return const AccessRestrictedScreen();
     }
 
@@ -94,7 +126,7 @@ class _PayrollCalculationPreviewScreenState
     final colorScheme = theme.colorScheme;
 
     return BlocProvider<PayrollCalculationPreviewCubit>.value(
-      value: _cubit,
+      value: _cubit!,
       child: Scaffold(
         key: const Key('payroll_calculation_preview_scaffold'),
         appBar: AppBar(
@@ -108,7 +140,7 @@ class _PayrollCalculationPreviewScreenState
               key: const Key('preview_refresh_button'),
               icon: const Icon(Icons.refresh),
               tooltip: 'Recalculate Preview',
-              onPressed: () => _cubit.retry(),
+              onPressed: () => _cubit?.retry(),
             ),
           ],
         ),
@@ -145,7 +177,7 @@ class _PayrollCalculationPreviewScreenState
                       const SizedBox(height: 16),
                       FilledButton.icon(
                         key: const Key('preview_retry_button'),
-                        onPressed: () => _cubit.retry(),
+                        onPressed: () => _cubit?.retry(),
                         icon: const Icon(Icons.refresh),
                         label: const Text('Retry Calculation'),
                       ),
@@ -495,7 +527,7 @@ class _PayrollCalculationPreviewScreenState
                       state.attendancePolicy == AttendanceProrationPolicy.unresolved,
                   onSelected: (selected) {
                     if (selected) {
-                      _cubit.setAttendancePolicy(
+                      _cubit?.setAttendancePolicy(
                         AttendanceProrationPolicy.unresolved,
                       );
                     }
@@ -508,7 +540,7 @@ class _PayrollCalculationPreviewScreenState
                       state.attendancePolicy == AttendanceProrationPolicy.calendarDays,
                   onSelected: (selected) {
                     if (selected) {
-                      _cubit.setAttendancePolicy(
+                      _cubit?.setAttendancePolicy(
                         AttendanceProrationPolicy.calendarDays,
                       );
                     }
@@ -521,7 +553,7 @@ class _PayrollCalculationPreviewScreenState
                       state.attendancePolicy == AttendanceProrationPolicy.fixed30Days,
                   onSelected: (selected) {
                     if (selected) {
-                      _cubit.setAttendancePolicy(
+                      _cubit?.setAttendancePolicy(
                         AttendanceProrationPolicy.fixed30Days,
                       );
                     }
@@ -534,7 +566,7 @@ class _PayrollCalculationPreviewScreenState
                       AttendanceProrationPolicy.workingDays26,
                   onSelected: (selected) {
                     if (selected) {
-                      _cubit.setAttendancePolicy(
+                      _cubit?.setAttendancePolicy(
                         AttendanceProrationPolicy.workingDays26,
                       );
                     }
