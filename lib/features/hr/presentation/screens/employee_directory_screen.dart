@@ -20,6 +20,7 @@ import 'add_employee_screen.dart';
 import 'attendance_list_screen.dart';
 import 'employee_details_screen.dart';
 import 'employee_kpi_list_screen.dart';
+import 'employee_report_screen.dart';
 import 'payroll_overview_screen.dart';
 
 /// Main Employee Directory workspace screen in the HR module.
@@ -161,6 +162,21 @@ class _EmployeeDirectoryViewState extends State<_EmployeeDirectoryView> {
                 );
               },
             ),
+          IconButton(
+            key: const Key('employee_directory_reports_button'),
+            tooltip: 'Employee Reports',
+            icon: const Icon(Icons.summarize_outlined),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => EmployeeReportScreen(
+                    user: widget.user,
+                    employeeRepository: widget.repository,
+                  ),
+                ),
+              );
+            },
+          ),
           IconButton(
             key: const Key('employee_directory_refresh_button'),
             tooltip: 'Refresh',
