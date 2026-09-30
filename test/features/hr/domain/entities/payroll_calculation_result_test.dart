@@ -156,6 +156,7 @@ void main() {
     });
 
     test('value equality and hashCode behavior', () {
+      final fixedDate = DateTime.utc(2026, 1, 15, 12, 0);
       final r1 = PayrollCalculationResult(
         calculationId: 'calc_1',
         employeeId: 'emp_1',
@@ -164,6 +165,7 @@ void main() {
         grossEarnings: gross,
         totalDeductions: ded,
         netPayable: net,
+        calculatedAt: fixedDate,
       );
       final r2 = PayrollCalculationResult(
         calculationId: 'calc_1',
@@ -173,6 +175,7 @@ void main() {
         grossEarnings: gross,
         totalDeductions: ded,
         netPayable: net,
+        calculatedAt: fixedDate,
       );
       final r3 = PayrollCalculationResult(
         calculationId: 'calc_2',
@@ -182,6 +185,7 @@ void main() {
         grossEarnings: gross,
         totalDeductions: ded,
         netPayable: net,
+        calculatedAt: fixedDate,
       );
 
       expect(r1, equals(r2));
