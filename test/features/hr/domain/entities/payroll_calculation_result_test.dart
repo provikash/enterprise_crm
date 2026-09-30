@@ -1,4 +1,5 @@
 import 'package:enterprise_crm/features/hr/domain/entities/payroll_calculation_result.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/payroll_component.dart';
 import 'package:enterprise_crm/features/hr/domain/value_objects/calculation_validation_issue.dart';
 import 'package:enterprise_crm/features/hr/domain/value_objects/money.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -186,6 +187,58 @@ void main() {
       expect(r1, equals(r2));
       expect(r1.hashCode, equals(r2.hashCode));
       expect(r1, isNot(equals(r3)));
+    });
+
+    test('accepts itemized components and provides earnings and deductions getters', () {
+      final earning = PayrollComponent.earning(
+        id: 'comp_hra',
+        name: 'HRA',
+        amount: const Money(minorUnits: 2500000),
+      );
+      final deduction = PayrollComponent.deduction(
+        id: 'comp_pf',
+        name: 'PF',
+        amount: const Money(minorUnits: 180000),
+      );
+
+      final result = PayrollCalculationResult(
+        calculationId: 'calc_res_comp',
+        employeeId: 'emp_1',
+        payrollPeriodId: 'period_1',
+        baseSalary: base,
+        grossEarnings: gross,
+        totalDeductions: ded,
+        netPayable: net,
+        components: [earning, deduction],
+      );
+
+      expect(result.components.length, equals(2));
+      expect(result.earnings.length, equals(1));
+      expect(result.earnings.first.id, equals('comp_hra'));
+      expect(result.deductions.length, equals(1));
+      expect(result.deductions.first.id, equals('comp_pf'));
+    });
+
+    test('validates currency consistency between baseSalary and attached components in result', () {
+      final usdComp = PayrollComponent.earning(
+        id: 'comp_usd',
+        name: 'USD Allowance',
+        amount: const Money(minorUnits: 10000, currency: 'USD'),
+      );
+
+      expect(
+        () => PayrollCalculationResult(
+          calculationId: 'calc_res_curr',
+          employeeId: 'emp_1',
+          payrollPeriodId: 'period_1',
+          baseSalary: base, // INR
+          grossEarnings: gross, // INR
+          totalDeductions: ded, // INR
+          netPayable: net, // INR
+          components: [usdComp],
+        ),
+        throwsArgumentError,
+      );
     });
 
     test('toString maintains privacy and does not expose itemized details', () {

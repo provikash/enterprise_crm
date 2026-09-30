@@ -1,13 +1,17 @@
+import 'package:flutter/foundation.dart';
+
 import '../value_objects/calculation_validation_issue.dart';
 import '../value_objects/money.dart';
+import 'payroll_component.dart';
 
 /// Immutable domain entity representing the output of a payroll calculation
 /// or simulation operation in the Enterprise CRM HR module.
 ///
-/// Follows HR-7.2 and HR-7.3 domain contracts:
+/// Follows HR-7.2, HR-7.3, and HR-7.5 domain contracts:
 /// - Stably identified by [calculationId].
 /// - Associated with [employeeId] and [payrollPeriodId].
 /// - Preserves monetary integrity using exact [Money] value objects.
+/// - Itemizes evaluated components via [components] (earnings and deductions).
 /// - Encapsulates any [validationIssues] (warnings or errors) discovered during calculation.
 /// - Strictly marked as [isPreview] by default to prevent false finalization or overwriting
 ///   authoritative stored records in [PayrollRepository].
@@ -33,6 +37,9 @@ class PayrollCalculationResult {
   /// Final net take-home payable amount.
   final Money netPayable;
 
+  /// Itemized list of all evaluated payroll components for this run.
+  final List<PayrollComponent> components;
+
   /// List of validation warnings, errors, or diagnostic notices.
   final List<CalculationValidationIssue> validationIssues;
 
@@ -53,11 +60,13 @@ class PayrollCalculationResult {
     required this.grossEarnings,
     required this.totalDeductions,
     required this.netPayable,
+    List<PayrollComponent>? components,
     List<CalculationValidationIssue>? validationIssues,
     DateTime? calculatedAt,
     this.ruleVersion = 'RULE_SET_V1_MOCK',
     this.isPreview = true,
-  })  : validationIssues = List.unmodifiable(validationIssues ?? const []),
+  })  : components = List.unmodifiable(components ?? const []),
+        validationIssues = List.unmodifiable(validationIssues ?? const []),
         calculatedAt = (calculatedAt ?? DateTime.now()).toUtc() {
     if (calculationId.trim().isEmpty) {
       throw ArgumentError.value(
@@ -89,6 +98,13 @@ class PayrollCalculationResult {
         'deductions: ${totalDeductions.currency}, net: ${netPayable.currency}',
       );
     }
+    for (final comp in this.components) {
+      if (comp.currency != baseSalary.currency) {
+        throw ArgumentError(
+          'Payroll component currency (${comp.currency}) does not match calculation currency (${baseSalary.currency}) for component ID: ${comp.id}',
+        );
+      }
+    }
   }
 
   /// Whether this calculation produced any fatal errors.
@@ -100,6 +116,14 @@ class PayrollCalculationResult {
   /// Whether this calculation is mathematically and logically valid (no fatal errors).
   bool get isValid => !hasErrors;
 
+  /// Convenience getter for all itemized earning components.
+  List<PayrollComponent> get earnings =>
+      components.where((c) => c.isEarning).toList();
+
+  /// Convenience getter for all itemized deduction components.
+  List<PayrollComponent> get deductions =>
+      components.where((c) => c.isDeduction).toList();
+
   /// Creates a copy of this calculation result with updated fields.
   PayrollCalculationResult copyWith({
     String? calculationId,
@@ -109,6 +133,7 @@ class PayrollCalculationResult {
     Money? grossEarnings,
     Money? totalDeductions,
     Money? netPayable,
+    List<PayrollComponent>? components,
     List<CalculationValidationIssue>? validationIssues,
     DateTime? calculatedAt,
     String? ruleVersion,
@@ -122,6 +147,7 @@ class PayrollCalculationResult {
       grossEarnings: grossEarnings ?? this.grossEarnings,
       totalDeductions: totalDeductions ?? this.totalDeductions,
       netPayable: netPayable ?? this.netPayable,
+      components: components ?? this.components,
       validationIssues: validationIssues ?? this.validationIssues,
       calculatedAt: calculatedAt ?? this.calculatedAt,
       ruleVersion: ruleVersion ?? this.ruleVersion,
@@ -141,6 +167,7 @@ class PayrollCalculationResult {
           grossEarnings == other.grossEarnings &&
           totalDeductions == other.totalDeductions &&
           netPayable == other.netPayable &&
+          listEquals(components, other.components) &&
           calculatedAt == other.calculatedAt &&
           ruleVersion == other.ruleVersion &&
           isPreview == other.isPreview;
@@ -154,6 +181,7 @@ class PayrollCalculationResult {
         grossEarnings,
         totalDeductions,
         netPayable,
+        Object.hashAll(components),
         calculatedAt,
         ruleVersion,
         isPreview,
