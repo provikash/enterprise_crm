@@ -10,6 +10,7 @@ import '../bloc/attendance_list_cubit.dart';
 import '../bloc/attendance_list_state.dart';
 import '../widgets/attendance_status_badge.dart';
 import 'attendance_details_dialog.dart';
+import 'attendance_report_screen.dart';
 
 /// Main Attendance Management Screen supporting List and Calendar views.
 class AttendanceListScreen extends StatelessWidget {
@@ -104,6 +105,21 @@ class _AttendanceListViewState extends State<_AttendanceListView> {
           appBar: AppBar(
             title: const Text('Attendance Management'),
             actions: [
+              IconButton(
+                key: const Key('attendance_list_reports_button'),
+                icon: const Icon(Icons.summarize_outlined),
+                tooltip: 'Attendance Reports',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => AttendanceReportScreen(
+                        user: widget.user,
+                        attendanceRepository: widget.repository,
+                      ),
+                    ),
+                  );
+                },
+              ),
               IconButton(
                 key: const Key('attendance_refresh_button'),
                 icon: const Icon(Icons.refresh),

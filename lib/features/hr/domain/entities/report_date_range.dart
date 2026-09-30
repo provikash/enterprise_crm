@@ -23,6 +23,19 @@ class ReportDateRange {
     }
   }
 
+  /// Convenience alias for [start].
+  DateTime get startDate => start;
+
+  /// Convenience alias for [end].
+  DateTime get endDate => end;
+
+  /// Formatted string e.g. 'YYYY-MM-DD – YYYY-MM-DD'.
+  String get formattedLabel {
+    final s = '${start.year}-${start.month.toString().padLeft(2, '0')}-${start.day.toString().padLeft(2, '0')}';
+    final e = '${end.year}-${end.month.toString().padLeft(2, '0')}-${end.day.toString().padLeft(2, '0')}';
+    return '$s – $e';
+  }
+
   /// Whether the specified [date] falls inclusively within this range.
   bool contains(DateTime date) {
     final utcDate = date.toUtc();

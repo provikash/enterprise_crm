@@ -1,5 +1,9 @@
+import 'package:enterprise_crm/features/hr/data/repositories/mock_attendance_repository.dart';
 import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_repository.dart';
 import 'package:enterprise_crm/features/hr/data/repositories/mock_hr_report_repository.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/attendance_report_query.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/attendance_report_row.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/attendance_report_summary.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/employee.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/employee_report_query.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/employee_report_row.dart';
@@ -244,6 +248,177 @@ void main() {
       for (var i = 0; i < beforeEmployees.length; i++) {
         expect(afterEmployees[i].id, equals(beforeEmployees[i].id));
         expect(afterEmployees[i].fullName, equals(beforeEmployees[i].fullName));
+      }
+    });
+  });
+
+  group('HR-8.4: Attendance Report Domain & Repository Tests', () {
+    late MockEmployeeRepository employeeRepo;
+    late MockAttendanceRepository attendanceRepo;
+    late MockHrReportRepository reportRepo;
+
+    setUp(() {
+      employeeRepo = MockEmployeeRepository();
+      attendanceRepo = MockAttendanceRepository();
+      reportRepo = MockHrReportRepository(
+        employeeRepository: employeeRepo,
+        attendanceRepository: attendanceRepo,
+      );
+    });
+
+    test('AttendanceReportSummary correctly aggregates counts without fabricated data', () {
+      final rows = [
+        AttendanceReportRow(
+          attendanceId: 'att_1',
+          employeeId: 'emp_1',
+          employeeName: 'Alice',
+          attendanceDate: DateTime.utc(2026, 9, 21),
+          attendanceStatus: 'Present',
+        ),
+        AttendanceReportRow(
+          attendanceId: 'att_2',
+          employeeId: 'emp_1',
+          employeeName: 'Alice',
+          attendanceDate: DateTime.utc(2026, 9, 22),
+          attendanceStatus: 'Absent',
+        ),
+        AttendanceReportRow(
+          attendanceId: 'att_3',
+          employeeId: 'emp_2',
+          employeeName: 'Bob',
+          attendanceDate: DateTime.utc(2026, 9, 21),
+          attendanceStatus: 'Half-day',
+        ),
+        AttendanceReportRow(
+          attendanceId: 'att_4',
+          employeeId: 'emp_2',
+          employeeName: 'Bob',
+          attendanceDate: DateTime.utc(2026, 9, 22),
+          attendanceStatus: 'On Leave',
+        ),
+      ];
+
+      final summary = AttendanceReportSummary.fromRows(rows);
+      expect(summary.totalRecords, equals(4));
+      expect(summary.presentCount, equals(1));
+      expect(summary.absentCount, equals(1));
+      expect(summary.halfDayCount, equals(1));
+      expect(summary.onLeaveCount, equals(1));
+    });
+
+    test('default attendance report query executes and resolves employee names', () async {
+      final result = await reportRepo.getAttendanceReport(
+        const AttendanceReportQuery(),
+      );
+
+      expect(result.isNotEmpty, isTrue);
+      expect(result.totalCount, greaterThan(0));
+
+      final firstRow = result.rows.first;
+      expect(firstRow.employeeName, isNotEmpty);
+      expect(firstRow.attendanceDate.isUtc, isTrue);
+    });
+
+    test('filtering by employeeId returns only records for that employee', () async {
+      final result = await reportRepo.getAttendanceReport(
+        const AttendanceReportQuery(employeeId: 'emp_1'),
+      );
+
+      expect(result.isNotEmpty, isTrue);
+      expect(result.rows.every((r) => r.employeeId == 'emp_1'), isTrue);
+      expect(result.rows.every((r) => r.employeeName == 'Alice Johnson'), isTrue);
+    });
+
+    test('filtering by status returns only matching attendance records', () async {
+      final result = await reportRepo.getAttendanceReport(
+        const AttendanceReportQuery(status: 'On Leave'),
+      );
+
+      expect(result.isNotEmpty, isTrue);
+      expect(result.rows.every((r) => r.attendanceStatus == 'On Leave'), isTrue);
+    });
+
+    test('filtering by date range restricts records to inclusive boundaries', () async {
+      final range = ReportDateRange(
+        start: DateTime.utc(2026, 9, 21),
+        end: DateTime.utc(2026, 9, 22),
+      );
+
+      final result = await reportRepo.getAttendanceReport(
+        AttendanceReportQuery(dateRange: range),
+      );
+
+      expect(result.isNotEmpty, isTrue);
+      expect(
+        result.rows.every((r) => range.contains(r.attendanceDate)),
+        isTrue,
+      );
+    });
+
+    test('search term filters dynamically by employee name or code', () async {
+      final result = await reportRepo.getAttendanceReport(
+        const AttendanceReportQuery(searchTerm: 'Alice'),
+      );
+
+      expect(result.isNotEmpty, isTrue);
+      expect(result.rows.every((r) => r.employeeName.contains('Alice')), isTrue);
+    });
+
+    test('combined filters execute conjunctively (employeeId + status)', () async {
+      final result = await reportRepo.getAttendanceReport(
+        const AttendanceReportQuery(
+          employeeId: 'emp_1',
+          status: 'Present',
+        ),
+      );
+
+      expect(result.isNotEmpty, isTrue);
+      expect(
+        result.rows.every((r) => r.employeeId == 'emp_1' && r.attendanceStatus == 'Present'),
+        isTrue,
+      );
+    });
+
+    test('sorting by date ascending orders chronologically', () async {
+      final result = await reportRepo.getAttendanceReport(
+        const AttendanceReportQuery(
+          sort: ReportSort(
+            field: 'date',
+            direction: ReportSortDirection.ascending,
+          ),
+        ),
+      );
+
+      final dates = result.rows.map((r) => r.attendanceDate).toList();
+      for (var i = 0; i < dates.length - 1; i++) {
+        expect(dates[i].compareTo(dates[i + 1]), lessThanOrEqualTo(0));
+      }
+    });
+
+    test('missing attendance integrity: does not fabricate absent records', () async {
+      // Query for an employee on a date range with known records
+      final result = await reportRepo.getAttendanceReport(
+        const AttendanceReportQuery(employeeId: 'emp_1'),
+      );
+
+      // Verify that every returned row corresponds to a real AttendanceRecord in the store
+      final actualRecords = await attendanceRepo.getAttendanceForEmployee('emp_1');
+      expect(result.totalCount, equals(actualRecords.length));
+    });
+
+    test('report execution does not mutate underlying AttendanceRepository', () async {
+      final beforeRecords = await attendanceRepo.getAttendanceRecords();
+      await reportRepo.getAttendanceReport(
+        const AttendanceReportQuery(
+          employeeId: 'emp_1',
+          status: 'Present',
+        ),
+      );
+      final afterRecords = await attendanceRepo.getAttendanceRecords();
+
+      expect(afterRecords.length, equals(beforeRecords.length));
+      for (var i = 0; i < beforeRecords.length; i++) {
+        expect(afterRecords[i].id, equals(beforeRecords[i].id));
       }
     });
   });

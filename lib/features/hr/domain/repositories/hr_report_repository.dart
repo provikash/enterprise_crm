@@ -1,3 +1,5 @@
+import '../entities/attendance_report_query.dart';
+import '../entities/attendance_report_row.dart';
 import '../entities/employee_report_query.dart';
 import '../entities/employee_report_row.dart';
 import '../entities/report_result.dart';
@@ -12,6 +14,11 @@ abstract interface class HrReportRepository {
   /// Evaluates and returns the Employee Directory Report matching [query].
   Future<ReportResult<EmployeeReportRow>> getEmployeeReport(
     EmployeeReportQuery query,
+  );
+
+  /// Evaluates and returns the Attendance Summary Report matching [query].
+  Future<ReportResult<AttendanceReportRow>> getAttendanceReport(
+    AttendanceReportQuery query,
   );
 }
 
