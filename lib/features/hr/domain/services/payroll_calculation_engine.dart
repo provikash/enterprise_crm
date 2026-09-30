@@ -71,6 +71,16 @@ class PayrollCalculationEngine {
     final calculationId = 'calc_res_${input.id}';
 
     // 1. Mandatory Input Invariant Validation
+    if (currency.trim().isEmpty) {
+      issues.add(
+        const CalculationValidationIssue(
+          code: 'INVALID_CURRENCY',
+          message: 'Base salary currency code cannot be empty.',
+          severity: CalculationIssueSeverity.error,
+        ),
+      );
+    }
+
     if (input.employeeId.trim().isEmpty) {
       issues.add(
         const CalculationValidationIssue(
@@ -100,6 +110,74 @@ class PayrollCalculationEngine {
           severity: CalculationIssueSeverity.error,
         ),
       );
+    }
+
+    // Period date range consistency
+    if (periodStartDate != null && periodEndDate != null) {
+      final normalizedStart = DateTime.utc(
+        periodStartDate.year,
+        periodStartDate.month,
+        periodStartDate.day,
+      );
+      final normalizedEnd = DateTime.utc(
+        periodEndDate.year,
+        periodEndDate.month,
+        periodEndDate.day,
+      );
+      if (normalizedStart.isAfter(normalizedEnd)) {
+        issues.add(
+          CalculationValidationIssue(
+            code: 'INVALID_PERIOD_DATE_RANGE',
+            message:
+                'Period start date ($normalizedStart) cannot be after period end date ($normalizedEnd).',
+            severity: CalculationIssueSeverity.error,
+          ),
+        );
+      }
+    }
+
+    // Component duplication and collision checks
+    final seenComponentIds = <String>{};
+    final seenKindName = <String>{};
+    for (final comp in input.components) {
+      // Unique ID check
+      if (!seenComponentIds.add(comp.id)) {
+        issues.add(
+          CalculationValidationIssue(
+            code: 'DUPLICATE_COMPONENT_ID',
+            message:
+                'Duplicate component ID detected: "${comp.id}". Each component must have a unique identifier.',
+            severity: CalculationIssueSeverity.error,
+          ),
+        );
+      }
+
+      // Conflict with base salary earning
+      final normName = comp.name.trim().toLowerCase();
+      if (comp.isEarning &&
+          (normName == 'base salary' || normName == 'basic salary')) {
+        issues.add(
+          CalculationValidationIssue(
+            code: 'DUPLICATE_BASE_SALARY_COMPONENT',
+            message:
+                'Input includes an itemized earning "${comp.name}" which collides with the contracted base compensation.',
+            severity: CalculationIssueSeverity.error,
+          ),
+        );
+      }
+
+      // Same kind and name warning
+      final kindKey = '${comp.kind.name}:$normName';
+      if (!seenKindName.add(kindKey)) {
+        issues.add(
+          CalculationValidationIssue(
+            code: 'DUPLICATE_COMPONENT_NAME',
+            message:
+                'Multiple ${comp.kind.name} components named "${comp.name}" detected. Verify whether these should be combined.',
+            severity: CalculationIssueSeverity.warning,
+          ),
+        );
+      }
     }
 
     // Date range and joining date verification
@@ -138,6 +216,44 @@ class PayrollCalculationEngine {
           severity: CalculationIssueSeverity.warning,
         ),
       );
+    }
+
+    // Excessive unpaid leave check
+    if (input.unpaidLeaveDays > 0) {
+      if (periodStartDate != null && periodEndDate != null) {
+        final daysInPeriod =
+            periodEndDate.difference(periodStartDate).inDays + 1;
+        if (daysInPeriod > 0 && input.unpaidLeaveDays > daysInPeriod) {
+          issues.add(
+            CalculationValidationIssue(
+              code: 'EXCESSIVE_UNPAID_LEAVE',
+              message:
+                  'Unpaid leave days (${input.unpaidLeaveDays}) exceeds total calendar days in period ($daysInPeriod).',
+              severity: CalculationIssueSeverity.warning,
+            ),
+          );
+        }
+      } else if (attendancePolicy == AttendanceProrationPolicy.fixed30Days &&
+          input.unpaidLeaveDays > 30) {
+        issues.add(
+          CalculationValidationIssue(
+            code: 'EXCESSIVE_UNPAID_LEAVE',
+            message:
+                'Unpaid leave days (${input.unpaidLeaveDays}) exceeds standard 30-day divisor.',
+            severity: CalculationIssueSeverity.warning,
+          ),
+        );
+      } else if (attendancePolicy == AttendanceProrationPolicy.workingDays26 &&
+          input.unpaidLeaveDays > 26) {
+        issues.add(
+          CalculationValidationIssue(
+            code: 'EXCESSIVE_UNPAID_LEAVE',
+            message:
+                'Unpaid leave days (${input.unpaidLeaveDays}) exceeds standard 26 working days divisor.',
+            severity: CalculationIssueSeverity.warning,
+          ),
+        );
+      }
     }
 
     // If fatal validation errors exist, safely return an invalid calculation result
