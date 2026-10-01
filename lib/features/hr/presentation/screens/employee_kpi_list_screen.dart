@@ -14,6 +14,7 @@ import '../bloc/employee_kpi_list_state.dart';
 import 'add_employee_kpi_screen.dart';
 import 'employee_kpi_details_screen.dart';
 import 'employee_kpi_summary_screen.dart';
+import 'kpi_report_screen.dart';
 
 /// Screen displaying Employee Key Performance Indicators (KPIs).
 ///
@@ -227,6 +228,22 @@ class _EmployeeKpiListViewState extends State<_EmployeeKpiListView> {
             tooltip: 'KPI Summary',
             icon: const Icon(Icons.bar_chart_outlined),
             onPressed: _navigateToSummary,
+          ),
+          IconButton(
+            key: const Key('kpi_reports_button'),
+            tooltip: 'KPI Reports',
+            icon: const Icon(Icons.summarize_outlined),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => KpiReportScreen(
+                    user: widget.user,
+                    kpiRepository: widget.kpiRepository,
+                    employeeRepository: widget.employeeRepository,
+                  ),
+                ),
+              );
+            },
           ),
           if (widget.user.isAdmin)
             IconButton(

@@ -3,30 +3,38 @@ import '../../domain/entities/attendance_report_row.dart';
 import '../../domain/entities/attendance_report_summary.dart';
 import '../../domain/entities/employee_report_query.dart';
 import '../../domain/entities/employee_report_row.dart';
+import '../../domain/entities/kpi_report_query.dart';
+import '../../domain/entities/kpi_report_row.dart';
+import '../../domain/entities/kpi_report_summary.dart';
 import '../../domain/entities/report_result.dart';
 import '../../domain/entities/report_sort.dart';
 import '../../domain/repositories/attendance_repository.dart';
+import '../../domain/repositories/employee_kpi_repository.dart';
 import '../../domain/repositories/employee_repository.dart';
 import '../../domain/repositories/hr_report_repository.dart';
 import 'mock_attendance_repository.dart';
+import 'mock_employee_kpi_repository.dart';
 import 'mock_employee_repository.dart';
 
 /// In-memory mock implementation of [HrReportRepository].
 ///
-/// Follows HR-8.2 and HR-8.4 architectural principles:
-/// - Reuses existing [EmployeeRepository] and [AttendanceRepository] to prevent data duplication.
+/// Follows HR-8.2, HR-8.4, and HR-8.5 architectural principles:
+/// - Reuses existing [EmployeeRepository], [AttendanceRepository], and [EmployeeKpiRepository].
 /// - Purely functional filtering, searching, and sorting over authoritative entity records.
 /// - Zero data mutation on underlying repositories.
 class MockHrReportRepository implements HrReportRepository {
   final EmployeeRepository _employeeRepository;
   final AttendanceRepository _attendanceRepository;
+  final EmployeeKpiRepository _kpiRepository;
 
   MockHrReportRepository({
     EmployeeRepository? employeeRepository,
     AttendanceRepository? attendanceRepository,
+    EmployeeKpiRepository? kpiRepository,
   })  : _employeeRepository = employeeRepository ?? MockEmployeeRepository(),
         _attendanceRepository =
-            attendanceRepository ?? MockAttendanceRepository();
+            attendanceRepository ?? MockAttendanceRepository(),
+        _kpiRepository = kpiRepository ?? MockEmployeeKpiRepository();
 
   @override
   Future<ReportResult<EmployeeReportRow>> getEmployeeReport(
@@ -199,6 +207,102 @@ class MockHrReportRepository implements HrReportRepository {
     final summary = AttendanceReportSummary.fromRows(rows);
 
     return ReportResult<AttendanceReportRow>(
+      rows: rows,
+      totalCount: rows.length,
+      metadata: {
+        'summary': summary,
+        'hasFilters': query.hasActiveFilters,
+      },
+    );
+  }
+
+  @override
+  Future<ReportResult<KpiReportRow>> getKpiReport(
+    KpiReportQuery query,
+  ) async {
+    // 1. Retrieve records from EmployeeKpiRepository
+    final kpis = await _kpiRepository.getKpis(
+      employeeId: query.employeeId,
+      startDate: query.dateRange?.startDate,
+      endDate: query.dateRange?.endDate,
+    );
+
+    // 2. Resolve employee records
+    final employees = await _employeeRepository.getEmployees();
+    final employeeMap = {for (final e in employees) e.id: e};
+
+    // 3. Map to KpiReportRow (Strict score integrity: no recalculation)
+    var rows = kpis.map((kpi) {
+      final emp = employeeMap[kpi.employeeId];
+      return KpiReportRow.fromEmployeeKpi(
+        kpi,
+        employeeCode: emp?.employeeCode,
+        employeeName: emp?.fullName ?? 'Unknown (${kpi.employeeId})',
+      );
+    }).toList();
+
+    // 4. Apply metricName filter
+    if (query.metricName != null &&
+        query.metricName!.trim().isNotEmpty &&
+        query.metricName != 'All') {
+      final targetMetric = query.metricName!.trim().toLowerCase();
+      rows = rows
+          .where((r) => r.metricName.trim().toLowerCase() == targetMetric)
+          .toList();
+    }
+
+    // 5. Apply search term filter on employeeName, employeeCode, or metricName
+    if (query.searchTerm != null && query.searchTerm!.trim().isNotEmpty) {
+      final term = query.searchTerm!.trim().toLowerCase();
+      rows = rows.where((r) {
+        final nameMatch = r.employeeName.toLowerCase().contains(term);
+        final codeMatch =
+            r.employeeCode?.toLowerCase().contains(term) ?? false;
+        final metricMatch = r.metricName.toLowerCase().contains(term);
+        return nameMatch || codeMatch || metricMatch;
+      }).toList();
+    }
+
+    // 6. Apply sorting
+    final sort = query.sort ??
+        const ReportSort(
+          field: 'period',
+          direction: ReportSortDirection.descending,
+        );
+
+    rows.sort((a, b) {
+      int comparison;
+      switch (sort.field) {
+        case 'employeeName':
+          comparison =
+              a.employeeName.toLowerCase().compareTo(b.employeeName.toLowerCase());
+          break;
+        case 'metricName':
+          comparison =
+              a.metricName.toLowerCase().compareTo(b.metricName.toLowerCase());
+          break;
+        case 'target':
+          comparison = a.targetValue.compareTo(b.targetValue);
+          break;
+        case 'actual':
+          comparison = a.actualValue.compareTo(b.actualValue);
+          break;
+        case 'score':
+          final aScore = a.score ?? -1.0;
+          final bScore = b.score ?? -1.0;
+          comparison = aScore.compareTo(bScore);
+          break;
+        case 'period':
+        default:
+          comparison = a.periodStart.compareTo(b.periodStart);
+          break;
+      }
+      return sort.direction.isDescending ? -comparison : comparison;
+    });
+
+    final summary = KpiReportSummary.fromRows(rows);
+
+    return ReportResult<KpiReportRow>(
       rows: rows,
       totalCount: rows.length,
       metadata: {

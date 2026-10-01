@@ -9,6 +9,8 @@ import 'package:enterprise_crm/features/hr/domain/entities/report_sort.dart';
 import 'package:enterprise_crm/features/hr/domain/repositories/hr_report_repository.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/attendance_report_query.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/attendance_report_row.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/kpi_report_query.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/kpi_report_row.dart';
 import 'package:enterprise_crm/features/hr/presentation/bloc/employee_report_cubit.dart';
 import 'package:enterprise_crm/features/hr/presentation/bloc/employee_report_state.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -21,6 +23,11 @@ class _ExplosiveReportRepository implements HrReportRepository {
 
   @override
   Future<ReportResult<AttendanceReportRow>> getAttendanceReport(AttendanceReportQuery query) async {
+    throw Exception('DATABASE_CRASH');
+  }
+
+  @override
+  Future<ReportResult<KpiReportRow>> getKpiReport(KpiReportQuery query) async {
     throw Exception('DATABASE_CRASH');
   }
 }

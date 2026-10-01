@@ -10,6 +10,8 @@ import 'package:enterprise_crm/features/hr/domain/entities/attendance_report_que
 import 'package:enterprise_crm/features/hr/domain/entities/attendance_report_row.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/employee_report_query.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/employee_report_row.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/kpi_report_query.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/kpi_report_row.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/report_result.dart';
 import 'package:enterprise_crm/features/hr/domain/repositories/attendance_repository.dart';
 import 'package:enterprise_crm/features/hr/domain/repositories/employee_repository.dart';
@@ -31,6 +33,13 @@ class _ExplosiveReportRepository implements HrReportRepository {
   @override
   Future<ReportResult<AttendanceReportRow>> getAttendanceReport(
     AttendanceReportQuery query,
+  ) async {
+    throw Exception('SENSITIVE_DB_FAILURE_STACK');
+  }
+
+  @override
+  Future<ReportResult<KpiReportRow>> getKpiReport(
+    KpiReportQuery query,
   ) async {
     throw Exception('SENSITIVE_DB_FAILURE_STACK');
   }

@@ -1,9 +1,13 @@
 import 'package:enterprise_crm/features/hr/data/repositories/mock_attendance_repository.dart';
+import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_kpi_repository.dart';
 import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_repository.dart';
 import 'package:enterprise_crm/features/hr/data/repositories/mock_hr_report_repository.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/attendance_report_query.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/attendance_report_row.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/attendance_report_summary.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/kpi_report_query.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/kpi_report_row.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/kpi_report_summary.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/employee.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/employee_report_query.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/employee_report_row.dart';
@@ -415,6 +419,199 @@ void main() {
         ),
       );
       final afterRecords = await attendanceRepo.getAttendanceRecords();
+
+      expect(afterRecords.length, equals(beforeRecords.length));
+      for (var i = 0; i < beforeRecords.length; i++) {
+        expect(afterRecords[i].id, equals(beforeRecords[i].id));
+      }
+    });
+  });
+
+  group('HR-8.5: KPI Report Domain & Repository Tests', () {
+    late MockEmployeeRepository employeeRepo;
+    late MockEmployeeKpiRepository kpiRepo;
+    late MockHrReportRepository reportRepo;
+
+    setUp(() {
+      employeeRepo = MockEmployeeRepository();
+      kpiRepo = MockEmployeeKpiRepository();
+      reportRepo = MockHrReportRepository(
+        employeeRepository: employeeRepo,
+        kpiRepository: kpiRepo,
+      );
+    });
+
+    test('KpiReportSummary aggregates counts and prevents incompatible unit mixing', () {
+      final mixedRows = <KpiReportRow>[
+        KpiReportRow(
+          kpiId: 'kpi_1',
+          employeeId: 'emp_1',
+          employeeName: 'Alice',
+          metricName: 'Code Reviews',
+          periodStart: DateTime.utc(2026, 7, 1),
+          periodEnd: DateTime.utc(2026, 9, 30),
+          targetValue: 20.0,
+          actualValue: 25.0,
+          score: 100.0,
+        ),
+        KpiReportRow(
+          kpiId: 'kpi_2',
+          employeeId: 'emp_2',
+          employeeName: 'Bob',
+          metricName: 'Sales Revenue',
+          periodStart: DateTime.utc(2026, 7, 1),
+          periodEnd: DateTime.utc(2026, 9, 30),
+          targetValue: 1000.0,
+          actualValue: 1200.0,
+          score: 95.0,
+        ),
+      ];
+
+      final mixedSummary = KpiReportSummary.fromRows(mixedRows);
+      expect(mixedSummary.totalRecords, equals(2));
+      expect(mixedSummary.scoredRecords, equals(2));
+      expect(mixedSummary.unscoredRecords, equals(0));
+      // Invariant: differing metrics must not sum targets or actuals
+      expect(mixedSummary.singleMetricName, isNull);
+      expect(mixedSummary.totalTargetForMetric, isNull);
+      expect(mixedSummary.totalActualForMetric, isNull);
+
+      final singleMetricRows = <KpiReportRow>[
+        KpiReportRow(
+          kpiId: 'kpi_1',
+          employeeId: 'emp_1',
+          employeeName: 'Alice',
+          metricName: 'Code Reviews',
+          periodStart: DateTime.utc(2026, 7, 1),
+          periodEnd: DateTime.utc(2026, 9, 30),
+          targetValue: 20.0,
+          actualValue: 25.0,
+          score: 100.0,
+        ),
+        KpiReportRow(
+          kpiId: 'kpi_3',
+          employeeId: 'emp_3',
+          employeeName: 'Charlie',
+          metricName: 'Code Reviews',
+          periodStart: DateTime.utc(2026, 7, 1),
+          periodEnd: DateTime.utc(2026, 9, 30),
+          targetValue: 30.0,
+          actualValue: 28.0,
+          score: null,
+        ),
+      ];
+
+      final singleSummary = KpiReportSummary.fromRows(singleMetricRows);
+      expect(singleSummary.totalRecords, equals(2));
+      expect(singleSummary.scoredRecords, equals(1));
+      expect(singleSummary.unscoredRecords, equals(1));
+      expect(singleSummary.singleMetricName, equals('Code Reviews'));
+      expect(singleSummary.totalTargetForMetric, equals(50.0));
+      expect(singleSummary.totalActualForMetric, equals(53.0));
+    });
+
+    test('default KPI report query returns all KPI records with resolved employee names', () async {
+      final result = await reportRepo.getKpiReport(const KpiReportQuery());
+      expect(result.isNotEmpty, isTrue);
+      expect(result.totalCount, equals(5));
+
+      final firstRow = result.rows.first;
+      expect(firstRow.employeeName, isNotEmpty);
+      expect(firstRow.metricName, isNotEmpty);
+      expect(firstRow.formattedPeriod, isNotEmpty);
+    });
+
+    test('filtering by employeeId returns only records for that employee', () async {
+      final result = await reportRepo.getKpiReport(
+        const KpiReportQuery(employeeId: 'emp_1'),
+      );
+      expect(result.isNotEmpty, isTrue);
+      expect(result.totalCount, equals(2));
+      expect(result.rows.every((r) => r.employeeId == 'emp_1'), isTrue);
+      expect(result.rows.every((r) => r.employeeName == 'Alice Johnson'), isTrue);
+    });
+
+    test('filtering by metricName returns only matching KPI records', () async {
+      final result = await reportRepo.getKpiReport(
+        const KpiReportQuery(metricName: 'Inventory Accuracy'),
+      );
+      expect(result.isNotEmpty, isTrue);
+      expect(result.totalCount, equals(1));
+      expect(result.rows.first.metricName, equals('Inventory Accuracy'));
+      expect(result.rows.first.employeeName, equals('Bob Miller'));
+    });
+
+    test('filtering by date range matches period boundaries', () async {
+      final range = ReportDateRange(
+        start: DateTime.utc(2026, 7, 1),
+        end: DateTime.utc(2026, 9, 30),
+      );
+      final result = await reportRepo.getKpiReport(
+        KpiReportQuery(dateRange: range),
+      );
+      expect(result.isNotEmpty, isTrue);
+      expect(result.totalCount, equals(5));
+    });
+
+    test('search term matches employee name or metric name', () async {
+      final resultName = await reportRepo.getKpiReport(
+        const KpiReportQuery(searchTerm: 'Charlie'),
+      );
+      expect(resultName.totalCount, equals(1));
+      expect(resultName.rows.first.employeeName, equals('Charlie Davis'));
+
+      final resultMetric = await reportRepo.getKpiReport(
+        const KpiReportQuery(searchTerm: 'Retention'),
+      );
+      expect(resultMetric.totalCount, equals(1));
+      expect(resultMetric.rows.first.metricName, equals('Employee Retention Rate'));
+    });
+
+    test('combined filters execute conjunctively (employeeId + metricName)', () async {
+      final result = await reportRepo.getKpiReport(
+        const KpiReportQuery(
+          employeeId: 'emp_1',
+          metricName: 'Time to Hire (Days)',
+        ),
+      );
+      expect(result.totalCount, equals(1));
+      expect(result.rows.first.employeeId, equals('emp_1'));
+      expect(result.rows.first.metricName, equals('Time to Hire (Days)'));
+    });
+
+    test('sorting by metricName ascending orders alphabetically', () async {
+      final result = await reportRepo.getKpiReport(
+        const KpiReportQuery(
+          sort: ReportSort(
+            field: 'metricName',
+            direction: ReportSortDirection.ascending,
+          ),
+        ),
+      );
+      final metrics = result.rows.map((r) => r.metricName).toList();
+      for (var i = 0; i < metrics.length - 1; i++) {
+        expect(metrics[i].compareTo(metrics[i + 1]), lessThanOrEqualTo(0));
+      }
+    });
+
+    test('score integrity: stored score is preserved and never recalculated or altered', () async {
+      final result = await reportRepo.getKpiReport(
+        const KpiReportQuery(employeeId: 'emp_3'),
+      );
+      expect(result.rows.first.score, equals(100.0));
+      expect(result.rows.first.targetValue, equals(150.0));
+      expect(result.rows.first.actualValue, equals(165.0));
+    });
+
+    test('report query execution does not mutate underlying EmployeeKpiRepository', () async {
+      final beforeRecords = await kpiRepo.getKpis();
+      await reportRepo.getKpiReport(
+        const KpiReportQuery(
+          employeeId: 'emp_1',
+          metricName: 'Time to Hire (Days)',
+        ),
+      );
+      final afterRecords = await kpiRepo.getKpis();
 
       expect(afterRecords.length, equals(beforeRecords.length));
       for (var i = 0; i < beforeRecords.length; i++) {
