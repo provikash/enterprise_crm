@@ -4,7 +4,6 @@ import 'report_date_range.dart';
 import 'report_sort.dart';
 
 /// Immutable domain query criteria for evaluating Attendance Summary Reports.
-///
 /// Follows HR-8.4 query contract:
 /// - Supports filtering by [employeeId], [status], and [dateRange].
 /// - Supports [searchTerm] over employee name or code.
@@ -83,14 +82,14 @@ class AttendanceReportQuery {
 
   @override
   int get hashCode => Object.hash(
-        employeeId,
-        status,
-        dateRange,
-        searchTerm,
-        sort,
-        limit,
-        offset,
-      );
+    employeeId,
+    status,
+    dateRange,
+    searchTerm,
+    sort,
+    limit,
+    offset,
+  );
 
   @override
   String toString() =>
