@@ -41,6 +41,9 @@ class AttendanceReportQuery {
       dateRange != null ||
       (searchTerm != null && searchTerm!.trim().isNotEmpty);
 
+  /// Unified alias for cross-report filter state inspection.
+  bool get hasFilters => hasActiveFilters;
+
   AttendanceReportQuery copyWith({
     String? employeeId,
     bool clearEmployeeId = false,

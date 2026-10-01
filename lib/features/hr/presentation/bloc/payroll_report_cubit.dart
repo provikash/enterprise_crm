@@ -24,9 +24,10 @@ class PayrollReportCubit extends Cubit<PayrollReportState> {
 
   PayrollReportCubit({
     HrReportRepository? reportRepository,
+    HrReportRepository? repository,
     PayrollRepository? payrollRepository,
     PayrollReportQuery initialQuery = PayrollReportQuery.defaultQuery,
-  })  : _reportRepository = reportRepository ?? MockHrReportRepository(),
+  })  : _reportRepository = reportRepository ?? repository ?? MockHrReportRepository(),
         _payrollRepository = payrollRepository ?? MockPayrollRepository(),
         super(PayrollReportState(query: initialQuery)) {
     loadInitial();
@@ -151,6 +152,9 @@ class PayrollReportCubit extends Cubit<PayrollReportState> {
   Future<void> resetFilters() async {
     await loadReport(query: PayrollReportQuery.defaultQuery);
   }
+
+  /// Unified alias for resetting filters to default query.
+  Future<void> clearFilters() => resetFilters();
 
   /// Retries the current query after failure.
   Future<void> retry() async {

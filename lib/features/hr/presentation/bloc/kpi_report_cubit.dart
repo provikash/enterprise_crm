@@ -125,6 +125,9 @@ class KpiReportCubit extends Cubit<KpiReportState> {
     await loadReport(query: defaultQ);
   }
 
+  /// Unified alias for resetting filters to default query.
+  Future<void> resetFilters() => clearFilters();
+
   /// Retries the currently applied query after failure.
   Future<void> retry() async {
     await loadReport(forceRefresh: true);

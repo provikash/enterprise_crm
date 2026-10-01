@@ -124,6 +124,9 @@ class EmployeeReportCubit extends Cubit<EmployeeReportState> {
     loadReport(const EmployeeReportQuery());
   }
 
+  /// Unified alias for resetting filters to default query.
+  void resetFilters() => clearFilters();
+
   /// Retries loading report with existing criteria.
   void retry() {
     loadReport(state.query);

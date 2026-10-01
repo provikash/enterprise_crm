@@ -51,6 +51,9 @@ class PayrollReportQuery {
       (currency != null && currency!.isNotEmpty && currency != 'All') ||
       (searchTerm != null && searchTerm!.trim().isNotEmpty);
 
+  /// Unified alias for cross-report filter state inspection.
+  bool get hasFilters => hasActiveFilters;
+
   PayrollReportQuery copyWith({
     String? payrollPeriodId,
     bool clearPayrollPeriodId = false,

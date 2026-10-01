@@ -35,6 +35,9 @@ class EmployeeReportQuery {
       joiningDateRange != null ||
       (searchTerm != null && searchTerm!.trim().isNotEmpty);
 
+  /// Unified alias for cross-report filter state inspection.
+  bool get hasActiveFilters => hasFilters;
+
   /// Creates a copy of this query with updated parameters.
   EmployeeReportQuery copyWith({
     String? department,
