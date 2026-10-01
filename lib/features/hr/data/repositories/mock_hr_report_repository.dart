@@ -6,35 +6,43 @@ import '../../domain/entities/employee_report_row.dart';
 import '../../domain/entities/kpi_report_query.dart';
 import '../../domain/entities/kpi_report_row.dart';
 import '../../domain/entities/kpi_report_summary.dart';
+import '../../domain/entities/payroll_report_query.dart';
+import '../../domain/entities/payroll_report_row.dart';
+import '../../domain/entities/payroll_report_summary.dart';
 import '../../domain/entities/report_result.dart';
 import '../../domain/entities/report_sort.dart';
 import '../../domain/repositories/attendance_repository.dart';
 import '../../domain/repositories/employee_kpi_repository.dart';
 import '../../domain/repositories/employee_repository.dart';
 import '../../domain/repositories/hr_report_repository.dart';
+import '../../domain/repositories/payroll_repository.dart';
 import 'mock_attendance_repository.dart';
 import 'mock_employee_kpi_repository.dart';
 import 'mock_employee_repository.dart';
+import 'mock_payroll_repository.dart';
 
 /// In-memory mock implementation of [HrReportRepository].
 ///
-/// Follows HR-8.2, HR-8.4, and HR-8.5 architectural principles:
-/// - Reuses existing [EmployeeRepository], [AttendanceRepository], and [EmployeeKpiRepository].
+/// Follows HR-8.2, HR-8.4, HR-8.5, and HR-8.6 architectural principles:
+/// - Reuses existing [EmployeeRepository], [AttendanceRepository], [EmployeeKpiRepository], and [PayrollRepository].
 /// - Purely functional filtering, searching, and sorting over authoritative entity records.
 /// - Zero data mutation on underlying repositories.
 class MockHrReportRepository implements HrReportRepository {
   final EmployeeRepository _employeeRepository;
   final AttendanceRepository _attendanceRepository;
   final EmployeeKpiRepository _kpiRepository;
+  final PayrollRepository _payrollRepository;
 
   MockHrReportRepository({
     EmployeeRepository? employeeRepository,
     AttendanceRepository? attendanceRepository,
     EmployeeKpiRepository? kpiRepository,
+    PayrollRepository? payrollRepository,
   })  : _employeeRepository = employeeRepository ?? MockEmployeeRepository(),
         _attendanceRepository =
             attendanceRepository ?? MockAttendanceRepository(),
-        _kpiRepository = kpiRepository ?? MockEmployeeKpiRepository();
+        _kpiRepository = kpiRepository ?? MockEmployeeKpiRepository(),
+        _payrollRepository = payrollRepository ?? MockPayrollRepository();
 
   @override
   Future<ReportResult<EmployeeReportRow>> getEmployeeReport(
@@ -303,6 +311,132 @@ class MockHrReportRepository implements HrReportRepository {
     final summary = KpiReportSummary.fromRows(rows);
 
     return ReportResult<KpiReportRow>(
+      rows: rows,
+      totalCount: rows.length,
+      metadata: {
+        'summary': summary,
+        'hasFilters': query.hasActiveFilters,
+      },
+    );
+  }
+
+  @override
+  Future<ReportResult<PayrollReportRow>> getPayrollReport(
+    PayrollReportQuery query,
+  ) async {
+    // 1. Retrieve records from PayrollRepository
+    final periodFilter = (query.payrollPeriodId != null &&
+            query.payrollPeriodId!.isNotEmpty &&
+            query.payrollPeriodId != 'All')
+        ? query.payrollPeriodId
+        : null;
+
+    final records = await _payrollRepository.getPayrollRecords(
+      payrollPeriodId: periodFilter,
+      employeeId: query.employeeId,
+    );
+
+    // 2. Resolve employee records and payroll periods
+    final employees = await _employeeRepository.getEmployees();
+    final employeeMap = {for (final e in employees) e.id: e};
+
+    final periods = await _payrollRepository.getPayrollPeriods();
+    final periodMap = {for (final p in periods) p.id: p};
+
+    // 3. Map to PayrollReportRow (authoritative stored records only; zero client calculations)
+    var rows = records.map((rec) {
+      final emp = employeeMap[rec.employeeId];
+      final period = periodMap[rec.payrollPeriodId];
+      return PayrollReportRow.fromPayrollRecord(
+        rec,
+        employeeCode: emp?.employeeCode,
+        employeeName: emp?.fullName ?? 'Unknown (${rec.employeeId})',
+        periodName: period?.name ?? 'Period ${rec.payrollPeriodId}',
+      );
+    }).toList();
+
+    // 4. Apply paymentStatus filter
+    if (query.paymentStatus != null &&
+        query.paymentStatus!.trim().isNotEmpty &&
+        query.paymentStatus != 'All') {
+      final targetStatus = query.paymentStatus!.trim().toLowerCase();
+      rows = rows
+          .where((r) => r.paymentStatus.trim().toLowerCase() == targetStatus)
+          .toList();
+    }
+
+    // 5. Apply currency filter
+    if (query.currency != null &&
+        query.currency!.trim().isNotEmpty &&
+        query.currency != 'All') {
+      final targetCurrency = query.currency!.trim().toUpperCase();
+      rows = rows
+          .where((r) => r.currency.trim().toUpperCase() == targetCurrency)
+          .toList();
+    }
+
+    // 6. Apply search term filter on employeeName, employeeCode, or record ID
+    if (query.searchTerm != null && query.searchTerm!.trim().isNotEmpty) {
+      final term = query.searchTerm!.trim().toLowerCase();
+      rows = rows.where((r) {
+        final nameMatch = r.employeeName.toLowerCase().contains(term);
+        final codeMatch =
+            r.employeeCode?.toLowerCase().contains(term) ?? false;
+        final idMatch = r.id.toLowerCase().contains(term);
+        return nameMatch || codeMatch || idMatch;
+      }).toList();
+    }
+
+    // 7. Apply sorting
+    final sort = query.sort ??
+        const ReportSort(
+          field: 'period',
+          direction: ReportSortDirection.descending,
+        );
+
+    rows.sort((a, b) {
+      int comparison;
+      switch (sort.field) {
+        case 'employee':
+        case 'employeeName':
+          comparison = a.employeeName
+              .toLowerCase()
+              .compareTo(b.employeeName.toLowerCase());
+          break;
+        case 'grossSalary':
+          final aVal = a.grossSalary ?? -1.0;
+          final bVal = b.grossSalary ?? -1.0;
+          comparison = aVal.compareTo(bVal);
+          break;
+        case 'netSalary':
+          final aVal = a.netSalary ?? -1.0;
+          final bVal = b.netSalary ?? -1.0;
+          comparison = aVal.compareTo(bVal);
+          break;
+        case 'paymentDate':
+          final aDate =
+              a.paymentDate ?? DateTime.fromMillisecondsSinceEpoch(0);
+          final bDate =
+              b.paymentDate ?? DateTime.fromMillisecondsSinceEpoch(0);
+          comparison = aDate.compareTo(bDate);
+          break;
+        case 'period':
+        default:
+          final aPeriod = periodMap[a.payrollPeriodId];
+          final bPeriod = periodMap[b.payrollPeriodId];
+          if (aPeriod != null && bPeriod != null) {
+            comparison = aPeriod.startDate.compareTo(bPeriod.startDate);
+          } else {
+            comparison = a.payrollPeriodId.compareTo(b.payrollPeriodId);
+          }
+          break;
+      }
+      return sort.direction.isDescending ? -comparison : comparison;
+    });
+
+    final summary = PayrollReportSummary.fromRows(rows);
+
+    return ReportResult<PayrollReportRow>(
       rows: rows,
       totalCount: rows.length,
       metadata: {

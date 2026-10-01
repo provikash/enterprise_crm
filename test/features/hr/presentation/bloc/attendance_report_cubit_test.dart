@@ -7,6 +7,8 @@ import 'package:enterprise_crm/features/hr/domain/entities/employee_report_query
 import 'package:enterprise_crm/features/hr/domain/entities/employee_report_row.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/kpi_report_query.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/kpi_report_row.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/payroll_report_query.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/payroll_report_row.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/report_date_range.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/report_result.dart';
 import 'package:enterprise_crm/features/hr/domain/repositories/hr_report_repository.dart';
@@ -43,6 +45,13 @@ class _ExplodingReportRepository implements HrReportRepository {
     KpiReportQuery query,
   ) {
     return _fallback.getKpiReport(query);
+  }
+
+  @override
+  Future<ReportResult<PayrollReportRow>> getPayrollReport(
+    PayrollReportQuery query,
+  ) {
+    return _fallback.getPayrollReport(query);
   }
 }
 

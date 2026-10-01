@@ -17,6 +17,7 @@ import '../bloc/payroll_period_state.dart';
 import '../widgets/payroll_period_selector.dart';
 import 'payroll_calculation_preview_screen.dart';
 import 'payroll_details_screen.dart';
+import 'payroll_report_screen.dart';
 
 /// Primary read-only screen for HR Payroll Overview.
 ///
@@ -218,6 +219,22 @@ class _PayrollOverviewScreenState extends State<PayrollOverviewScreen> {
               child: Text('Payroll Overview'),
             ),
             actions: [
+              IconButton(
+                key: const Key('payroll_overview_reports_button'),
+                icon: const Icon(Icons.summarize_outlined),
+                tooltip: 'Payroll Reports',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => PayrollReportScreen(
+                        user: widget.user,
+                        payrollRepository: widget.payrollRepository,
+                        employeeRepository: _employeeRepository,
+                      ),
+                    ),
+                  );
+                },
+              ),
               IconButton(
                 key: const Key('payroll_overview_refresh_button'),
                 icon: const Icon(Icons.refresh),

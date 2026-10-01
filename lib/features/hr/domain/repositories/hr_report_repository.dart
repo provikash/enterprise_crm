@@ -4,6 +4,8 @@ import '../entities/employee_report_query.dart';
 import '../entities/employee_report_row.dart';
 import '../entities/kpi_report_query.dart';
 import '../entities/kpi_report_row.dart';
+import '../entities/payroll_report_query.dart';
+import '../entities/payroll_report_row.dart';
 import '../entities/report_result.dart';
 
 /// Abstract domain repository interface for HR and Payroll reporting queries.
@@ -26,6 +28,11 @@ abstract interface class HrReportRepository {
   /// Evaluates and returns the KPI Performance Report matching [query].
   Future<ReportResult<KpiReportRow>> getKpiReport(
     KpiReportQuery query,
+  );
+
+  /// Evaluates and returns the Payroll Summary Report matching [query].
+  Future<ReportResult<PayrollReportRow>> getPayrollReport(
+    PayrollReportQuery query,
   );
 }
 

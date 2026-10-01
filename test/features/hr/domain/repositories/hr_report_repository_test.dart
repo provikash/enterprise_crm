@@ -2,16 +2,20 @@ import 'package:enterprise_crm/features/hr/data/repositories/mock_attendance_rep
 import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_kpi_repository.dart';
 import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_repository.dart';
 import 'package:enterprise_crm/features/hr/data/repositories/mock_hr_report_repository.dart';
+import 'package:enterprise_crm/features/hr/data/repositories/mock_payroll_repository.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/attendance_report_query.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/attendance_report_row.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/attendance_report_summary.dart';
-import 'package:enterprise_crm/features/hr/domain/entities/kpi_report_query.dart';
-import 'package:enterprise_crm/features/hr/domain/entities/kpi_report_row.dart';
-import 'package:enterprise_crm/features/hr/domain/entities/kpi_report_summary.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/employee.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/employee_report_query.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/employee_report_row.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/employment_status.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/kpi_report_query.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/kpi_report_row.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/kpi_report_summary.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/payroll_report_query.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/payroll_report_row.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/payroll_report_summary.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/report_date_range.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/report_result.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/report_sort.dart';
@@ -612,6 +616,213 @@ void main() {
         ),
       );
       final afterRecords = await kpiRepo.getKpis();
+
+      expect(afterRecords.length, equals(beforeRecords.length));
+      for (var i = 0; i < beforeRecords.length; i++) {
+        expect(afterRecords[i].id, equals(beforeRecords[i].id));
+      }
+    });
+  });
+
+  group('HR-8.6: Payroll Report Domain & Repository Tests', () {
+    late MockEmployeeRepository employeeRepo;
+    late MockPayrollRepository payrollRepo;
+    late MockHrReportRepository reportRepo;
+
+    setUp(() {
+      employeeRepo = MockEmployeeRepository();
+      payrollRepo = MockPayrollRepository();
+      reportRepo = MockHrReportRepository(
+        employeeRepository: employeeRepo,
+        payrollRepository: payrollRepo,
+      );
+    });
+
+    test('PayrollReportSummary correctly aggregates counts and groups by currency', () {
+      final rows = [
+        const PayrollReportRow(
+          id: 'pay_1',
+          payrollPeriodId: 'p1',
+          periodName: 'Jan 2026',
+          employeeId: 'emp_1',
+          employeeName: 'Alice',
+          grossSalary: 10000.0,
+          totalAllowances: 1000.0,
+          totalDeductions: 2000.0,
+          netSalary: 9000.0,
+          currency: 'USD',
+          paymentStatus: 'Paid',
+        ),
+        const PayrollReportRow(
+          id: 'pay_2',
+          payrollPeriodId: 'p1',
+          periodName: 'Jan 2026',
+          employeeId: 'emp_2',
+          employeeName: 'Bob',
+          grossSalary: 5000.0,
+          totalAllowances: 500.0,
+          totalDeductions: 1000.0,
+          netSalary: 4500.0,
+          currency: 'USD',
+          paymentStatus: 'Paid',
+        ),
+      ];
+
+      final summary = PayrollReportSummary.fromRows(rows);
+      expect(summary.totalRecords, equals(2));
+      expect(summary.isMultiCurrency, isFalse);
+      expect(summary.singleCurrency, equals('USD'));
+      expect(summary.singleSummary?.totalGross, equals(15000.0));
+      expect(summary.singleSummary?.totalAllowances, equals(1500.0));
+      expect(summary.singleSummary?.totalDeductions, equals(3000.0));
+      expect(summary.singleSummary?.totalNet, equals(13500.0));
+    });
+
+    test('PayrollReportSummary enforces multi-currency safety with zero cross-currency summation', () {
+      final rows = [
+        const PayrollReportRow(
+          id: 'pay_1',
+          payrollPeriodId: 'p1',
+          periodName: 'Jan 2026',
+          employeeId: 'emp_1',
+          employeeName: 'Alice',
+          grossSalary: 1000.0,
+          netSalary: 900.0,
+          currency: 'USD',
+          paymentStatus: 'Paid',
+        ),
+        const PayrollReportRow(
+          id: 'pay_2',
+          payrollPeriodId: 'p1',
+          periodName: 'Jan 2026',
+          employeeId: 'emp_2',
+          employeeName: 'Bob',
+          grossSalary: 80000.0,
+          netSalary: 72000.0,
+          currency: 'INR',
+          paymentStatus: 'Paid',
+        ),
+      ];
+
+      final summary = PayrollReportSummary.fromRows(rows);
+      expect(summary.totalRecords, equals(2));
+      expect(summary.isMultiCurrency, isTrue);
+      expect(summary.singleCurrency, isNull);
+      expect(summary.singleSummary, isNull);
+      expect(summary.currencySummaries['USD']?.totalGross, equals(1000.0));
+      expect(summary.currencySummaries['INR']?.totalGross, equals(80000.0));
+      // Cross-currency summation strictly absent
+    });
+
+    test('default payroll report query returns all seeded records with resolved names and periods', () async {
+      final result = await reportRepo.getPayrollReport(PayrollReportQuery.defaultQuery);
+      expect(result.rows.length, equals(5)); // Seeded store has 3 records in period 1 + 2 records in period 2
+      expect(result.rows.every((r) => r.source == 'stored'), isTrue);
+      expect(result.rows.any((r) => r.employeeName == 'Alice Johnson'), isTrue);
+      expect(result.rows.any((r) => r.periodName == 'January 2026'), isTrue);
+    });
+
+    test('filtering by payrollPeriodId returns only records for that period', () async {
+      final p1Result = await reportRepo.getPayrollReport(
+        const PayrollReportQuery(payrollPeriodId: 'period_2026_01'),
+      );
+      expect(p1Result.rows.length, equals(3));
+      expect(p1Result.rows.every((r) => r.payrollPeriodId == 'period_2026_01'), isTrue);
+
+      final p2Result = await reportRepo.getPayrollReport(
+        const PayrollReportQuery(payrollPeriodId: 'period_2026_02'),
+      );
+      expect(p2Result.rows.length, equals(2));
+      expect(p2Result.rows.every((r) => r.payrollPeriodId == 'period_2026_02'), isTrue);
+
+      final p3Result = await reportRepo.getPayrollReport(
+        const PayrollReportQuery(payrollPeriodId: 'period_2026_03'),
+      );
+      expect(p3Result.rows.isEmpty, isTrue);
+    });
+
+    test('filtering by employeeId returns only records for that employee', () async {
+      final result = await reportRepo.getPayrollReport(
+        const PayrollReportQuery(employeeId: 'emp_1'),
+      );
+      expect(result.rows.length, equals(2)); // emp_1 is in period 1 and period 2
+      expect(result.rows.every((r) => r.employeeId == 'emp_1'), isTrue);
+    });
+
+    test('filtering by paymentStatus returns only matching records', () async {
+      final result = await reportRepo.getPayrollReport(
+        const PayrollReportQuery(paymentStatus: 'Paid'),
+      );
+      expect(result.rows.length, equals(5));
+
+      final pendingResult = await reportRepo.getPayrollReport(
+        const PayrollReportQuery(paymentStatus: 'Pending'),
+      );
+      expect(pendingResult.rows.isEmpty, isTrue);
+    });
+
+    test('search term filters dynamically by employee name, code, or record ID', () async {
+      final nameResult = await reportRepo.getPayrollReport(
+        const PayrollReportQuery(searchTerm: 'Charlie'),
+      );
+      expect(nameResult.rows.length, equals(1));
+      expect(nameResult.rows.first.employeeName, contains('Charlie'));
+
+      final idResult = await reportRepo.getPayrollReport(
+        const PayrollReportQuery(searchTerm: 'pay_rec_101'),
+      );
+      expect(idResult.rows.length, equals(1));
+      expect(idResult.rows.first.id, equals('pay_rec_101'));
+    });
+
+    test('combined filters execute conjunctively (payrollPeriodId + employeeId)', () async {
+      final result = await reportRepo.getPayrollReport(
+        const PayrollReportQuery(
+          payrollPeriodId: 'period_2026_01',
+          employeeId: 'emp_1',
+        ),
+      );
+      expect(result.rows.length, equals(1));
+      expect(result.rows.first.id, equals('pay_rec_101'));
+    });
+
+    test('sorting by netSalary descending orders from highest to lowest compensation', () async {
+      final result = await reportRepo.getPayrollReport(
+        const PayrollReportQuery(
+          payrollPeriodId: 'period_2026_01',
+          sort: ReportSort(field: 'netSalary', direction: ReportSortDirection.descending),
+        ),
+      );
+      final netSalaries = result.rows.map((r) => r.netSalary ?? 0.0).toList();
+      for (var i = 0; i < netSalaries.length - 1; i++) {
+        expect(netSalaries[i], greaterThanOrEqualTo(netSalaries[i + 1]));
+      }
+    });
+
+    test('missing vs zero integrity: null salaries are preserved and never fabricated as zero', () async {
+      const row = PayrollReportRow(
+        id: 'test_missing',
+        payrollPeriodId: 'p1',
+        periodName: 'Test Period',
+        employeeId: 'emp_x',
+        employeeName: 'Xavier',
+        grossSalary: null,
+        netSalary: null,
+        currency: 'USD',
+        paymentStatus: 'Pending',
+      );
+      expect(row.grossSalary, isNull);
+      expect(row.netSalary, isNull);
+      expect(row.formattedGrossSalary, equals('-'));
+      expect(row.formattedNetSalary, equals('-'));
+    });
+
+    test('report query execution does not mutate underlying PayrollRepository', () async {
+      final beforeRecords = await payrollRepo.getPayrollRecords();
+      await reportRepo.getPayrollReport(
+        const PayrollReportQuery(payrollPeriodId: 'period_2026_01'),
+      );
+      final afterRecords = await payrollRepo.getPayrollRecords();
 
       expect(afterRecords.length, equals(beforeRecords.length));
       for (var i = 0; i < beforeRecords.length; i++) {
