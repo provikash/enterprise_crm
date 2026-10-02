@@ -5,6 +5,7 @@ import '../../domain/entities/hr_approval_request.dart';
 import '../../domain/entities/hr_approval_target.dart';
 import '../../domain/entities/hr_approval_workflow_type.dart';
 import '../../domain/repositories/hr_approval_repository.dart';
+import '../../domain/services/hr_approval_notification_service.dart';
 import '../mock/mock_hr_approval_store.dart';
 
 /// Mock implementation of [HrApprovalRepository] backed by [MockHrApprovalStore].
@@ -13,12 +14,19 @@ import '../mock/mock_hr_approval_store.dart';
 /// Presentation Cubits and future UI screens depend exclusively on this abstraction.
 class MockHrApprovalRepository implements HrApprovalRepository {
   final MockHrApprovalStore _store;
+  final HrApprovalNotificationService? _notificationService;
 
-  MockHrApprovalRepository({MockHrApprovalStore? store})
-      : _store = store ?? MockHrApprovalStore();
+  MockHrApprovalRepository({
+    MockHrApprovalStore? store,
+    HrApprovalNotificationService? notificationService,
+  })  : _store = store ?? MockHrApprovalStore(),
+        _notificationService = notificationService;
 
   /// Access to the underlying mock store for testing and reset capability.
   MockHrApprovalStore get store => _store;
+
+  /// Access to the optional notification service.
+  HrApprovalNotificationService? get notificationService => _notificationService;
 
   @override
   Future<HrApprovalRequest> submitRequest({
@@ -27,12 +35,14 @@ class MockHrApprovalRepository implements HrApprovalRepository {
     required HrApprovalTarget target,
     String? remarks,
   }) async {
-    return _store.submitRequest(
+    final req = _store.submitRequest(
       workflowType: workflowType,
       requesterId: requesterId,
       target: target,
       remarks: remarks,
     );
+    await _notificationService?.handleRequestSubmitted(req);
+    return req;
   }
 
   @override
@@ -70,11 +80,13 @@ class MockHrApprovalRepository implements HrApprovalRepository {
     required HrApprovalDecision decision,
     required CurrentUser actor,
   }) async {
-    return _store.submitDecision(
+    final req = _store.submitDecision(
       requestId: requestId,
       decision: decision,
       actor: actor,
     );
+    await _notificationService?.handleDecisionRecorded(req, decision);
+    return req;
   }
 
   @override
@@ -83,11 +95,13 @@ class MockHrApprovalRepository implements HrApprovalRepository {
     required CurrentUser actor,
     String? reason,
   }) async {
-    return _store.cancelRequest(
+    final req = _store.cancelRequest(
       requestId: requestId,
       actor: actor,
       reason: reason,
     );
+    await _notificationService?.handleRequestCancelled(req, actor: actor, reason: reason);
+    return req;
   }
 
   @override
