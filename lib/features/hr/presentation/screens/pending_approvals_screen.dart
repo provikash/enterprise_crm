@@ -4,12 +4,15 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../data/repositories/mock_hr_approval_repository.dart';
+import '../../data/repositories/mock_hr_notification_repository.dart';
 import '../../domain/entities/hr_approval_request.dart';
 import '../../domain/policies/hr_access_policy.dart';
 import '../../domain/repositories/hr_approval_repository.dart';
+import '../../domain/repositories/hr_notification_repository.dart';
 import '../bloc/pending_approvals_cubit.dart';
 import '../bloc/pending_approvals_state.dart';
 import '../widgets/hr_approval_status_badge.dart';
+import '../widgets/hr_notification_inbox_dialog.dart';
 import 'hr_approval_request_details_screen.dart';
 import 'hr_approval_request_screen.dart';
 
@@ -23,12 +26,16 @@ import 'hr_approval_request_screen.dart';
 class PendingApprovalsScreen extends StatefulWidget {
   final CurrentUser user;
   final HrApprovalRepository repository;
+  final HrNotificationRepository notificationRepository;
 
   PendingApprovalsScreen({
     super.key,
     required this.user,
     HrApprovalRepository? repository,
-  }) : repository = repository ?? MockHrApprovalRepository();
+    HrNotificationRepository? notificationRepository,
+  })  : repository = repository ?? MockHrApprovalRepository(),
+        notificationRepository =
+            notificationRepository ?? MockHrNotificationRepository();
 
   @override
   State<PendingApprovalsScreen> createState() => _PendingApprovalsScreenState();
@@ -83,6 +90,17 @@ class _PendingApprovalsScreenState extends State<PendingApprovalsScreen> {
         appBar: AppBar(
           title: const Text('Approvals & Requests'),
           actions: [
+            IconButton(
+              key: const Key('pending_approvals_notifications_button'),
+              icon: const Icon(Icons.notifications_outlined),
+              tooltip: 'Notifications',
+              onPressed: () => HrNotificationInboxDialog.show(
+                context: context,
+                user: widget.user,
+                notificationRepository: widget.notificationRepository,
+                approvalRepository: widget.repository,
+              ),
+            ),
             IconButton(
               key: const Key('pending_approvals_refresh_button'),
               icon: const Icon(Icons.refresh),
