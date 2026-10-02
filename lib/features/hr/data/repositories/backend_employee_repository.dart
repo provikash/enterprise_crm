@@ -8,7 +8,7 @@ import '../network/network_exception.dart';
 
 /// Backend-backed implementation of [EmployeeRepository].
 ///
-/// Established in HR-10.3 as the first production-compatible HR repository adapter.
+/// Established in HR-10.3 and completed in HR-10.4 with full CRUD and search/filter support.
 /// Communicates with the instructor backend via the shared [ApiClient] transport.
 ///
 /// Invariants:
@@ -16,6 +16,8 @@ import '../network/network_exception.dart';
 /// - Never silently falls back to mock fixtures in backend mode.
 /// - Maps strongly typed [NetworkException] into the domain [EmployeeException].
 /// - Preserves stable [Employee.id] and [CurrentUser.id] identity boundaries.
+/// - Write operations ([createEmployee], [updateEmployee]) enforce non-empty names and
+///   return authoritative server-persisted domain entities.
 class BackendEmployeeRepository extends BackendAdapter
     implements EmployeeRepository {
   BackendEmployeeRepository({required super.apiClient});
@@ -123,18 +125,123 @@ class BackendEmployeeRepository extends BackendAdapter
 
   @override
   Future<Employee> createEmployee(CreateEmployeeInput input) async {
-    // In HR-10.3, write operations are deferred to HR-10.4.
-    throw const EmployeeException(
-      'Employee creation via backend is deferred to HR-10.4.',
-    );
+    final trimmedName = input.fullName.trim();
+    if (trimmedName.isEmpty) {
+      throw const EmployeeException('Full name is required for creating an employee.');
+    }
+
+    final payload = <String, dynamic>{
+      'full_name': trimmedName,
+      if (input.employeeCode != null && input.employeeCode!.trim().isNotEmpty)
+        'employee_code': input.employeeCode!.trim(),
+      if (input.email != null && input.email!.trim().isNotEmpty)
+        'email': input.email!.trim(),
+      if (input.phone != null && input.phone!.trim().isNotEmpty)
+        'phone': input.phone!.trim(),
+      if (input.department != null && input.department!.trim().isNotEmpty)
+        'department': input.department!.trim(),
+      if (input.designation != null && input.designation!.trim().isNotEmpty)
+        'designation': input.designation!.trim(),
+      'status': input.employmentStatus.value,
+      if (input.joiningDate != null)
+        'joining_date':
+            '${input.joiningDate!.year.toString().padLeft(4, '0')}-${input.joiningDate!.month.toString().padLeft(2, '0')}-${input.joiningDate!.day.toString().padLeft(2, '0')}',
+      if (input.userId != null && input.userId!.trim().isNotEmpty)
+        'user_id': input.userId!.trim(),
+    };
+
+    try {
+      final response = await apiClient.post(
+        '/hr/employees',
+        body: payload,
+      );
+
+      final Map<String, dynamic> rawMap;
+      if (response is Map<String, dynamic>) {
+        if (response.containsKey('data') && response['data'] is Map<String, dynamic>) {
+          rawMap = response['data'] as Map<String, dynamic>;
+        } else {
+          rawMap = response;
+        }
+      } else if (response is Map) {
+        rawMap = Map<String, dynamic>.from(response);
+      } else {
+        throw const FormatException('Expected JSON map in employee creation response.');
+      }
+
+      return EmployeeDto.fromJson(rawMap).toDomain();
+    } on NetworkException catch (e) {
+      throw _mapNetworkException(e, operation: 'creating employee "$trimmedName"');
+    } catch (e) {
+      throw EmployeeException('Failed to create employee: $e');
+    }
   }
 
   @override
   Future<Employee> updateEmployee(UpdateEmployeeInput input) async {
-    // In HR-10.3, write operations are deferred to HR-10.4.
-    throw const EmployeeException(
-      'Employee update via backend is deferred to HR-10.4.',
-    );
+    final sanitizedId = input.id.trim();
+    if (sanitizedId.isEmpty) {
+      throw const EmployeeException('Employee ID is required for updating.');
+    }
+    final trimmedName = input.fullName.trim();
+    if (trimmedName.isEmpty) {
+      throw const EmployeeException('Full name is required for updating an employee.');
+    }
+
+    final payload = <String, dynamic>{
+      'id': sanitizedId,
+      'full_name': trimmedName,
+      'employee_code': (input.employeeCode != null && input.employeeCode!.trim().isNotEmpty)
+          ? input.employeeCode!.trim()
+          : null,
+      'email': (input.email != null && input.email!.trim().isNotEmpty)
+          ? input.email!.trim()
+          : null,
+      'phone': (input.phone != null && input.phone!.trim().isNotEmpty)
+          ? input.phone!.trim()
+          : null,
+      'department': (input.department != null && input.department!.trim().isNotEmpty)
+          ? input.department!.trim()
+          : null,
+      'designation': (input.designation != null && input.designation!.trim().isNotEmpty)
+          ? input.designation!.trim()
+          : null,
+      'status': input.employmentStatus.value,
+      'joining_date': input.joiningDate != null
+          ? '${input.joiningDate!.year.toString().padLeft(4, '0')}-${input.joiningDate!.month.toString().padLeft(2, '0')}-${input.joiningDate!.day.toString().padLeft(2, '0')}'
+          : null,
+      'user_id': input.clearUserId
+          ? null
+          : ((input.userId != null && input.userId!.trim().isNotEmpty)
+              ? input.userId!.trim()
+              : null),
+    };
+
+    try {
+      final response = await apiClient.put(
+        '/hr/employees/$sanitizedId',
+        body: payload,
+      );
+
+      final Map<String, dynamic> rawMap;
+      if (response is Map<String, dynamic>) {
+        if (response.containsKey('data') && response['data'] is Map<String, dynamic>) {
+          rawMap = response['data'] as Map<String, dynamic>;
+        } else {
+          rawMap = response;
+        }
+      } else if (response is Map) {
+        rawMap = Map<String, dynamic>.from(response);
+      } else {
+        throw const FormatException('Expected JSON map in employee update response.');
+      }
+
+      return EmployeeDto.fromJson(rawMap).toDomain();
+    } on NetworkException catch (e) {
+      throw _mapNetworkException(e, operation: 'updating employee "$sanitizedId"');
+    } catch (e) {
+      throw EmployeeException('Failed to update employee: $e');
+    }
   }
 
   /// Maps typed [NetworkException] to user-facing domain [EmployeeException].
@@ -149,7 +256,15 @@ class BackendEmployeeRepository extends BackendAdapter
     }
     if (e is ForbiddenException) {
       return const EmployeeException(
-        'Access denied: You do not have permission to view employee records.',
+        'Access denied: You do not have permission to perform this employee operation.',
+      );
+    }
+    if (e is NotFoundException) {
+      return EmployeeException('Employee record not found while $operation.');
+    }
+    if (e is ConflictException) {
+      return EmployeeException(
+        'Conflict detected while $operation: employee code or record already exists.',
       );
     }
     if (e is NetworkTimeoutException) {
