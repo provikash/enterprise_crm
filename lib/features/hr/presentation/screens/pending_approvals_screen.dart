@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
+import '../../data/repositories/mock_hr_approval_repository.dart';
 import '../../domain/entities/hr_approval_request.dart';
 import '../../domain/policies/hr_access_policy.dart';
 import '../../domain/repositories/hr_approval_repository.dart';
@@ -23,11 +24,11 @@ class PendingApprovalsScreen extends StatefulWidget {
   final CurrentUser user;
   final HrApprovalRepository repository;
 
-  const PendingApprovalsScreen({
+  PendingApprovalsScreen({
     super.key,
     required this.user,
-    required this.repository,
-  });
+    HrApprovalRepository? repository,
+  }) : repository = repository ?? MockHrApprovalRepository();
 
   @override
   State<PendingApprovalsScreen> createState() => _PendingApprovalsScreenState();
