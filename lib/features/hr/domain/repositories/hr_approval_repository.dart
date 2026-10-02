@@ -1,4 +1,6 @@
 import '../../../../features/auth/domain/entities/current_user.dart';
+import '../entities/hr_approval_decision.dart';
+import '../entities/hr_approval_history_entry.dart';
 import '../entities/hr_approval_request.dart';
 import '../entities/hr_approval_target.dart';
 import '../entities/hr_approval_workflow_type.dart';
@@ -6,16 +8,11 @@ import '../entities/hr_approval_workflow_type.dart';
 /// Abstract domain repository interface for HR approval request workflows.
 ///
 /// Follows repository patterns established across the Enterprise CRM.
-/// Cubits and future UI screens depend exclusively on this abstraction.
+/// Cubits and UI screens depend exclusively on this abstraction.
 ///
-/// Scope Boundaries (HR-9.3):
-/// - Request submission.
-/// - Request retrieval by unique ID.
-/// - Retrieval of requests submitted by a specific CRM user.
-/// - Querying pending approval requests visible to the current authorized actor.
-/// - Querying approval requests associated with an HR target reference.
-/// - Strictly read & request-submission only: decision mutations (approve/reject)
-///   are excluded from HR-9.3 and belong to HR-9.5.
+/// Scope Boundaries:
+/// - HR-9.3: Request submission, query by ID/requester/target/pending/all.
+/// - HR-9.5: Decision execution (approve/reject), cancellation, and audit history.
 abstract interface class HrApprovalRepository {
   /// Submits a new approval request for an HR workflow.
   ///
@@ -46,4 +43,28 @@ abstract interface class HrApprovalRepository {
 
   /// Retrieves all approval requests visible to [user] regardless of status.
   Future<List<HrApprovalRequest>> getAllRequests({CurrentUser? user});
+
+  /// Submits a formal approval or rejection [decision] on [requestId] by [actor].
+  ///
+  /// Throws [HrApprovalWorkflowException] if the request is not found, the actor
+  /// is unauthorized, the decision is duplicate, or the transition is invalid.
+  Future<HrApprovalRequest> submitDecision({
+    required String requestId,
+    required HrApprovalDecision decision,
+    required CurrentUser actor,
+  });
+
+  /// Cancels an active pending approval request [requestId] by [actor].
+  ///
+  /// Restricted to the original requester or an administrator.
+  /// Throws [HrApprovalWorkflowException] if the request is not found, already terminal,
+  /// or if [actor] is not authorized.
+  Future<HrApprovalRequest> cancelRequest({
+    required String requestId,
+    required CurrentUser actor,
+    String? reason,
+  });
+
+  /// Retrieves the immutable chronological audit history trail for [requestId].
+  Future<List<HrApprovalHistoryEntry>> getHistoryForRequest(String requestId);
 }

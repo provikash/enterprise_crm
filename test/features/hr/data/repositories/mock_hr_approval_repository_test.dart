@@ -4,6 +4,7 @@ import 'package:enterprise_crm/features/auth/domain/entities/crm_module.dart';
 import 'package:enterprise_crm/features/auth/domain/entities/current_user.dart';
 import 'package:enterprise_crm/features/hr/data/mock/mock_hr_approval_store.dart';
 import 'package:enterprise_crm/features/hr/data/repositories/mock_hr_approval_repository.dart';
+import 'package:enterprise_crm/features/hr/domain/entities/hr_approval_decision.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/hr_approval_status.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/hr_approval_target.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/hr_approval_workflow_type.dart';
@@ -237,6 +238,222 @@ void main() {
         // Status is strictly pending
         expect(request.status, equals(HrApprovalStatus.pending));
         expect(request.isTerminal, isFalse);
+      });
+    });
+
+    group('Decision Execution Contract (HR-9.5)', () {
+      test('administrator can approve pending request', () async {
+        final decision = HrApprovalDecision(
+          requestId: 'appr_req_1',
+          actorId: adminUser.id,
+          decisionType: HrApprovalDecisionType.approve,
+          decisionTime: DateTime.utc(2026, 2, 5, 14, 0),
+          reason: 'Verified and approved by admin',
+        );
+
+        final updated = await repository.submitDecision(
+          requestId: 'appr_req_1',
+          decision: decision,
+          actor: adminUser,
+        );
+
+        expect(updated.status, equals(HrApprovalStatus.approved));
+        expect(updated.isApproved, isTrue);
+        expect(updated.isTerminal, isTrue);
+        expect(updated.updatedAt, equals(DateTime.utc(2026, 2, 5, 14, 0)));
+
+        // Verify request stored in repository reflects update
+        final fetched = await repository.getRequestById('appr_req_1');
+        expect(fetched!.status, equals(HrApprovalStatus.approved));
+
+        // Verify history trail updated
+        final history = await repository.getHistoryForRequest('appr_req_1');
+        expect(history.length, equals(2));
+        expect(history.last.action, equals('approved'));
+        expect(history.last.previousStatus, equals(HrApprovalStatus.pending));
+        expect(history.last.newStatus, equals(HrApprovalStatus.approved));
+        expect(history.last.actorId, equals('usr_admin'));
+        expect(history.last.reason, equals('Verified and approved by admin'));
+      });
+
+      test('administrator can reject pending request with reason', () async {
+        final decision = HrApprovalDecision(
+          requestId: 'appr_req_2',
+          actorId: adminUser.id,
+          decisionType: HrApprovalDecisionType.reject,
+          decisionTime: DateTime.utc(2026, 2, 5, 15, 0),
+          reason: 'Insufficient attendance proof provided',
+        );
+
+        final updated = await repository.submitDecision(
+          requestId: 'appr_req_2',
+          decision: decision,
+          actor: adminUser,
+        );
+
+        expect(updated.status, equals(HrApprovalStatus.rejected));
+        expect(updated.isRejected, isTrue);
+        expect(updated.isTerminal, isTrue);
+
+        final history = await repository.getHistoryForRequest('appr_req_2');
+        expect(history.last.action, equals('rejected'));
+        expect(history.last.newStatus, equals(HrApprovalStatus.rejected));
+        expect(history.last.reason, equals('Insufficient attendance proof provided'));
+      });
+
+      test('standard user cannot decide request, throws unauthorizedActor', () async {
+        final decision = HrApprovalDecision(
+          requestId: 'appr_req_1',
+          actorId: hrUser.id,
+          decisionType: HrApprovalDecisionType.approve,
+          decisionTime: DateTime.utc(2026, 2, 5, 14, 0),
+        );
+
+        expect(
+          () => repository.submitDecision(
+            requestId: 'appr_req_1',
+            decision: decision,
+            actor: hrUser,
+          ),
+          throwsA(
+            isA<HrApprovalWorkflowException>().having(
+              (e) => e.code,
+              'code',
+              equals(HrApprovalWorkflowException.unauthorizedActor),
+            ),
+          ),
+        );
+      });
+
+      test('cannot decide terminal request, throws duplicateDecision', () async {
+        final decision = HrApprovalDecision(
+          requestId: 'appr_req_3', // Already approved in seeds
+          actorId: adminUser.id,
+          decisionType: HrApprovalDecisionType.approve,
+          decisionTime: DateTime.utc(2026, 2, 5, 14, 0),
+        );
+
+        expect(
+          () => repository.submitDecision(
+            requestId: 'appr_req_3',
+            decision: decision,
+            actor: adminUser,
+          ),
+          throwsA(
+            isA<HrApprovalWorkflowException>().having(
+              (e) => e.code,
+              'code',
+              equals(HrApprovalWorkflowException.duplicateDecision),
+            ),
+          ),
+        );
+      });
+
+      test('decision on non-existent request throws requestNotFound', () async {
+        final decision = HrApprovalDecision(
+          requestId: 'appr_req_9999',
+          actorId: adminUser.id,
+          decisionType: HrApprovalDecisionType.approve,
+          decisionTime: DateTime.utc(2026, 2, 5, 14, 0),
+        );
+
+        expect(
+          () => repository.submitDecision(
+            requestId: 'appr_req_9999',
+            decision: decision,
+            actor: adminUser,
+          ),
+          throwsA(
+            isA<HrApprovalWorkflowException>().having(
+              (e) => e.code,
+              'code',
+              equals(HrApprovalWorkflowException.requestNotFound),
+            ),
+          ),
+        );
+      });
+    });
+
+    group('Cancellation Contract (HR-9.5)', () {
+      test('original requester can cancel their pending request', () async {
+        final updated = await repository.cancelRequest(
+          requestId: 'appr_req_2',
+          actor: standardUser, // standardUser is requester of appr_req_2
+          reason: 'Entered correction by mistake',
+        );
+
+        expect(updated.status, equals(HrApprovalStatus.cancelled));
+        expect(updated.isCancelled, isTrue);
+
+        final history = await repository.getHistoryForRequest('appr_req_2');
+        expect(history.last.action, equals('cancelled'));
+        expect(history.last.actorId, equals('usr_standard'));
+        expect(history.last.newStatus, equals(HrApprovalStatus.cancelled));
+        expect(history.last.reason, equals('Entered correction by mistake'));
+      });
+
+      test('administrator can cancel any pending request', () async {
+        final updated = await repository.cancelRequest(
+          requestId: 'appr_req_1',
+          actor: adminUser,
+          reason: 'Administrative override',
+        );
+
+        expect(updated.status, equals(HrApprovalStatus.cancelled));
+      });
+
+      test('non-requester standard user cannot cancel, throws unauthorizedActor', () async {
+        expect(
+          () => repository.cancelRequest(
+            requestId: 'appr_req_1', // requester is usr_hr
+            actor: standardUser, // standardUser is usr_standard
+          ),
+          throwsA(
+            isA<HrApprovalWorkflowException>().having(
+              (e) => e.code,
+              'code',
+              equals(HrApprovalWorkflowException.unauthorizedActor),
+            ),
+          ),
+        );
+      });
+
+      test('cannot cancel already terminal request, throws invalidTransition', () async {
+        expect(
+          () => repository.cancelRequest(
+            requestId: 'appr_req_3', // Already approved
+            actor: adminUser,
+          ),
+          throwsA(
+            isA<HrApprovalWorkflowException>().having(
+              (e) => e.code,
+              'code',
+              equals(HrApprovalWorkflowException.invalidTransition),
+            ),
+          ),
+        );
+      });
+    });
+
+    group('History Trail and Immutability (HR-9.5)', () {
+      test('history entries are seeded correctly', () async {
+        final history1 = await repository.getHistoryForRequest('appr_req_1');
+        expect(history1.length, equals(1));
+        expect(history1.first.action, equals('submitted'));
+
+        final history3 = await repository.getHistoryForRequest('appr_req_3');
+        expect(history3.length, equals(2));
+        expect(history3[0].action, equals('submitted'));
+        expect(history3[1].action, equals('approved'));
+      });
+
+      test('defensive copy: caller cannot mutate history store', () async {
+        final history = await repository.getHistoryForRequest('appr_req_1');
+        final count = history.length;
+        history.clear();
+
+        final fetchedAgain = await repository.getHistoryForRequest('appr_req_1');
+        expect(fetchedAgain.length, equals(count));
       });
     });
   });

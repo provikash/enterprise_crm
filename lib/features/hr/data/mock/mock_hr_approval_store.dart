@@ -1,11 +1,14 @@
 import '../../../../features/auth/domain/entities/current_user.dart';
+import '../../domain/entities/hr_approval_decision.dart';
+import '../../domain/entities/hr_approval_history_entry.dart';
 import '../../domain/entities/hr_approval_request.dart';
 import '../../domain/entities/hr_approval_status.dart';
 import '../../domain/entities/hr_approval_target.dart';
 import '../../domain/entities/hr_approval_workflow_type.dart';
 import '../../domain/exceptions/hr_approval_exception.dart';
+import '../../domain/services/hr_approval_workflow_validator.dart';
 
-/// In-memory thread-safe mock store for HR approval requests.
+/// In-memory thread-safe mock store for HR approval requests and audit history.
 ///
 /// Follows HR-9 architectural constraints:
 /// - Deterministic initial seed fixtures across stable CRM user and HR target references.
@@ -13,9 +16,12 @@ import '../../domain/exceptions/hr_approval_exception.dart';
 /// - UTC-normalized timestamps; no random data generation.
 /// - Strictly side-effect free: does NOT mutate source Employee, Attendance, KPI, or Payroll stores.
 /// - Configurable error injection for test coverage of failure and retry states.
+/// - Atomic status and history updates for decisions and cancellations.
 class MockHrApprovalStore {
   final Map<String, HrApprovalRequest> _requests = {};
+  final Map<String, List<HrApprovalHistoryEntry>> _history = {};
   int _counter = 100;
+  int _historyCounter = 100;
   bool _shouldThrow = false;
 
   MockHrApprovalStore({bool seedInitialData = true}) {
@@ -59,6 +65,53 @@ class MockHrApprovalStore {
     for (final req in seedItems) {
       _requests[req.id] = req;
     }
+
+    // Seed corresponding history entries
+    _history['appr_req_1'] = [
+      HrApprovalHistoryEntry(
+        id: 'hist_1',
+        requestId: 'appr_req_1',
+        actorId: 'usr_hr',
+        action: 'submitted',
+        newStatus: HrApprovalStatus.pending,
+        timestamp: DateTime.utc(2026, 2, 1, 10, 0),
+        reason: 'January 2026 payroll finalization request',
+      ),
+    ];
+
+    _history['appr_req_2'] = [
+      HrApprovalHistoryEntry(
+        id: 'hist_2',
+        requestId: 'appr_req_2',
+        actorId: 'usr_standard',
+        action: 'submitted',
+        newStatus: HrApprovalStatus.pending,
+        timestamp: DateTime.utc(2026, 2, 2, 11, 30),
+        reason: 'Check-in time adjustment for Feb 1',
+      ),
+    ];
+
+    _history['appr_req_3'] = [
+      HrApprovalHistoryEntry(
+        id: 'hist_3',
+        requestId: 'appr_req_3',
+        actorId: 'usr_admin',
+        action: 'submitted',
+        newStatus: HrApprovalStatus.pending,
+        timestamp: DateTime.utc(2026, 1, 15, 9, 0),
+        reason: 'Government ID verification submitted',
+      ),
+      HrApprovalHistoryEntry(
+        id: 'hist_4',
+        requestId: 'appr_req_3',
+        actorId: 'usr_admin',
+        action: 'approved',
+        previousStatus: HrApprovalStatus.pending,
+        newStatus: HrApprovalStatus.approved,
+        timestamp: DateTime.utc(2026, 1, 15, 14, 0),
+        reason: 'Government ID verification verified and approved',
+      ),
+    ];
   }
 
   /// Sets error simulation flag.
@@ -93,17 +146,31 @@ class MockHrApprovalStore {
     }
 
     final id = 'appr_req_${++_counter}';
+    final now = submissionTime ?? DateTime.now().toUtc();
     final request = HrApprovalRequest(
       id: id,
       workflowType: workflowType,
       requesterId: requesterId.trim(),
       target: target,
       status: HrApprovalStatus.pending,
-      createdAt: submissionTime ?? DateTime.now().toUtc(),
+      createdAt: now,
       remarks: remarks?.trim().isEmpty == true ? null : remarks?.trim(),
     );
 
     _requests[id] = request;
+
+    // Record submission history entry
+    final historyEntry = HrApprovalHistoryEntry(
+      id: 'hist_${++_historyCounter}',
+      requestId: id,
+      actorId: requesterId.trim(),
+      action: 'submitted',
+      newStatus: HrApprovalStatus.pending,
+      timestamp: now,
+      reason: remarks?.trim().isEmpty == true ? null : remarks?.trim(),
+    );
+    _history.putIfAbsent(id, () => []).add(historyEntry);
+
     return _clone(request);
   }
 
@@ -165,10 +232,111 @@ class MockHrApprovalStore {
     return result;
   }
 
+  /// Submits and atomically executes a decision on [requestId] by [actor].
+  HrApprovalRequest submitDecision({
+    required String requestId,
+    required HrApprovalDecision decision,
+    required CurrentUser actor,
+  }) {
+    _checkThrow();
+
+    final req = _requests[requestId];
+    if (req == null) {
+      throw HrApprovalWorkflowException(
+        'Approval request "$requestId" not found.',
+        code: HrApprovalWorkflowException.requestNotFound,
+      );
+    }
+
+    // Pure domain validation and transition derivation
+    final updated = HrApprovalWorkflowValidator.applyDecision(
+      request: req,
+      decision: decision,
+      actor: actor,
+    );
+
+    // Atomic update in store
+    _requests[requestId] = updated;
+
+    final historyEntry = HrApprovalHistoryEntry(
+      id: 'hist_${++_historyCounter}',
+      requestId: requestId,
+      actorId: actor.id,
+      action: decision.isApproved ? 'approved' : 'rejected',
+      previousStatus: req.status,
+      newStatus: updated.status,
+      timestamp: decision.decisionTime,
+      reason: decision.reason,
+    );
+    _history.putIfAbsent(requestId, () => []).add(historyEntry);
+
+    return _clone(updated);
+  }
+
+  /// Cancels an active pending approval request.
+  HrApprovalRequest cancelRequest({
+    required String requestId,
+    required CurrentUser actor,
+    String? reason,
+    DateTime? cancellationTime,
+  }) {
+    _checkThrow();
+
+    final req = _requests[requestId];
+    if (req == null) {
+      throw HrApprovalWorkflowException(
+        'Approval request "$requestId" not found.',
+        code: HrApprovalWorkflowException.requestNotFound,
+      );
+    }
+
+    final time = cancellationTime ?? DateTime.now().toUtc();
+    final updated = HrApprovalWorkflowValidator.applyCancellation(
+      request: req,
+      actor: actor,
+      cancellationTime: time,
+      reason: reason,
+    );
+
+    _requests[requestId] = updated;
+
+    final historyEntry = HrApprovalHistoryEntry(
+      id: 'hist_${++_historyCounter}',
+      requestId: requestId,
+      actorId: actor.id,
+      action: 'cancelled',
+      previousStatus: req.status,
+      newStatus: updated.status,
+      timestamp: time,
+      reason: reason,
+    );
+    _history.putIfAbsent(requestId, () => []).add(historyEntry);
+
+    return _clone(updated);
+  }
+
+  /// Retrieves the chronological audit history for [requestId].
+  List<HrApprovalHistoryEntry> getHistoryForRequest(String requestId) {
+    _checkThrow();
+    final list = _history[requestId] ?? [];
+    return list.map((e) => HrApprovalHistoryEntry(
+      id: e.id,
+      requestId: e.requestId,
+      actorId: e.actorId,
+      action: e.action,
+      previousStatus: e.previousStatus,
+      newStatus: e.newStatus,
+      timestamp: e.timestamp,
+      reason: e.reason,
+    )).toList();
+  }
+
   /// Clears and re-seeds the store.
   void reset() {
     _requests.clear();
+    _history.clear();
     _counter = 100;
+    _historyCounter = 100;
     _shouldThrow = false;
     _seed();
   }

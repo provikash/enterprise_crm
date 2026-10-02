@@ -1,4 +1,6 @@
 import '../../../../features/auth/domain/entities/current_user.dart';
+import '../../domain/entities/hr_approval_decision.dart';
+import '../../domain/entities/hr_approval_history_entry.dart';
 import '../../domain/entities/hr_approval_request.dart';
 import '../../domain/entities/hr_approval_target.dart';
 import '../../domain/entities/hr_approval_workflow_type.dart';
@@ -60,5 +62,38 @@ class MockHrApprovalRepository implements HrApprovalRepository {
   @override
   Future<List<HrApprovalRequest>> getAllRequests({CurrentUser? user}) async {
     return _store.getAllRequests(user: user);
+  }
+
+  @override
+  Future<HrApprovalRequest> submitDecision({
+    required String requestId,
+    required HrApprovalDecision decision,
+    required CurrentUser actor,
+  }) async {
+    return _store.submitDecision(
+      requestId: requestId,
+      decision: decision,
+      actor: actor,
+    );
+  }
+
+  @override
+  Future<HrApprovalRequest> cancelRequest({
+    required String requestId,
+    required CurrentUser actor,
+    String? reason,
+  }) async {
+    return _store.cancelRequest(
+      requestId: requestId,
+      actor: actor,
+      reason: reason,
+    );
+  }
+
+  @override
+  Future<List<HrApprovalHistoryEntry>> getHistoryForRequest(
+    String requestId,
+  ) async {
+    return _store.getHistoryForRequest(requestId);
   }
 }

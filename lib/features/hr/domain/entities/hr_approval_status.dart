@@ -22,6 +22,9 @@ enum HrApprovalStatus {
 
   const HrApprovalStatus(this.value, this.label);
 
+  /// Display name alias for [label].
+  String get displayName => label;
+
   /// Whether this status is a terminal state that cannot transition further.
   bool get isTerminal =>
       this == HrApprovalStatus.approved ||

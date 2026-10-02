@@ -29,6 +29,14 @@ void main() {
     permissions: {},
   );
 
+  const otherUser = CurrentUser(
+    id: 'usr_other',
+    displayName: 'Other User',
+    accountType: AccountType.user,
+    modules: {CrmModule.hrPayroll},
+    permissions: {},
+  );
+
   const unauthorizedUser = CurrentUser(
     id: 'usr_sales',
     displayName: 'Sales User',
@@ -70,7 +78,7 @@ void main() {
     );
   }
 
-  group('HrApprovalRequestDetailsScreen', () {
+  group('HrApprovalRequestDetailsScreen Tests (HR-9.5)', () {
     testWidgets('unauthorized user sees AccessRestrictedScreen', (tester) async {
       await tester.pumpWidget(
         buildTestWidget(
@@ -104,21 +112,145 @@ void main() {
       expect(find.text('Monthly lock request for payroll'), findsOneWidget);
     });
 
-    testWidgets('strictly zero approve/reject decision buttons are rendered', (tester) async {
+    testWidgets('non-admin user on pending request does not see Approve/Reject buttons', (tester) async {
       await tester.pumpWidget(
         buildTestWidget(
-          user: adminUser,
-          requestId: testRequest.id,
-          initialRequest: testRequest,
+          user: otherUser,
+          requestId: 'appr_req_1',
         ),
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Approve'), findsNothing);
-      expect(find.text('Reject'), findsNothing);
+      expect(find.byKey(const Key('hr_approval_approve_button')), findsNothing);
+      expect(find.byKey(const Key('hr_approval_reject_button')), findsNothing);
       expect(find.text('Finalize'), findsNothing);
       expect(find.text('Pay'), findsNothing);
     });
+
+    testWidgets('admin user on pending request sees Approve and Reject buttons', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          user: adminUser,
+          requestId: 'appr_req_1',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('hr_approval_approve_button')), findsOneWidget);
+      expect(find.byKey(const Key('hr_approval_reject_button')), findsOneWidget);
+      expect(find.text('Finalize'), findsNothing);
+      expect(find.text('Pay'), findsNothing);
+    });
+
+    testWidgets('admin approving pending request transitions status to Approved', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          user: adminUser,
+          requestId: 'appr_req_1',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Scroll to Approve button and tap
+      await tester.scrollUntilVisible(find.byKey(const Key('hr_approval_approve_button')), 200);
+      await tester.tap(find.byKey(const Key('hr_approval_approve_button')));
+      await tester.pumpAndSettle();
+
+      // Dialog opens
+      expect(find.text('Approve Request'), findsOneWidget);
+      expect(find.byKey(const Key('hr_approval_decision_reason_field')), findsOneWidget);
+
+      // Enter optional reason
+      await tester.enterText(
+        find.byKey(const Key('hr_approval_decision_reason_field')),
+        'Approved by administrator',
+      );
+
+      // Confirm
+      await tester.tap(find.byKey(const Key('hr_approval_confirm_decision_button')));
+      await tester.pumpAndSettle();
+
+      // Status badge updates to Approved
+      expect(find.text('Approved'), findsWidgets);
+      // Approve/Reject buttons disappear
+      expect(find.byKey(const Key('hr_approval_approve_button')), findsNothing);
+      expect(find.byKey(const Key('hr_approval_reject_button')), findsNothing);
+    });
+
+    testWidgets('admin rejecting pending request transitions status to Rejected', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          user: adminUser,
+          requestId: 'appr_req_2',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Scroll to Reject button and tap
+      await tester.scrollUntilVisible(find.byKey(const Key('hr_approval_reject_button')), 200);
+      await tester.tap(find.byKey(const Key('hr_approval_reject_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Reject Request'), findsOneWidget);
+
+      await tester.enterText(
+        find.byKey(const Key('hr_approval_decision_reason_field')),
+        'Attendance record is invalid',
+      );
+
+      await tester.tap(find.byKey(const Key('hr_approval_confirm_decision_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Rejected'), findsWidgets);
+      expect(find.byKey(const Key('hr_approval_approve_button')), findsNothing);
+    });
+
+    testWidgets('requester can cancel their pending request', (tester) async {
+      // appr_req_2 requester is usr_standard
+      const requesterUser = CurrentUser(
+        id: 'usr_standard',
+        displayName: 'Requester User',
+        accountType: AccountType.user,
+        modules: {CrmModule.hrPayroll},
+        permissions: {},
+      );
+
+      await tester.pumpWidget(
+        buildTestWidget(
+          user: requesterUser,
+          requestId: 'appr_req_2',
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Scroll to Cancel button and tap
+      await tester.scrollUntilVisible(find.byKey(const Key('hr_approval_cancel_button')), 200);
+      expect(find.byKey(const Key('hr_approval_cancel_button')), findsOneWidget);
+      await tester.tap(find.byKey(const Key('hr_approval_cancel_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cancel Approval Request'), findsOneWidget);
+      await tester.tap(find.byKey(const Key('hr_approval_confirm_cancel_button')));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Cancelled'), findsWidgets);
+    });
+
+    testWidgets('audit history entries are rendered', (tester) async {
+      await tester.pumpWidget(
+        buildTestWidget(
+          user: adminUser,
+          requestId: 'appr_req_3', // Has 2 history entries in seed
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.scrollUntilVisible(find.byKey(const Key('hr_approval_details_history_card')), 200);
+      expect(find.byKey(const Key('hr_approval_details_history_card')), findsOneWidget);
+      expect(find.text('SUBMITTED by usr_admin'), findsOneWidget);
+      expect(find.text('APPROVED by usr_admin'), findsOneWidget);
+    });
+
 
     testWidgets('unknown request ID displays error view', (tester) async {
       await tester.pumpWidget(
@@ -131,6 +263,29 @@ void main() {
 
       expect(find.byKey(const Key('hr_approval_details_not_found')), findsOneWidget);
       expect(find.text('Approval request not found.'), findsOneWidget);
+    });
+
+    testWidgets('responsive layout on mobile and desktop without overflow', (tester) async {
+      const viewports = [
+        Size(320, 568),
+        Size(360, 640),
+        Size(768, 1024),
+        Size(1200, 800),
+      ];
+
+      for (final size in viewports) {
+        await tester.pumpWidget(
+          buildTestWidget(
+            user: adminUser,
+            requestId: 'appr_req_1',
+            size: size,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(tester.takeException(), isNull);
+        expect(find.byKey(const Key('hr_approval_details_header_card')), findsOneWidget);
+      }
     });
   });
 }
