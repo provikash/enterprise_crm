@@ -175,6 +175,7 @@ class BackendEmployeeKpiRepository extends BackendAdapter
     } on ConflictException catch (e) {
       throw EmployeeKpiException(
         'A conflicting KPI record already exists for this metric and period: ${e.message}',
+        code: 'CONFLICT',
       );
     } on NetworkException catch (e) {
       throw _translateNetworkException(e);
@@ -243,6 +244,7 @@ class BackendEmployeeKpiRepository extends BackendAdapter
     } on ConflictException catch (e) {
       throw EmployeeKpiException(
         'A conflicting KPI record was detected during update: ${e.message}',
+        code: 'CONFLICT',
       );
     } on NetworkException catch (e) {
       throw _translateNetworkException(e);
