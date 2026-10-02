@@ -5,6 +5,7 @@ import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../data/repositories/mock_attendance_repository.dart';
 import '../../data/repositories/mock_employee_kpi_repository.dart';
+import '../../data/repositories/mock_hr_approval_repository.dart';
 import '../../data/repositories/mock_payroll_repository.dart';
 import '../../domain/entities/employee.dart';
 import '../../domain/entities/employment_status.dart';
@@ -13,6 +14,7 @@ import '../../domain/repositories/attendance_repository.dart';
 import '../../domain/repositories/employee_document_repository.dart';
 import '../../domain/repositories/employee_kpi_repository.dart';
 import '../../domain/repositories/employee_repository.dart';
+import '../../domain/repositories/hr_approval_repository.dart';
 import '../../domain/repositories/payroll_repository.dart';
 import '../bloc/employee_directory_cubit.dart';
 import '../bloc/employee_directory_state.dart';
@@ -22,6 +24,7 @@ import 'employee_details_screen.dart';
 import 'employee_kpi_list_screen.dart';
 import 'employee_report_screen.dart';
 import 'payroll_overview_screen.dart';
+import 'pending_approvals_screen.dart';
 
 /// Main Employee Directory workspace screen in the HR module.
 ///
@@ -34,6 +37,7 @@ class EmployeeDirectoryScreen extends StatelessWidget {
   final AttendanceRepository? attendanceRepository;
   final EmployeeKpiRepository? kpiRepository;
   final PayrollRepository? payrollRepository;
+  final HrApprovalRepository? approvalRepository;
 
   const EmployeeDirectoryScreen({
     super.key,
@@ -43,6 +47,7 @@ class EmployeeDirectoryScreen extends StatelessWidget {
     this.attendanceRepository,
     this.kpiRepository,
     this.payrollRepository,
+    this.approvalRepository,
   });
 
   @override
@@ -66,6 +71,7 @@ class EmployeeDirectoryScreen extends StatelessWidget {
         attendanceRepository: attendanceRepository,
         kpiRepository: kpiRepository,
         payrollRepository: payrollRepository,
+        approvalRepository: approvalRepository,
       ),
     );
   }
@@ -78,6 +84,7 @@ class _EmployeeDirectoryView extends StatefulWidget {
   final AttendanceRepository? attendanceRepository;
   final EmployeeKpiRepository? kpiRepository;
   final PayrollRepository? payrollRepository;
+  final HrApprovalRepository? approvalRepository;
 
   const _EmployeeDirectoryView({
     required this.user,
@@ -86,6 +93,7 @@ class _EmployeeDirectoryView extends StatefulWidget {
     this.attendanceRepository,
     this.kpiRepository,
     this.payrollRepository,
+    this.approvalRepository,
   });
 
   @override
@@ -172,6 +180,22 @@ class _EmployeeDirectoryViewState extends State<_EmployeeDirectoryView> {
                   builder: (_) => EmployeeReportScreen(
                     user: widget.user,
                     employeeRepository: widget.repository,
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('employee_directory_approvals_button'),
+            tooltip: 'Approvals & Requests',
+            icon: const Icon(Icons.rule_folder_outlined),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => PendingApprovalsScreen(
+                    user: widget.user,
+                    repository: widget.approvalRepository ??
+                        MockHrApprovalRepository(),
                   ),
                 ),
               );
