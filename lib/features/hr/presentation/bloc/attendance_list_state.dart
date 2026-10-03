@@ -8,6 +8,7 @@ enum AttendanceViewMode { list, calendar }
 class AttendanceListState {
   final AttendanceListStatus status;
   final List<AttendanceRecord> records;
+  final List<AttendanceRecord> calendarRecords;
   final List<AttendanceRecord> filteredRecords;
   final String searchQuery;
   final String? selectedStatus;
@@ -19,6 +20,7 @@ class AttendanceListState {
   const AttendanceListState({
     this.status = AttendanceListStatus.initial,
     this.records = const [],
+    this.calendarRecords = const [],
     this.filteredRecords = const [],
     this.searchQuery = '',
     this.selectedStatus,
@@ -38,21 +40,24 @@ class AttendanceListState {
       searchQuery.trim().isNotEmpty ||
       selectedStatus != null ||
       selectedDate != null ||
-      selectedEmployeeId != null;
+      (selectedEmployeeId != null && selectedEmployeeId!.isNotEmpty);
 
   /// Returns all records matching a specific calendar [day] (year, month, day).
   List<AttendanceRecord> recordsForDay(DateTime day) {
-    return records.where((r) => r.isSameDay(day)).toList();
+    final list = calendarRecords.isNotEmpty ? calendarRecords : records;
+    return list.where((r) => r.isSameDay(day)).toList();
   }
 
   /// Returns true if there is at least one attendance record for [day].
   bool hasRecordsOnDay(DateTime day) {
-    return records.any((r) => r.isSameDay(day));
+    final list = calendarRecords.isNotEmpty ? calendarRecords : records;
+    return list.any((r) => r.isSameDay(day));
   }
 
   AttendanceListState copyWith({
     AttendanceListStatus? status,
     List<AttendanceRecord>? records,
+    List<AttendanceRecord>? calendarRecords,
     List<AttendanceRecord>? filteredRecords,
     String? searchQuery,
     String? Function()? selectedStatus,
@@ -64,6 +69,7 @@ class AttendanceListState {
     return AttendanceListState(
       status: status ?? this.status,
       records: records ?? this.records,
+      calendarRecords: calendarRecords ?? this.calendarRecords,
       filteredRecords: filteredRecords ?? this.filteredRecords,
       searchQuery: searchQuery ?? this.searchQuery,
       selectedStatus: selectedStatus != null

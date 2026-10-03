@@ -8,17 +8,23 @@ import 'attendance_list_state.dart';
 class AttendanceListCubit extends Cubit<AttendanceListState> {
   final AttendanceRepository _repository;
   final String? initialEmployeeId;
+  int _requestId = 0;
 
   AttendanceListCubit(this._repository, {this.initialEmployeeId})
     : super(AttendanceListState(selectedEmployeeId: initialEmployeeId));
 
   /// Loads attendance records from the repository.
   Future<void> loadAttendance() async {
+    final currentRequestId = ++_requestId;
     emit(state.copyWith(status: AttendanceListStatus.loading));
     try {
       final records = await _repository.getAttendanceRecords(
         employeeId: state.selectedEmployeeId,
+        startDate: state.selectedDate,
+        endDate: state.selectedDate,
+        status: state.selectedStatus,
       );
+      if (currentRequestId != _requestId) return;
 
       final filtered = _applyFilters(
         records,
@@ -32,11 +38,13 @@ class AttendanceListCubit extends Cubit<AttendanceListState> {
         state.copyWith(
           status: AttendanceListStatus.loaded,
           records: records,
+          calendarRecords: state.selectedDate == null ? records : state.calendarRecords,
           filteredRecords: filtered,
           errorMessage: () => null,
         ),
       );
     } on AttendanceException catch (e) {
+      if (currentRequestId != _requestId) return;
       emit(
         state.copyWith(
           status: AttendanceListStatus.failure,
@@ -44,6 +52,7 @@ class AttendanceListCubit extends Cubit<AttendanceListState> {
         ),
       );
     } catch (_) {
+      if (currentRequestId != _requestId) return;
       emit(
         state.copyWith(
           status: AttendanceListStatus.failure,
@@ -56,8 +65,9 @@ class AttendanceListCubit extends Cubit<AttendanceListState> {
 
   /// Sets the search query and filters records locally.
   void setSearchQuery(String query) {
+    final baseList = state.calendarRecords.isNotEmpty ? state.calendarRecords : state.records;
     final filtered = _applyFilters(
-      state.records,
+      baseList,
       query,
       state.selectedStatus,
       state.selectedDate,
@@ -67,51 +77,196 @@ class AttendanceListCubit extends Cubit<AttendanceListState> {
   }
 
   /// Sets the status filter (e.g. 'Present', 'Absent', 'Half-day', 'On Leave').
-  void setStatusFilter(String? status) {
+  Future<void> setStatusFilter(String? status, {bool queryRepository = false}) async {
+    final normalizedStatus = (status == null || status.trim().toLowerCase() == 'all')
+        ? null
+        : status.trim();
+
+    final baseList = state.calendarRecords.isNotEmpty ? state.calendarRecords : state.records;
     final filtered = _applyFilters(
-      state.records,
+      baseList,
       state.searchQuery,
-      status,
+      normalizedStatus,
       state.selectedDate,
       state.selectedEmployeeId,
     );
     emit(
-      state.copyWith(selectedStatus: () => status, filteredRecords: filtered),
+      state.copyWith(
+        selectedStatus: () => normalizedStatus,
+        filteredRecords: filtered,
+      ),
     );
+
+    if (!queryRepository) return;
+
+    final currentRequestId = ++_requestId;
+    try {
+      final records = await _repository.getAttendanceRecords(
+        employeeId: state.selectedEmployeeId,
+        startDate: state.selectedDate,
+        endDate: state.selectedDate,
+        status: normalizedStatus,
+      );
+      if (currentRequestId != _requestId) return;
+
+      final updatedFiltered = _applyFilters(
+        records,
+        state.searchQuery,
+        normalizedStatus,
+        state.selectedDate,
+        state.selectedEmployeeId,
+      );
+      emit(
+        state.copyWith(
+          status: AttendanceListStatus.loaded,
+          records: records,
+          filteredRecords: updatedFiltered,
+          errorMessage: () => null,
+        ),
+      );
+    } on AttendanceException catch (e) {
+      if (currentRequestId != _requestId) return;
+      emit(state.copyWith(
+        status: AttendanceListStatus.failure,
+        errorMessage: () => e.message,
+      ));
+    } catch (_) {
+      if (currentRequestId != _requestId) return;
+      emit(state.copyWith(
+        status: AttendanceListStatus.failure,
+        errorMessage: () => 'Failed to load attendance records.',
+      ));
+    }
   }
 
-  /// Sets the selected calendar/filter date.
-  void setSelectedDate(DateTime? date) {
+  /// Sets the selected calendar/filter date with stale-response protection.
+  Future<void> setSelectedDate(DateTime? date, {bool queryRepository = true}) async {
     final normalized = date != null
         ? DateTime.utc(date.year, date.month, date.day)
         : null;
+    final currentRequestId = ++_requestId;
+
+    final baseList = state.calendarRecords.isNotEmpty ? state.calendarRecords : state.records;
     final filtered = _applyFilters(
-      state.records,
+      baseList,
       state.searchQuery,
       state.selectedStatus,
       normalized,
       state.selectedEmployeeId,
     );
     emit(
-      state.copyWith(selectedDate: () => normalized, filteredRecords: filtered),
-    );
-  }
-
-  /// Sets employee filter.
-  void setSelectedEmployeeId(String? employeeId) {
-    final filtered = _applyFilters(
-      state.records,
-      state.searchQuery,
-      state.selectedStatus,
-      state.selectedDate,
-      employeeId,
-    );
-    emit(
       state.copyWith(
-        selectedEmployeeId: () => employeeId,
+        selectedDate: () => normalized,
         filteredRecords: filtered,
       ),
     );
+
+    if (!queryRepository) return;
+
+    try {
+      final records = await _repository.getAttendanceRecords(
+        employeeId: state.selectedEmployeeId,
+        startDate: normalized,
+        endDate: normalized,
+        status: state.selectedStatus,
+      );
+      if (currentRequestId != _requestId) return; // Discard stale response!
+
+      final updatedFiltered = _applyFilters(
+        records,
+        state.searchQuery,
+        state.selectedStatus,
+        normalized,
+        state.selectedEmployeeId,
+      );
+      emit(
+        state.copyWith(
+          status: AttendanceListStatus.loaded,
+          records: records,
+          calendarRecords: state.calendarRecords.isEmpty && normalized == null
+              ? records
+              : state.calendarRecords,
+          filteredRecords: updatedFiltered,
+          errorMessage: () => null,
+        ),
+      );
+    } on AttendanceException catch (e) {
+      if (currentRequestId != _requestId) return;
+      emit(state.copyWith(
+        status: AttendanceListStatus.failure,
+        errorMessage: () => e.message,
+      ));
+    } catch (_) {
+      if (currentRequestId != _requestId) return;
+      emit(state.copyWith(
+        status: AttendanceListStatus.failure,
+        errorMessage: () => 'Failed to load attendance for selected date.',
+      ));
+    }
+  }
+
+  /// Sets employee filter with stale-response protection.
+  Future<void> setSelectedEmployeeId(String? employeeId, {bool queryRepository = true}) async {
+    final normalizedId = (employeeId != null && employeeId.trim().isNotEmpty)
+        ? employeeId.trim()
+        : null;
+    final currentRequestId = ++_requestId;
+
+    final baseList = state.calendarRecords.isNotEmpty ? state.calendarRecords : state.records;
+    final filtered = _applyFilters(
+      baseList,
+      state.searchQuery,
+      state.selectedStatus,
+      state.selectedDate,
+      normalizedId,
+    );
+    emit(
+      state.copyWith(
+        selectedEmployeeId: () => normalizedId,
+        filteredRecords: filtered,
+      ),
+    );
+
+    if (!queryRepository) return;
+
+    try {
+      final records = await _repository.getAttendanceRecords(
+        employeeId: normalizedId,
+        startDate: state.selectedDate,
+        endDate: state.selectedDate,
+        status: state.selectedStatus,
+      );
+      if (currentRequestId != _requestId) return; // Discard stale response!
+
+      final updatedFiltered = _applyFilters(
+        records,
+        state.searchQuery,
+        state.selectedStatus,
+        state.selectedDate,
+        normalizedId,
+      );
+      emit(
+        state.copyWith(
+          status: AttendanceListStatus.loaded,
+          records: records,
+          calendarRecords: state.selectedDate == null ? records : state.calendarRecords,
+          filteredRecords: updatedFiltered,
+          errorMessage: () => null,
+        ),
+      );
+    } on AttendanceException catch (e) {
+      if (currentRequestId != _requestId) return;
+      emit(state.copyWith(
+        status: AttendanceListStatus.failure,
+        errorMessage: () => e.message,
+      ));
+    } catch (_) {
+      if (currentRequestId != _requestId) return;
+      emit(state.copyWith(
+        status: AttendanceListStatus.failure,
+        errorMessage: () => 'Failed to load attendance records.',
+      ));
+    }
   }
 
   /// Switches between list and calendar views.
@@ -119,10 +274,12 @@ class AttendanceListCubit extends Cubit<AttendanceListState> {
     emit(state.copyWith(viewMode: mode));
   }
 
-  /// Clears active search and filter constraints.
-  void resetFilters() {
+  /// Clears active search and filter constraints and restores default scope.
+  Future<void> resetFilters({bool reload = true}) async {
+    final currentRequestId = ++_requestId;
+    final baseList = state.calendarRecords.isNotEmpty ? state.calendarRecords : state.records;
     final filtered = _applyFilters(
-      state.records,
+      baseList,
       '',
       null,
       null,
@@ -137,6 +294,33 @@ class AttendanceListCubit extends Cubit<AttendanceListState> {
         filteredRecords: filtered,
       ),
     );
+
+    if (!reload) return;
+
+    try {
+      final records = await _repository.getAttendanceRecords(
+        employeeId: initialEmployeeId,
+      );
+      if (currentRequestId != _requestId) return;
+      final updatedFiltered = _applyFilters(
+        records,
+        '',
+        null,
+        null,
+        initialEmployeeId,
+      );
+      emit(
+        state.copyWith(
+          status: AttendanceListStatus.loaded,
+          records: records,
+          calendarRecords: records,
+          filteredRecords: updatedFiltered,
+          errorMessage: () => null,
+        ),
+      );
+    } catch (_) {
+      // Retain filtered state if reload fails
+    }
   }
 
   /// Refreshes attendance from repository while preserving current filters.
@@ -156,7 +340,9 @@ class AttendanceListCubit extends Cubit<AttendanceListState> {
         if (r.employeeId != employeeId.trim()) return false;
       }
 
-      if (status != null && status.trim().isNotEmpty) {
+      if (status != null &&
+          status.trim().isNotEmpty &&
+          status.trim().toLowerCase() != 'all') {
         if (r.attendanceStatus.trim().toLowerCase() !=
             status.trim().toLowerCase()) {
           return false;

@@ -130,6 +130,7 @@ class _EmployeeDirectoryViewState extends State<_EmployeeDirectoryView> {
                     repository:
                         widget.attendanceRepository ??
                         MockAttendanceRepository(),
+                    employeeRepository: widget.repository,
                   ),
                 ),
               );

@@ -32,25 +32,60 @@ class EmployeeAttendanceHistoryScreen extends StatelessWidget {
     }
 
     return BlocProvider(
+      key: ValueKey<String>('attendance_cubit_${employee.id}'),
       create: (_) =>
           AttendanceListCubit(repository, initialEmployeeId: employee.id)
             ..loadAttendance(),
-      child: _EmployeeAttendanceHistoryView(user: user, employee: employee),
+      child: _EmployeeAttendanceHistoryView(
+        key: ValueKey<String>('attendance_view_${employee.id}'),
+        user: user,
+        employee: employee,
+      ),
     );
   }
 }
 
-class _EmployeeAttendanceHistoryView extends StatelessWidget {
+class _EmployeeAttendanceHistoryView extends StatefulWidget {
   final CurrentUser user;
   final Employee employee;
 
   const _EmployeeAttendanceHistoryView({
+    super.key,
     required this.user,
     required this.employee,
   });
 
+  @override
+  State<_EmployeeAttendanceHistoryView> createState() =>
+      _EmployeeAttendanceHistoryViewState();
+}
+
+class _EmployeeAttendanceHistoryViewState
+    extends State<_EmployeeAttendanceHistoryView> {
+  static const List<String> _statuses = [
+    'All',
+    'Present',
+    'Absent',
+    'Half-day',
+    'On Leave',
+  ];
+
   void _openDetails(BuildContext context, AttendanceRecord record) {
     AttendanceDetailsDialog.show(context, record);
+  }
+
+  Future<void> _pickDateFilter() async {
+    final cubit = context.read<AttendanceListCubit>();
+    final picked = await showDatePicker(
+      context: context,
+      initialDate:
+          cubit.state.selectedDate ?? DateTime.utc(2026, 9, 21),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
+    );
+    if (picked != null && mounted) {
+      cubit.setSelectedDate(picked);
+    }
   }
 
   @override
@@ -60,7 +95,9 @@ class _EmployeeAttendanceHistoryView extends StatelessWidget {
 
     return BlocBuilder<AttendanceListCubit, AttendanceListState>(
       builder: (context, state) {
-        final records = state.records;
+        final records = state.calendarRecords.isNotEmpty
+            ? state.calendarRecords
+            : state.records;
         final totalDays = records.length;
         final presentCount = records
             .where((r) => r.attendanceStatus.toLowerCase() == 'present')
@@ -75,10 +112,14 @@ class _EmployeeAttendanceHistoryView extends StatelessWidget {
             .where((r) => r.attendanceStatus.toLowerCase() == 'on leave')
             .length;
 
+        final hasActiveFilters = state.selectedDate != null ||
+            state.selectedStatus != null ||
+            state.searchQuery.isNotEmpty;
+
         return Scaffold(
           key: const Key('employee_attendance_history_scaffold'),
           appBar: AppBar(
-            title: Text('${employee.fullName} — Attendance'),
+            title: Text('${widget.employee.fullName} — Attendance'),
             actions: [
               IconButton(
                 key: const Key('attendance_history_refresh_button'),
@@ -90,7 +131,7 @@ class _EmployeeAttendanceHistoryView extends StatelessWidget {
           ),
           body: Column(
             children: [
-              // Summary Metrics Card
+              // Summary Metrics Card & Filters
               Card(
                 margin: const EdgeInsets.all(16.0),
                 elevation: 0,
@@ -104,7 +145,7 @@ class _EmployeeAttendanceHistoryView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Employee: ${employee.fullName} (${employee.employeeCode ?? employee.id})',
+                        'Employee: ${widget.employee.fullName} (${widget.employee.employeeCode ?? widget.employee.id})',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 12),
@@ -146,6 +187,56 @@ class _EmployeeAttendanceHistoryView extends StatelessWidget {
                               Colors.blue.shade100,
                               Colors.blue.shade900,
                             ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Divider(height: 1),
+                      const SizedBox(height: 12),
+
+                      // History Filter Chips & Date Filter
+                      SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: [
+                            for (final status in _statuses)
+                              Padding(
+                                padding: const EdgeInsets.only(right: 8.0),
+                                child: FilterChip(
+                                  key: Key('attendance_history_filter_chip_$status'),
+                                  label: Text(status),
+                                  selected: status == 'All'
+                                      ? state.selectedStatus == null
+                                      : state.selectedStatus == status,
+                                  onSelected: (selected) {
+                                    context.read<AttendanceListCubit>().setStatusFilter(
+                                      status == 'All' || !selected ? null : status,
+                                    );
+                                  },
+                                ),
+                              ),
+                            const SizedBox(width: 8),
+                            OutlinedButton.icon(
+                              key: const Key('attendance_history_date_picker_button'),
+                              icon: const Icon(Icons.event, size: 16),
+                              label: Text(
+                                state.selectedDate != null
+                                    ? '${state.selectedDate!.year}-${state.selectedDate!.month.toString().padLeft(2, '0')}-${state.selectedDate!.day.toString().padLeft(2, '0')}'
+                                    : 'Pick Date',
+                              ),
+                              onPressed: _pickDateFilter,
+                            ),
+                            if (hasActiveFilters) ...[
+                              const SizedBox(width: 8),
+                              TextButton.icon(
+                                key: const Key('attendance_history_reset_filters_button'),
+                                icon: const Icon(Icons.close, size: 16),
+                                label: const Text('Reset'),
+                                onPressed: () {
+                                  context.read<AttendanceListCubit>().resetFilters();
+                                },
+                              ),
+                            ],
                           ],
                         ),
                       ),
@@ -196,7 +287,11 @@ class _EmployeeAttendanceHistoryView extends StatelessWidget {
     ColorScheme colorScheme,
   ) {
     if (state.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: CircularProgressIndicator(
+          key: Key('attendance_history_loading_indicator'),
+        ),
+      );
     }
 
     if (state.isFailure) {
@@ -209,6 +304,7 @@ class _EmployeeAttendanceHistoryView extends StatelessWidget {
             Text(state.errorMessage ?? 'Error loading history.'),
             const SizedBox(height: 16),
             ElevatedButton(
+              key: const Key('attendance_history_retry_button'),
               onPressed: () => context.read<AttendanceListCubit>().refresh(),
               child: const Text('Retry'),
             ),

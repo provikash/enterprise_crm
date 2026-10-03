@@ -140,5 +140,74 @@ void main() {
       expect(find.byType(AttendanceDetailsDialog), findsOneWidget);
       expect(find.text('Attendance Details'), findsOneWidget);
     });
+
+    testWidgets('status filter chips filter history records and reset button clears filter', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1200, 1000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      await tester.pumpWidget(
+        buildWidget(
+          user: adminUser,
+          employee: const Employee(id: 'emp_1', fullName: 'Aarav Sharma'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Filter by Half-day
+      final halfDayChip = find.byKey(const Key('attendance_history_filter_chip_Half-day'));
+      expect(halfDayChip, findsOneWidget);
+      await tester.tap(halfDayChip);
+      await tester.pumpAndSettle();
+
+      // emp_1 has 1 half-day record (att_103)
+      expect(find.byKey(const Key('employee_history_card_att_103')), findsOneWidget);
+      expect(find.byKey(const Key('employee_history_card_att_101')), findsNothing);
+
+      // Tap Reset button
+      final resetBtn = find.byKey(const Key('attendance_history_reset_filters_button'));
+      expect(resetBtn, findsOneWidget);
+      await tester.tap(resetBtn);
+      await tester.pumpAndSettle();
+
+      // All 5 records restored
+      expect(find.byType(AttendanceStatusBadge), findsNWidgets(5));
+    });
+
+    testWidgets('Rapid Employee switching preserves isolation without cross-talk', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1200, 1000);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
+
+      // Open Employee A (emp_1)
+      await tester.pumpWidget(
+        buildWidget(
+          user: adminUser,
+          employee: const Employee(id: 'emp_1', fullName: 'Alice Johnson'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Alice Johnson — Attendance'), findsOneWidget);
+      expect(find.byKey(const Key('employee_history_card_att_101')), findsOneWidget);
+      expect(find.byKey(const Key('employee_history_card_att_201')), findsNothing);
+
+      // Rapidly switch to Employee B (emp_2)
+      await tester.pumpWidget(
+        buildWidget(
+          user: adminUser,
+          employee: const Employee(id: 'emp_2', fullName: 'Bob Smith'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Bob Smith — Attendance'), findsOneWidget);
+      expect(find.byKey(const Key('employee_history_card_att_201')), findsOneWidget);
+      expect(find.byKey(const Key('employee_history_card_att_101')), findsNothing);
+    });
   });
 }

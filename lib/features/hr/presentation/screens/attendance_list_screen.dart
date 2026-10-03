@@ -3,9 +3,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
+import '../../data/repositories/mock_employee_repository.dart';
 import '../../domain/entities/attendance_record.dart';
+import '../../domain/entities/employee.dart';
 import '../../domain/policies/hr_access_policy.dart';
 import '../../domain/repositories/attendance_repository.dart';
+import '../../domain/repositories/employee_repository.dart';
 import '../bloc/attendance_list_cubit.dart';
 import '../bloc/attendance_list_state.dart';
 import '../widgets/attendance_status_badge.dart';
@@ -17,13 +20,17 @@ import 'pending_approvals_screen.dart';
 class AttendanceListScreen extends StatelessWidget {
   final CurrentUser user;
   final AttendanceRepository repository;
+  final EmployeeRepository? employeeRepository;
   final String? initialEmployeeId;
+  final AttendanceViewMode initialViewMode;
 
   const AttendanceListScreen({
     super.key,
     required this.user,
     required this.repository,
+    this.employeeRepository,
     this.initialEmployeeId,
+    this.initialViewMode = AttendanceViewMode.list,
   });
 
   @override
@@ -33,10 +40,17 @@ class AttendanceListScreen extends StatelessWidget {
     }
 
     return BlocProvider(
-      create: (_) =>
-          AttendanceListCubit(repository, initialEmployeeId: initialEmployeeId)
-            ..loadAttendance(),
-      child: _AttendanceListView(user: user, repository: repository),
+      create: (_) => AttendanceListCubit(
+        repository,
+        initialEmployeeId: initialEmployeeId,
+      )
+        ..setViewMode(initialViewMode)
+        ..loadAttendance(),
+      child: _AttendanceListView(
+        user: user,
+        repository: repository,
+        employeeRepository: employeeRepository,
+      ),
     );
   }
 }
@@ -44,8 +58,13 @@ class AttendanceListScreen extends StatelessWidget {
 class _AttendanceListView extends StatefulWidget {
   final CurrentUser user;
   final AttendanceRepository repository;
+  final EmployeeRepository? employeeRepository;
 
-  const _AttendanceListView({required this.user, required this.repository});
+  const _AttendanceListView({
+    required this.user,
+    required this.repository,
+    this.employeeRepository,
+  });
 
   @override
   State<_AttendanceListView> createState() => _AttendanceListViewState();
@@ -54,6 +73,8 @@ class _AttendanceListView extends StatefulWidget {
 class _AttendanceListViewState extends State<_AttendanceListView> {
   final TextEditingController _searchController = TextEditingController();
   DateTime _calendarMonth = DateTime.utc(2026, 9, 1);
+  List<Employee> _employees = [];
+  bool _isLoadingEmployees = true;
 
   static const List<String> _statuses = [
     'All',
@@ -62,6 +83,29 @@ class _AttendanceListViewState extends State<_AttendanceListView> {
     'Half-day',
     'On Leave',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadEmployees();
+  }
+
+  Future<void> _loadEmployees() async {
+    final repo = widget.employeeRepository ?? MockEmployeeRepository();
+    try {
+      final list = await repo.getEmployees();
+      if (mounted) {
+        setState(() {
+          _employees = list;
+          _isLoadingEmployees = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isLoadingEmployees = false);
+      }
+    }
+  }
 
   @override
   void dispose() {
@@ -245,11 +289,53 @@ class _AttendanceListViewState extends State<_AttendanceListView> {
             ),
             const SizedBox(height: 12),
 
-            // Bottom Row: Status Filter Chips & Date Filter
+            // Bottom Row: Employee Filter, Status Filter Chips & Date Filter
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
+                  if (!_isLoadingEmployees && _employees.isNotEmpty)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 8.0),
+                      child: DropdownButtonHideUnderline(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            border: Border.all(
+                              color: colorScheme.outlineVariant,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: DropdownButton<String?>(
+                            key: const Key('attendance_employee_filter'),
+                            value: state.selectedEmployeeId,
+                            hint: const Text('All Employees'),
+                            isDense: true,
+                            items: [
+                              const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text('All Employees'),
+                              ),
+                              ..._employees.map((e) {
+                                return DropdownMenuItem<String?>(
+                                  key: Key('attendance_employee_item_${e.id}'),
+                                  value: e.id,
+                                  child: Text(e.fullName),
+                                );
+                              }),
+                            ],
+                            onChanged: (val) {
+                              context
+                                  .read<AttendanceListCubit>()
+                                  .setSelectedEmployeeId(val);
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
                   for (final status in _statuses)
                     Padding(
                       padding: const EdgeInsets.only(right: 8.0),
@@ -470,8 +556,8 @@ class _AttendanceListViewState extends State<_AttendanceListView> {
   ) {
     final year = _calendarMonth.year;
     final month = _calendarMonth.month;
-    final daysInMonth = DateTime(year, month + 1, 0).day;
-    final firstWeekday = DateTime(year, month, 1).weekday % 7; // Sunday = 0
+    final daysInMonth = DateTime.utc(year, month + 1, 0).day;
+    final firstWeekday = DateTime.utc(year, month, 1).weekday % 7; // Sunday = 0
 
     final monthName = _monthName(month);
 
@@ -582,6 +668,7 @@ class _AttendanceListViewState extends State<_AttendanceListView> {
                           state.selectedDate!.isAtSameMomentAs(date);
 
                       return InkWell(
+                        key: Key('calendar_day_$dayNum'),
                         onTap: () {
                           context.read<AttendanceListCubit>().setSelectedDate(
                             isSelected ? null : date,
@@ -657,6 +744,7 @@ class _AttendanceListViewState extends State<_AttendanceListView> {
 
           if (state.filteredRecords.isEmpty)
             Card(
+              key: const Key('calendar_empty_state'),
               elevation: 0,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
