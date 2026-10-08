@@ -203,6 +203,27 @@ void main() {
       expect(find.text('Enterprise CRM'), findsOneWidget);
       expect(find.byKey(const Key('login_submit_button')), findsOneWidget);
     });
+
+    for (final size in <Size>[const Size(320, 568), const Size(360, 640)]) {
+      testWidgets(
+        'fits compact viewport ${size.width.toInt()}x${size.height.toInt()}',
+        (tester) async {
+          tester.view.physicalSize = size;
+          tester.view.devicePixelRatio = 1;
+          addTearDown(tester.view.resetPhysicalSize);
+          addTearDown(tester.view.resetDevicePixelRatio);
+
+          await tester.pumpWidget(_buildLoginTestApp(cubit: cubit));
+          await tester.pumpAndSettle();
+
+          expect(tester.takeException(), isNull);
+          final cardRect = tester.getRect(find.byType(Card));
+          expect(cardRect.left, greaterThanOrEqualTo(0));
+          expect(cardRect.right, lessThanOrEqualTo(size.width));
+          expect(find.byKey(const Key('login_submit_button')), findsOneWidget);
+        },
+      );
+    }
   });
 }
 
