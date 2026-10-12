@@ -5,17 +5,22 @@ import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../data/repositories/mock_attendance_repository.dart';
 import '../../data/repositories/mock_employee_document_repository.dart';
+import '../../data/repositories/mock_employee_kpi_repository.dart';
 import '../../domain/entities/employee.dart';
 import '../../domain/entities/employment_status.dart';
 import '../../domain/policies/hr_access_policy.dart';
 import '../../domain/repositories/attendance_repository.dart';
 import '../../domain/repositories/employee_document_repository.dart';
+import '../../domain/repositories/employee_kpi_repository.dart';
 import '../../domain/repositories/employee_repository.dart';
 import '../bloc/employee_details_cubit.dart';
 import '../bloc/employee_details_state.dart';
+import '../widgets/hr_info_row.dart';
+import '../widgets/hr_section_card.dart';
 import 'edit_employee_screen.dart';
 import 'employee_attendance_history_screen.dart';
 import 'employee_documents_screen.dart';
+import 'employee_kpi_list_screen.dart';
 
 /// Employee Details screen displaying full information for a selected employee record.
 class EmployeeDetailsScreen extends StatelessWidget {
@@ -24,6 +29,7 @@ class EmployeeDetailsScreen extends StatelessWidget {
   final EmployeeRepository repository;
   final EmployeeDocumentRepository? documentRepository;
   final AttendanceRepository? attendanceRepository;
+  final EmployeeKpiRepository? kpiRepository;
 
   const EmployeeDetailsScreen({
     super.key,
@@ -32,6 +38,7 @@ class EmployeeDetailsScreen extends StatelessWidget {
     required this.repository,
     this.documentRepository,
     this.attendanceRepository,
+    this.kpiRepository,
   });
 
   @override
@@ -54,6 +61,7 @@ class EmployeeDetailsScreen extends StatelessWidget {
         repository: repository,
         documentRepository: documentRepository,
         attendanceRepository: attendanceRepository,
+        kpiRepository: kpiRepository,
       ),
     );
   }
@@ -65,6 +73,7 @@ class _EmployeeDetailsView extends StatefulWidget {
   final EmployeeRepository repository;
   final EmployeeDocumentRepository? documentRepository;
   final AttendanceRepository? attendanceRepository;
+  final EmployeeKpiRepository? kpiRepository;
 
   const _EmployeeDetailsView({
     required this.user,
@@ -72,6 +81,7 @@ class _EmployeeDetailsView extends StatefulWidget {
     required this.repository,
     this.documentRepository,
     this.attendanceRepository,
+    this.kpiRepository,
   });
 
   @override
@@ -290,6 +300,226 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
               ),
               const SizedBox(height: 20),
 
+              // Sub-Feature Navigation Overview Grid (Progressive Disclosure)
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final isWide = constraints.maxWidth >= 600;
+                  final cards = [
+                    // Employee Documents Card
+                    Card(
+                      key: const Key('employee_details_documents_card'),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: BorderSide(color: colorScheme.outlineVariant),
+                      ),
+                      color: colorScheme.surfaceContainerLowest,
+                      child: ListTile(
+                        key: const Key('employee_documents_tile'),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 6.0,
+                        ),
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.folder_shared_outlined,
+                            size: 22,
+                            color: colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                        title: const Text(
+                          'Employee Documents',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: const Text(
+                          'Agreements, KYC, identity, and certificates',
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => EmployeeDocumentsScreen(
+                                user: widget.user,
+                                employee: employee,
+                                repository:
+                                    widget.documentRepository ??
+                                    MockEmployeeDocumentRepository(),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    // Attendance History Card
+                    Card(
+                      key: const Key('employee_details_attendance_card'),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: BorderSide(color: colorScheme.outlineVariant),
+                      ),
+                      color: colorScheme.surfaceContainerLowest,
+                      child: ListTile(
+                        key: const Key('employee_attendance_tile'),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 6.0,
+                        ),
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.calendar_month_outlined,
+                            size: 22,
+                            color: colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                        title: const Text(
+                          'Attendance History',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: const Text(
+                          'Recorded daily logs and check-in/out records',
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => EmployeeAttendanceHistoryScreen(
+                                user: widget.user,
+                                employee: employee,
+                                repository:
+                                    widget.attendanceRepository ??
+                                    MockAttendanceRepository(),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    // Performance / KPI Card
+                    Card(
+                      key: const Key('employee_details_kpi_card'),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        side: BorderSide(color: colorScheme.outlineVariant),
+                      ),
+                      color: colorScheme.surfaceContainerLowest,
+                      child: ListTile(
+                        key: const Key('employee_kpi_tile'),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 6.0,
+                        ),
+                        leading: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Icon(
+                            Icons.assessment_outlined,
+                            size: 22,
+                            color: colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                        title: const Text(
+                          'Performance (KPI)',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        subtitle: const Text(
+                          'Quarterly goals and evaluation metrics',
+                        ),
+                        trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => EmployeeKpiListScreen(
+                                user: widget.user,
+                                initialEmployeeId: employee.id,
+                                kpiRepository:
+                                    widget.kpiRepository ??
+                                    MockEmployeeKpiRepository(),
+                                employeeRepository: widget.repository,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    if (HrAccessPolicy.canViewPayroll(widget.user))
+                      Card(
+                        key: const Key('employee_details_payroll_card'),
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                          side: BorderSide(color: colorScheme.outlineVariant),
+                        ),
+                        color: colorScheme.surfaceContainerLowest,
+                        child: ListTile(
+                          key: const Key('employee_payroll_tile'),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 6.0,
+                          ),
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: colorScheme.primaryContainer,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              Icons.payments_outlined,
+                              size: 22,
+                              color: colorScheme.onPrimaryContainer,
+                            ),
+                          ),
+                          title: const Text(
+                            'Payroll & Compensation',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: const Text(
+                            'Salary disbursement & tax compliance',
+                          ),
+                          trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                          onTap: () => _showPayrollOverview(context),
+                        ),
+                      ),
+                  ];
+
+                  if (isWide) {
+                    return Wrap(
+                      spacing: 14,
+                      runSpacing: 14,
+                      children: cards.map((c) {
+                        return SizedBox(
+                          width: (constraints.maxWidth - 14) / 2,
+                          child: c,
+                        );
+                      }).toList(),
+                    );
+                  }
+                  return Column(
+                    children: [
+                      for (int i = 0; i < cards.length; i++) ...[
+                        cards[i],
+                        if (i < cards.length - 1) const SizedBox(height: 12),
+                      ],
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 16),
+
               // Position & Organization Info
               _buildSectionCard(
                 context,
@@ -304,6 +534,7 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
                         ? '${employee.joiningDate!.year}-${employee.joiningDate!.month.toString().padLeft(2, '0')}-${employee.joiningDate!.day.toString().padLeft(2, '0')}'
                         : '—',
                   ),
+                  _buildDetailRow('Status', employee.employmentStatus.value),
                 ],
               ),
               const SizedBox(height: 16),
@@ -332,106 +563,25 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-
-              // Employee Documents Card
-              Card(
-                key: const Key('employee_details_documents_card'),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: colorScheme.outlineVariant),
+              if (HrAccessPolicy.canViewPayroll(widget.user)) ...[
+                const SizedBox(height: 16),
+                _buildSectionCard(
+                  context,
+                  title: 'Compensation & Payroll',
+                  icon: Icons.payments_outlined,
+                  trailing: TextButton.icon(
+                    key: const Key('employee_details_payroll_view_button'),
+                    icon: const Icon(Icons.open_in_new, size: 16),
+                    label: const Text('View Policy'),
+                    onPressed: () => _showPayrollOverview(context),
+                  ),
+                  children: [
+                    _buildDetailRow('Disbursement', 'Monthly Payroll Cycle'),
+                    _buildDetailRow('Compensation Framework', 'Grade-based Banding & CTC'),
+                    _buildDetailRow('Tax & Deductions', 'Standard Regulatory TDS'),
+                  ],
                 ),
-                child: ListTile(
-                  key: const Key('employee_documents_tile'),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20.0,
-                    vertical: 8.0,
-                  ),
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.folder_shared_outlined,
-                      color: colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                  title: const Text(
-                    'Employee Documents',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: const Text(
-                    'View agreements, KYC, identity, and certificates',
-                  ),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => EmployeeDocumentsScreen(
-                          user: widget.user,
-                          employee: employee,
-                          repository:
-                              widget.documentRepository ??
-                              MockEmployeeDocumentRepository(),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Attendance History Card
-              Card(
-                key: const Key('employee_details_attendance_card'),
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  side: BorderSide(color: colorScheme.outlineVariant),
-                ),
-                child: ListTile(
-                  key: const Key('employee_attendance_tile'),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20.0,
-                    vertical: 8.0,
-                  ),
-                  leading: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Icon(
-                      Icons.calendar_month_outlined,
-                      color: colorScheme.onPrimaryContainer,
-                    ),
-                  ),
-                  title: const Text(
-                    'Attendance History',
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: const Text(
-                    'View recorded attendance logs and status history',
-                  ),
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => EmployeeAttendanceHistoryScreen(
-                          user: widget.user,
-                          employee: employee,
-                          repository:
-                              widget.attendanceRepository ??
-                              MockAttendanceRepository(),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
+              ],
             ],
           ),
         ),
@@ -444,65 +594,146 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
     required String title,
     required IconData icon,
     required List<Widget> children,
+    Widget? trailing,
   }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: colorScheme.outlineVariant),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icon, size: 20, color: colorScheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const Divider(height: 24),
-            ...children,
-          ],
-        ),
-      ),
+    return HrSectionCard(
+      title: title,
+      icon: icon,
+      trailing: trailing,
+      children: children,
     );
   }
 
   Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 140,
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Colors.grey,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-          ),
-        ],
+    return HrInfoRow(
+      label: label,
+      value: value,
+    );
+  }
+
+  void _showPayrollOverview(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
+      builder: (modalContext) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: colorScheme.outlineVariant,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: colorScheme.primaryContainer,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Icon(
+                      Icons.payments_outlined,
+                      color: colorScheme.onPrimaryContainer,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Payroll & Compensation',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          'Disbursement and tax structure',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const Divider(height: 28),
+              Text(
+                'Compensation Overview',
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.3,
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: colorScheme.outlineVariant),
+                ),
+                child: Column(
+                  children: [
+                    HrInfoRow(
+                      label: 'Disbursement Frequency',
+                      value: 'Monthly (30 Days)',
+                    ),
+                    HrInfoRow(
+                      label: 'Salary Structure',
+                      value: 'Base + Allowances',
+                    ),
+                    HrInfoRow(
+                      label: 'Currency',
+                      value: 'INR (₹)',
+                    ),
+                    HrInfoRow(
+                      label: 'Compliance & Tax Filing',
+                      value: 'Standard Deductions',
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Note: Confidential employee disbursement audit is restricted to designated Payroll personnel.',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: colorScheme.onSurfaceVariant,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Align(
+                alignment: Alignment.centerRight,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.of(modalContext).pop(),
+                  child: const Text('Close'),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

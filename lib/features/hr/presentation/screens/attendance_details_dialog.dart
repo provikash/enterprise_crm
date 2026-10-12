@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../domain/entities/attendance_record.dart';
 import '../widgets/attendance_status_badge.dart';
+import '../widgets/hr_info_row.dart';
 
 /// Modal dialog displaying full metadata for an [AttendanceRecord].
 class AttendanceDetailsDialog extends StatelessWidget {
@@ -43,19 +44,44 @@ class AttendanceDetailsDialog extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildRow(context, 'Record ID', record.id),
-              _buildRow(context, 'Employee ID', record.employeeId),
-              _buildRow(context, 'Date', record.formattedDate),
-              _buildRow(context, 'Check In', record.formattedCheckIn ?? '—'),
-              _buildRow(context, 'Check Out', record.formattedCheckOut ?? '—'),
-              _buildRow(context, 'Remarks', record.remarks ?? '—'),
+              HrInfoRow(label: 'Record ID', value: record.id, labelWidth: 120),
+              HrInfoRow(
+                label: 'Employee ID',
+                value: record.employeeId,
+                labelWidth: 120,
+              ),
+              HrInfoRow(
+                label: 'Date',
+                value: record.formattedDate,
+                labelWidth: 120,
+              ),
+              HrInfoRow(
+                label: 'Check In',
+                value: record.formattedCheckIn ?? '—',
+                labelWidth: 120,
+              ),
+              HrInfoRow(
+                label: 'Check Out',
+                value: record.formattedCheckOut ?? '—',
+                labelWidth: 120,
+              ),
+              HrInfoRow(
+                label: 'Remarks',
+                value: record.remarks ?? '—',
+                labelWidth: 120,
+              ),
               if (record.recordedBy != null)
-                _buildRow(context, 'Recorded By', record.recordedBy!),
+                HrInfoRow(
+                  label: 'Recorded By',
+                  value: record.recordedBy!,
+                  labelWidth: 120,
+                ),
               if (record.createdAt != null)
-                _buildRow(
-                  context,
-                  'Created At',
-                  '${record.createdAt!.year}-${record.createdAt!.month.toString().padLeft(2, '0')}-${record.createdAt!.day.toString().padLeft(2, '0')}',
+                HrInfoRow(
+                  label: 'Created At',
+                  value:
+                      '${record.createdAt!.year}-${record.createdAt!.month.toString().padLeft(2, '0')}-${record.createdAt!.day.toString().padLeft(2, '0')}',
+                  labelWidth: 120,
                 ),
             ],
           ),
@@ -68,34 +94,6 @@ class AttendanceDetailsDialog extends StatelessWidget {
           child: const Text('Close'),
         ),
       ],
-    );
-  }
-
-  Widget _buildRow(BuildContext context, String label, String value) {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 120,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-                fontSize: 13,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

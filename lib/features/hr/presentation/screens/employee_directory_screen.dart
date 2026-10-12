@@ -18,6 +18,7 @@ import 'add_employee_screen.dart';
 import 'attendance_list_screen.dart';
 import 'employee_details_screen.dart';
 import 'employee_kpi_list_screen.dart';
+import 'hr_home_screen.dart';
 
 /// Main Employee Directory workspace screen in the HR module.
 ///
@@ -130,6 +131,24 @@ class _EmployeeDirectoryViewState extends State<_EmployeeDirectoryView> {
                     kpiRepository:
                         widget.kpiRepository ?? MockEmployeeKpiRepository(),
                     employeeRepository: widget.repository,
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
+            key: const Key('employee_directory_home_grid_button'),
+            tooltip: 'HR Dashboard Grid',
+            icon: const Icon(Icons.grid_view_outlined),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => HrHomeScreen(
+                    user: widget.user,
+                    repository: widget.repository,
+                    documentRepository: widget.documentRepository,
+                    attendanceRepository: widget.attendanceRepository,
+                    kpiRepository: widget.kpiRepository,
                   ),
                 ),
               );
@@ -452,11 +471,13 @@ class _EmployeeDirectoryViewState extends State<_EmployeeDirectoryView> {
       child: Card(
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           side: BorderSide(color: colorScheme.outlineVariant),
         ),
-        child: SizedBox(
-          width: double.infinity,
+        color: colorScheme.surfaceContainerLowest,
+        clipBehavior: Clip.antiAlias,
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
           child: DataTable(
             showCheckboxColumn: false,
             columns: const [
@@ -476,16 +497,29 @@ class _EmployeeDirectoryViewState extends State<_EmployeeDirectoryView> {
                     DataCell(
                       Text(
                         emp.employeeCode ?? '—',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        emp.fullName,
                         style: const TextStyle(fontWeight: FontWeight.w600),
                       ),
                     ),
-                    DataCell(Text(emp.fullName)),
                     DataCell(Text(emp.department ?? '—')),
                     DataCell(Text(emp.designation ?? '—')),
                     DataCell(_StatusBadge(status: emp.employmentStatus)),
                     DataCell(
                       IconButton(
-                        icon: const Icon(Icons.arrow_forward_ios, size: 14),
+                        tooltip: 'View details',
+                        icon: Icon(
+                          Icons.arrow_forward_ios,
+                          size: 14,
+                          color: colorScheme.primary,
+                        ),
                         onPressed: () => _openDetails(context, emp.id),
                       ),
                     ),
@@ -507,6 +541,7 @@ class _EmployeeDirectoryViewState extends State<_EmployeeDirectoryView> {
           repository: widget.repository,
           documentRepository: widget.documentRepository,
           attendanceRepository: widget.attendanceRepository,
+          kpiRepository: widget.kpiRepository,
         ),
       ),
     );
@@ -530,11 +565,13 @@ class _EmployeeCard extends StatelessWidget {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         side: BorderSide(color: colorScheme.outlineVariant),
       ),
+      color: colorScheme.surfaceContainerLowest,
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -542,34 +579,59 @@ class _EmployeeCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  Expanded(
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: colorScheme.primaryContainer,
                     child: Text(
-                      employee.fullName,
-                      style: theme.textTheme.titleMedium?.copyWith(
+                      employee.fullName.isNotEmpty
+                          ? employee.fullName[0].toUpperCase()
+                          : '?',
+                      style: TextStyle(
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
+                        color: colorScheme.onPrimaryContainer,
                       ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          employee.fullName,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (employee.employeeCode != null) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            employee.employeeCode!,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                   _StatusBadge(status: employee.employmentStatus),
                 ],
               ),
-              const SizedBox(height: 6),
-              if (employee.employeeCode != null)
-                Text(
-                  employee.employeeCode!,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
+              Divider(height: 1, color: colorScheme.outlineVariant),
+              const SizedBox(height: 12),
               Row(
                 children: [
                   Icon(
                     Icons.business_outlined,
-                    size: 14,
+                    size: 15,
                     color: colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 6),
@@ -579,10 +641,40 @@ class _EmployeeCard extends StatelessWidget {
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: colorScheme.onSurfaceVariant,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
+                  ),
+                  Icon(
+                    Icons.arrow_forward_ios,
+                    size: 12,
+                    color: colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                   ),
                 ],
               ),
+              if (employee.email != null) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.email_outlined,
+                      size: 14,
+                      color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        employee.email!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ],
           ),
         ),
@@ -598,24 +690,27 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = switch (status.value.toLowerCase()) {
-      'active' => Colors.green,
-      'probation' => Colors.orange,
-      'inactive' => Colors.grey,
-      _ => Colors.blueGrey,
+    final (Color bg, Color fg) = switch (status.value.toLowerCase()) {
+      'active' => (Colors.green.withValues(alpha: 0.12), Colors.green.shade800),
+      'probation' => (
+        Colors.orange.withValues(alpha: 0.12),
+        Colors.orange.shade800
+      ),
+      'inactive' => (Colors.grey.withValues(alpha: 0.12), Colors.grey.shade700),
+      _ => (Colors.blueGrey.withValues(alpha: 0.12), Colors.blueGrey.shade800),
     };
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: bg,
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: fg.withValues(alpha: 0.3)),
       ),
       child: Text(
         status.value,
         style: TextStyle(
-          color: color,
+          color: fg,
           fontSize: 12,
           fontWeight: FontWeight.w600,
         ),

@@ -8,6 +8,8 @@ import '../../domain/entities/employee.dart';
 import '../../domain/entities/employee_document.dart';
 import '../../domain/policies/hr_access_policy.dart';
 import '../../domain/repositories/employee_document_repository.dart';
+import '../widgets/hr_info_row.dart';
+import '../widgets/hr_section_card.dart';
 
 /// Screen displaying the complete metadata, preview status, and download action
 /// for a specific employee document.
@@ -379,51 +381,33 @@ class _EmployeeDocumentDetailsScreenState
                 const SizedBox(height: 20),
 
                 // Metadata Details Card
-                Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: BorderSide(color: colorScheme.outlineVariant),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(20.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'FILE METADATA',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 0.8,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildDetailRow('Original File Name', doc.fileName),
-                        _buildDetailRow(
-                          'File Format',
-                          doc.fileExtension.toUpperCase(),
-                        ),
-                        _buildDetailRow('File Size', doc.formattedFileSize),
-                        _buildDetailRow(
-                          'Uploaded On',
-                          '${doc.uploadedAt.year}-${doc.uploadedAt.month.toString().padLeft(2, '0')}-${doc.uploadedAt.day.toString().padLeft(2, '0')}',
-                        ),
-                        if (doc.uploadedBy != null)
-                          _buildDetailRow('Uploaded By', doc.uploadedBy!),
-                        if (doc.hasExpiryDate)
-                          _buildDetailRow(
-                            'Expiry Date',
-                            '${doc.expiryDate!.year}-${doc.expiryDate!.month.toString().padLeft(2, '0')}-${doc.expiryDate!.day.toString().padLeft(2, '0')}',
-                          ),
-                        if (doc.fileReference != null)
-                          _buildDetailRow(
-                            'Storage Reference',
-                            doc.fileReference!,
-                          ),
-                      ],
+                HrSectionCard(
+                  title: 'File Metadata',
+                  icon: Icons.description_outlined,
+                  children: [
+                    _buildDetailRow('Original File Name', doc.fileName),
+                    _buildDetailRow(
+                      'File Format',
+                      doc.fileExtension.toUpperCase(),
                     ),
-                  ),
+                    _buildDetailRow('File Size', doc.formattedFileSize),
+                    _buildDetailRow(
+                      'Uploaded On',
+                      '${doc.uploadedAt.year}-${doc.uploadedAt.month.toString().padLeft(2, '0')}-${doc.uploadedAt.day.toString().padLeft(2, '0')}',
+                    ),
+                    if (doc.uploadedBy != null)
+                      _buildDetailRow('Uploaded By', doc.uploadedBy!),
+                    if (doc.hasExpiryDate)
+                      _buildDetailRow(
+                        'Expiry Date',
+                        '${doc.expiryDate!.year}-${doc.expiryDate!.month.toString().padLeft(2, '0')}-${doc.expiryDate!.day.toString().padLeft(2, '0')}',
+                      ),
+                    if (doc.fileReference != null)
+                      _buildDetailRow(
+                        'Storage Reference',
+                        doc.fileReference!,
+                      ),
+                  ],
                 ),
               ],
             ),
@@ -464,29 +448,10 @@ class _EmployeeDocumentDetailsScreenState
   }
 
   Widget _buildDetailRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12.0),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 160,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-                fontSize: 14,
-              ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
-            ),
-          ),
-        ],
-      ),
+    return HrInfoRow(
+      label: label,
+      value: value,
+      labelWidth: 160,
     );
   }
 }
