@@ -28,7 +28,7 @@ class DispatchFilterBar extends StatelessWidget {
     final colorScheme = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       child: LayoutBuilder(
         builder: (context, constraints) {
           final isNarrow = constraints.maxWidth < 640;
@@ -49,7 +49,7 @@ class DispatchFilterBar extends StatelessWidget {
                   : null,
               contentPadding: const EdgeInsets.symmetric(
                 horizontal: 12,
-                vertical: 10,
+                vertical: 8,
               ),
               isDense: true,
               border: OutlineInputBorder(
@@ -110,7 +110,7 @@ class DispatchFilterBar extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 searchField,
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Row(
                   children: [
                     Expanded(child: statusDropdown),
@@ -119,7 +119,7 @@ class DispatchFilterBar extends StatelessWidget {
                   ],
                 ),
                 if (onClearFilters != null) ...[
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   clearFiltersButton,
                 ],
               ],

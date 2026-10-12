@@ -145,7 +145,11 @@ class AdminDashboardScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            CrmAppHeader(user: user, onLogout: onLogout),
+            CrmAppHeader(
+              user: user,
+              onLogout: onLogout,
+              userManagementRepository: userManagementRepository,
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(

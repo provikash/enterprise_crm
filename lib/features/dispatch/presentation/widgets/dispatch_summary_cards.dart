@@ -74,21 +74,19 @@ class DispatchSummaryCards extends StatelessWidget {
         ];
 
         if (isNarrow) {
-          final availableWidth = constraints.maxWidth - 32;
-          final columns = availableWidth < 320 ? 1 : (availableWidth < 600 ? 2 : 3);
-          final cardWidth = (availableWidth - (columns - 1) * 8) / columns;
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-            child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: items.map((item) {
+          return SizedBox(
+            height: 66,
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 2.0),
+              scrollDirection: Axis.horizontal,
+              itemCount: items.length,
+              separatorBuilder: (context, index) => const SizedBox(width: 8),
+              itemBuilder: (context, index) {
                 return SizedBox(
-                  width: cardWidth,
-                  child: _buildCard(context, item),
+                  width: 145,
+                  child: _buildCard(context, items[index]),
                 );
-              }).toList(),
+              },
             ),
           );
         }
@@ -143,7 +141,7 @@ class DispatchSummaryCards extends StatelessWidget {
           }
         },
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 10.0, vertical: 10.0),
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 6.0),
           child: Row(
             children: [
               Container(

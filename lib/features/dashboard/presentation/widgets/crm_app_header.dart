@@ -1,13 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../auth/domain/entities/current_user.dart';
+import '../../../user_management/domain/repositories/user_management_repository.dart';
+import 'account_profile_dialog.dart';
 
-/// Simplified application header displayed across authenticated CRM dashboards.
+/// Application header displayed across authenticated CRM dashboards.
+///
+/// Places the account avatar in the top right corner, providing profile
+/// management, non-editable User ID display, password reset, and logout options.
 class CrmAppHeader extends StatelessWidget {
   final CurrentUser user;
   final VoidCallback onLogout;
+  final UserManagementRepository? userManagementRepository;
 
-  const CrmAppHeader({super.key, required this.user, required this.onLogout});
+  const CrmAppHeader({
+    super.key,
+    required this.user,
+    required this.onLogout,
+    this.userManagementRepository,
+  });
+
+  void _openAccountDialog(BuildContext context) {
+    UserManagementRepository? repo = userManagementRepository;
+    if (repo == null) {
+      try {
+        repo = context.read<UserManagementRepository?>();
+      } catch (_) {
+        try {
+          repo = context.read<UserManagementRepository>();
+        } catch (_) {}
+      }
+    }
+
+    AccountProfileDialog.show(
+      context,
+      user: user,
+      onLogout: onLogout,
+      userManagementRepository: repo,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,11 +48,10 @@ class CrmAppHeader extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        // On very narrow viewports (< 420px), display only avatar + logout to prevent crowding
         final isNarrow = constraints.maxWidth < 420;
 
         return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           decoration: BoxDecoration(
             color: colorScheme.surface,
             border: Border(
@@ -31,24 +62,10 @@ class CrmAppHeader extends StatelessWidget {
           ),
           child: Row(
             children: [
-              // Far Left: Avatar first
-              CircleAvatar(
-                radius: 16,
-                backgroundColor: colorScheme.primaryContainer,
-                child: Text(
-                  user.displayName.isNotEmpty
-                      ? user.displayName.substring(0, 1).toUpperCase()
-                      : 'U',
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onPrimaryContainer,
-                  ),
-                ),
-              ),
+              const Spacer(),
 
-              // Display Name immediately after Avatar
+              // Right side: Display Name (if not narrow)
               if (!isNarrow && user.displayName.isNotEmpty) ...[
-                const SizedBox(width: 12),
                 Text(
                   user.displayName,
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -57,15 +74,42 @@ class CrmAppHeader extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(width: 10),
               ],
 
-              // Spacer pushing logout to the far right edge
-              const Spacer(),
+              // Top Right Corner: Account Avatar
+              Tooltip(
+                message: 'Account Profile & Settings',
+                child: InkWell(
+                  key: const Key('home_account_avatar'),
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () => _openAccountDialog(context),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4.0),
+                    child: CircleAvatar(
+                      key: const Key('account_avatar_button'),
+                      radius: 16,
+                      backgroundColor: colorScheme.primaryContainer,
+                      child: Text(
+                        user.displayName.isNotEmpty
+                            ? user.displayName.substring(0, 1).toUpperCase()
+                            : 'U',
+                        style: theme.textTheme.labelMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onPrimaryContainer,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
 
-              // Far Right: Only Logout
+              const SizedBox(width: 6),
+
+              // Logout Button
               IconButton(
                 key: const Key('crm_header_logout_button'),
-                icon: const Icon(Icons.logout),
+                icon: const Icon(Icons.logout, size: 20),
                 tooltip: 'Logout',
                 onPressed: onLogout,
               ),

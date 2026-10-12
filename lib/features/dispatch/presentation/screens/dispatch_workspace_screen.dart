@@ -152,7 +152,10 @@ class _DispatchWorkspaceViewState extends State<_DispatchWorkspaceView> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dispatch Management'),
+        title: const Text(
+          'Dispatch Management',
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           if (DispatchAccessPolicy.canExportAny(widget.user)) ...[
             IconButton(
@@ -161,17 +164,33 @@ class _DispatchWorkspaceViewState extends State<_DispatchWorkspaceView> {
               tooltip: 'Export Dispatches',
               onPressed: () => _handleExportDispatches(context),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 4),
           ],
           if (DispatchAccessPolicy.canCreate(widget.user))
-            Padding(
-              padding: const EdgeInsets.only(right: 16.0),
-              child: FilledButton.icon(
-                key: const Key('create_dispatch_button'),
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('New Dispatch'),
-                onPressed: () => _handleCreateDispatch(context),
-              ),
+            Builder(
+              builder: (context) {
+                final isNarrow = MediaQuery.of(context).size.width < 500;
+                if (isNarrow) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: IconButton.filled(
+                      key: const Key('create_dispatch_button'),
+                      icon: const Icon(Icons.add, size: 20),
+                      tooltip: 'New Dispatch',
+                      onPressed: () => _handleCreateDispatch(context),
+                    ),
+                  );
+                }
+                return Padding(
+                  padding: const EdgeInsets.only(right: 16.0),
+                  child: FilledButton.icon(
+                    key: const Key('create_dispatch_button'),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text('New Dispatch'),
+                    onPressed: () => _handleCreateDispatch(context),
+                  ),
+                );
+              },
             ),
         ],
       ),

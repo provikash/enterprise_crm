@@ -40,11 +40,12 @@ void main() {
 
         expect(find.byKey(const Key('inventory_items_table')), findsOneWidget);
         expect(find.byKey(const Key('inventory_horizontal_scroll_bar')), findsOneWidget);
-        expect(find.byKey(const Key('inventory_scroll_start_button')), findsOneWidget);
-        expect(find.byKey(const Key('inventory_scroll_left_button')), findsOneWidget);
         expect(find.byKey(const Key('inventory_horizontal_scroll_slider')), findsOneWidget);
-        expect(find.byKey(const Key('inventory_scroll_right_button')), findsOneWidget);
-        expect(find.byKey(const Key('inventory_scroll_end_button')), findsOneWidget);
+        expect(find.byKey(const Key('inventory_scroll_start_button')), findsNothing);
+        expect(find.byKey(const Key('inventory_scroll_left_button')), findsNothing);
+        expect(find.byKey(const Key('inventory_scroll_right_button')), findsNothing);
+        expect(find.byKey(const Key('inventory_scroll_end_button')), findsNothing);
+        expect(find.textContaining('Scroll Horizontally'), findsNothing);
         expect(find.byKey(const Key('inventory_workspace_add_item_button')), findsOneWidget);
         expect(find.byKey(const Key('inventory_workspace_bulk_entry_button')), findsNothing);
         expect(find.byKey(const Key('inventory_workspace_bulk_entry_appbar_button')), findsNothing);

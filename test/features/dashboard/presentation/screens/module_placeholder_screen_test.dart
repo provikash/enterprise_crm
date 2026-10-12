@@ -108,17 +108,17 @@ void main() {
     );
 
     testWidgets(
-      'Modules without fine-grained permissions (Dispatch, Approvals) grant access on module assignment',
+      'Modules without fine-grained permissions (Approvals) grant access on module assignment',
       (tester) async {
         const user = CurrentUser(
-          id: 'usr_dispatcher',
-          displayName: 'Dispatcher',
+          id: 'usr_approver',
+          displayName: 'Approver',
           accountType: AccountType.user,
-          modules: {CrmModule.dispatch},
+          modules: {CrmModule.approvalsNotifications},
           permissions: {},
         );
 
-        await tester.pumpWidget(_buildModuleApp(user, CrmModule.dispatch));
+        await tester.pumpWidget(_buildModuleApp(user, CrmModule.approvalsNotifications));
         await tester.pumpAndSettle();
 
         expect(find.text('Access granted.'), findsOneWidget);

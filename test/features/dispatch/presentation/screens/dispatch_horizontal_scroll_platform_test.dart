@@ -24,7 +24,7 @@ void main() {
     ) async {
       debugDefaultTargetPlatformOverride = TargetPlatform.windows;
       try {
-        tester.view.physicalSize = const Size(1200, 800);
+        tester.view.physicalSize = const Size(800, 800);
         tester.view.devicePixelRatio = 1.0;
         addTearDown(tester.view.resetPhysicalSize);
         addTearDown(tester.view.resetDevicePixelRatio);
@@ -41,11 +41,12 @@ void main() {
         expect(find.byType(DispatchDataTable), findsOneWidget);
         expect(find.byKey(const Key('dispatch_records_table')), findsOneWidget);
         expect(find.byKey(const Key('dispatch_horizontal_scroll_bar')), findsOneWidget);
-        expect(find.byKey(const Key('dispatch_scroll_start_button')), findsOneWidget);
-        expect(find.byKey(const Key('dispatch_scroll_left_button')), findsOneWidget);
         expect(find.byKey(const Key('dispatch_horizontal_scroll_slider')), findsOneWidget);
-        expect(find.byKey(const Key('dispatch_scroll_right_button')), findsOneWidget);
-        expect(find.byKey(const Key('dispatch_scroll_end_button')), findsOneWidget);
+        expect(find.byKey(const Key('dispatch_scroll_start_button')), findsNothing);
+        expect(find.byKey(const Key('dispatch_scroll_left_button')), findsNothing);
+        expect(find.byKey(const Key('dispatch_scroll_right_button')), findsNothing);
+        expect(find.byKey(const Key('dispatch_scroll_end_button')), findsNothing);
+        expect(find.textContaining('Scroll Horizontally'), findsNothing);
       } finally {
         debugDefaultTargetPlatformOverride = null;
       }
