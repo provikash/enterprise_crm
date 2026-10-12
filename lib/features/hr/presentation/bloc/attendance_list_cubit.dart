@@ -8,17 +8,33 @@ import 'attendance_list_state.dart';
 class AttendanceListCubit extends Cubit<AttendanceListState> {
   final AttendanceRepository _repository;
   final String? initialEmployeeId;
+  final DateTime? initialDate;
+  int _loadRequestId = 0;
 
-  AttendanceListCubit(this._repository, {this.initialEmployeeId})
-    : super(AttendanceListState(selectedEmployeeId: initialEmployeeId));
+  AttendanceListCubit(
+    this._repository, {
+    this.initialEmployeeId,
+    this.initialDate,
+    AttendanceViewMode initialViewMode = AttendanceViewMode.list,
+  }) : super(
+         AttendanceListState(
+           selectedEmployeeId: initialEmployeeId,
+           selectedDate: initialDate,
+           viewMode: initialViewMode,
+         ),
+       );
 
   /// Loads attendance records from the repository.
   Future<void> loadAttendance() async {
+    final requestId = ++_loadRequestId;
     emit(state.copyWith(status: AttendanceListStatus.loading));
     try {
       final records = await _repository.getAttendanceRecords(
         employeeId: state.selectedEmployeeId,
+        startDate: initialDate,
+        endDate: initialDate,
       );
+      if (isClosed || requestId != _loadRequestId) return;
 
       final filtered = _applyFilters(
         records,
@@ -37,6 +53,7 @@ class AttendanceListCubit extends Cubit<AttendanceListState> {
         ),
       );
     } on AttendanceException catch (e) {
+      if (isClosed || requestId != _loadRequestId) return;
       emit(
         state.copyWith(
           status: AttendanceListStatus.failure,
@@ -44,6 +61,7 @@ class AttendanceListCubit extends Cubit<AttendanceListState> {
         ),
       );
     } catch (_) {
+      if (isClosed || requestId != _loadRequestId) return;
       emit(
         state.copyWith(
           status: AttendanceListStatus.failure,
@@ -125,14 +143,14 @@ class AttendanceListCubit extends Cubit<AttendanceListState> {
       state.records,
       '',
       null,
-      null,
+      initialDate,
       initialEmployeeId,
     );
     emit(
       state.copyWith(
         searchQuery: '',
         selectedStatus: () => null,
-        selectedDate: () => null,
+        selectedDate: () => initialDate,
         selectedEmployeeId: () => initialEmployeeId,
         filteredRecords: filtered,
       ),

@@ -16,12 +16,18 @@ class AttendanceListScreen extends StatelessWidget {
   final CurrentUser user;
   final AttendanceRepository repository;
   final String? initialEmployeeId;
+  final DateTime? initialDate;
+  final DateTime? initialCalendarMonth;
+  final AttendanceViewMode initialViewMode;
 
   const AttendanceListScreen({
     super.key,
     required this.user,
     required this.repository,
     this.initialEmployeeId,
+    this.initialDate,
+    this.initialCalendarMonth,
+    this.initialViewMode = AttendanceViewMode.list,
   });
 
   @override
@@ -31,10 +37,17 @@ class AttendanceListScreen extends StatelessWidget {
     }
 
     return BlocProvider(
-      create: (_) =>
-          AttendanceListCubit(repository, initialEmployeeId: initialEmployeeId)
-            ..loadAttendance(),
-      child: _AttendanceListView(user: user, repository: repository),
+      create: (_) => AttendanceListCubit(
+        repository,
+        initialEmployeeId: initialEmployeeId,
+        initialDate: initialDate,
+        initialViewMode: initialViewMode,
+      )..loadAttendance(),
+      child: _AttendanceListView(
+        user: user,
+        repository: repository,
+        initialCalendarMonth: initialCalendarMonth,
+      ),
     );
   }
 }
@@ -42,8 +55,13 @@ class AttendanceListScreen extends StatelessWidget {
 class _AttendanceListView extends StatefulWidget {
   final CurrentUser user;
   final AttendanceRepository repository;
+  final DateTime? initialCalendarMonth;
 
-  const _AttendanceListView({required this.user, required this.repository});
+  const _AttendanceListView({
+    required this.user,
+    required this.repository,
+    this.initialCalendarMonth,
+  });
 
   @override
   State<_AttendanceListView> createState() => _AttendanceListViewState();
@@ -51,7 +69,7 @@ class _AttendanceListView extends StatefulWidget {
 
 class _AttendanceListViewState extends State<_AttendanceListView> {
   final TextEditingController _searchController = TextEditingController();
-  DateTime _calendarMonth = DateTime.utc(2026, 9, 1);
+  late DateTime _calendarMonth;
 
   static const List<String> _statuses = [
     'All',
@@ -60,6 +78,13 @@ class _AttendanceListViewState extends State<_AttendanceListView> {
     'Half-day',
     'On Leave',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    final initial = widget.initialCalendarMonth ?? DateTime.utc(2026, 9, 1);
+    _calendarMonth = DateTime.utc(initial.year, initial.month, 1);
+  }
 
   @override
   void dispose() {

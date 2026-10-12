@@ -19,6 +19,7 @@ import 'package:enterprise_crm/features/hr/presentation/screens/employee_directo
 import 'package:enterprise_crm/features/hr/presentation/screens/employee_document_details_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/employee_documents_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/upload_document_screen.dart';
+import 'package:enterprise_crm/features/hr/presentation/screens/hr_home_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/services/employee_document_file_picker.dart';
 import 'package:enterprise_crm/features/leads/data/repositories/mock_lead_repository.dart';
 import 'package:flutter/material.dart';
@@ -135,6 +136,10 @@ void main() {
         final hrCard = find.byKey(const Key('module_card_hrPayroll'));
         expect(hrCard, findsOneWidget);
         await tester.tap(hrCard);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(HrHomeScreen), findsOneWidget);
+        await tester.tap(find.byKey(const Key('hr_feature_card_documents')));
         await tester.pumpAndSettle();
 
         expect(find.byType(EmployeeDirectoryScreen), findsOneWidget);
@@ -361,6 +366,10 @@ void main() {
         final hrCard = find.byKey(const Key('module_card_hrPayroll'));
         expect(hrCard, findsOneWidget);
         await tester.tap(hrCard);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(HrHomeScreen), findsOneWidget);
+        await tester.tap(find.byKey(const Key('hr_feature_card_documents')));
         await tester.pumpAndSettle();
 
         expect(find.byType(EmployeeDirectoryScreen), findsOneWidget);

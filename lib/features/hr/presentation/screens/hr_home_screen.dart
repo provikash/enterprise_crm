@@ -13,7 +13,7 @@ import '../widgets/hr_feature_card.dart';
 import '../widgets/hr_page_header.dart';
 import '../widgets/hr_responsive_grid.dart';
 import '../widgets/hr_section_card.dart';
-import 'attendance_list_screen.dart';
+import 'attendance_home_screen.dart';
 import 'employee_directory_screen.dart';
 import 'employee_kpi_list_screen.dart';
 
@@ -50,9 +50,7 @@ class HrHomeScreen extends StatelessWidget {
 
     return Scaffold(
       key: const Key('hr_home_scaffold'),
-      appBar: AppBar(
-        title: const Text('Human Resources'),
-      ),
+      appBar: AppBar(title: const Text('Human Resources')),
       body: SingleChildScrollView(
         key: const Key('hr_home_scroll_view'),
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -72,19 +70,17 @@ class HrHomeScreen extends StatelessWidget {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .primaryContainer
-                          .withValues(alpha: 0.5),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primaryContainer.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       'Enterprise Module',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color:
-                                Theme.of(context).colorScheme.onPrimaryContainer,
-                            fontWeight: FontWeight.bold,
-                          ),
+                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -137,9 +133,10 @@ class HrHomeScreen extends StatelessWidget {
           onTap: () {
             Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => AttendanceListScreen(
+                builder: (_) => AttendanceHomeScreen(
                   user: user,
-                  repository: attendanceRepository ?? MockAttendanceRepository(),
+                  repository:
+                      attendanceRepository ?? MockAttendanceRepository(),
                 ),
               ),
             );
@@ -156,8 +153,7 @@ class HrHomeScreen extends StatelessWidget {
               MaterialPageRoute(
                 builder: (_) => EmployeeKpiListScreen(
                   user: user,
-                  kpiRepository:
-                      kpiRepository ?? MockEmployeeKpiRepository(),
+                  kpiRepository: kpiRepository ?? MockEmployeeKpiRepository(),
                   employeeRepository: repository,
                 ),
               ),

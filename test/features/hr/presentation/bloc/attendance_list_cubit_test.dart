@@ -34,6 +34,29 @@ void main() {
       },
     );
 
+    test('initial date scopes repository results and survives reset', () async {
+      final dateScopedCubit = AttendanceListCubit(
+        repository,
+        initialDate: DateTime.utc(2026, 9, 24),
+      );
+      addTearDown(dateScopedCubit.close);
+
+      await dateScopedCubit.loadAttendance();
+
+      expect(dateScopedCubit.state.records, hasLength(2));
+      expect(
+        dateScopedCubit.state.records.every(
+          (record) => record.isSameDay(DateTime.utc(2026, 9, 24)),
+        ),
+        isTrue,
+      );
+
+      dateScopedCubit.setSearchQuery('emp_1');
+      dateScopedCubit.resetFilters();
+      expect(dateScopedCubit.state.selectedDate, DateTime.utc(2026, 9, 24));
+      expect(dateScopedCubit.state.filteredRecords, hasLength(2));
+    });
+
     test('setSearchQuery filters records by query string', () async {
       await cubit.loadAttendance();
 

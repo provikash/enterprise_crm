@@ -4,7 +4,7 @@ import 'package:enterprise_crm/features/auth/domain/entities/current_user.dart';
 import 'package:enterprise_crm/features/auth/domain/policies/crm_permissions.dart';
 import 'package:enterprise_crm/features/auth/presentation/screens/access_restricted_screen.dart';
 import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_repository.dart';
-import 'package:enterprise_crm/features/hr/presentation/screens/attendance_list_screen.dart';
+import 'package:enterprise_crm/features/hr/presentation/screens/attendance_home_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/employee_directory_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/employee_kpi_list_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/hr_home_screen.dart';
@@ -50,7 +50,10 @@ void main() {
     repository = MockEmployeeRepository();
   });
 
-  Widget buildWidget({required CurrentUser user, Size size = const Size(1000, 800)}) {
+  Widget buildWidget({
+    required CurrentUser user,
+    Size size = const Size(1000, 800),
+  }) {
     return MaterialApp(
       home: MediaQuery(
         data: MediaQueryData(size: size),
@@ -60,7 +63,9 @@ void main() {
   }
 
   group('HrHomeScreen Tests', () {
-    testWidgets('unauthorized user sees AccessRestrictedScreen', (tester) async {
+    testWidgets('unauthorized user sees AccessRestrictedScreen', (
+      tester,
+    ) async {
       await tester.pumpWidget(buildWidget(user: unauthorizedUser));
       await tester.pumpAndSettle();
 
@@ -76,30 +81,40 @@ void main() {
 
       expect(find.byKey(const Key('hr_home_scaffold')), findsOneWidget);
       expect(find.text('HR & Payroll Management'), findsOneWidget);
-      expect(find.byKey(const Key('hr_feature_card_employees')), findsOneWidget);
-      expect(find.byKey(const Key('hr_feature_card_attendance')), findsOneWidget);
+      expect(
+        find.byKey(const Key('hr_feature_card_employees')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('hr_feature_card_attendance')),
+        findsOneWidget,
+      );
       expect(find.byKey(const Key('hr_feature_card_kpi')), findsOneWidget);
-      expect(find.byKey(const Key('hr_feature_card_documents')), findsOneWidget);
+      expect(
+        find.byKey(const Key('hr_feature_card_documents')),
+        findsOneWidget,
+      );
       expect(find.byKey(const Key('hr_feature_card_payroll')), findsNothing);
     });
 
-    testWidgets('user with payrollView sees payroll card and can open overview', (
-      tester,
-    ) async {
-      await tester.pumpWidget(buildWidget(user: hrPayrollUser));
-      await tester.pumpAndSettle();
+    testWidgets(
+      'user with payrollView sees payroll card and can open overview',
+      (tester) async {
+        await tester.pumpWidget(buildWidget(user: hrPayrollUser));
+        await tester.pumpAndSettle();
 
-      final payrollCard = find.byKey(const Key('hr_feature_card_payroll'));
-      expect(payrollCard, findsOneWidget);
+        final payrollCard = find.byKey(const Key('hr_feature_card_payroll'));
+        expect(payrollCard, findsOneWidget);
 
-      await tester.ensureVisible(payrollCard);
-      await tester.tap(payrollCard);
-      await tester.pumpAndSettle();
+        await tester.ensureVisible(payrollCard);
+        await tester.tap(payrollCard);
+        await tester.pumpAndSettle();
 
-      expect(find.text('Compensation Overview'), findsOneWidget);
-      expect(find.text('Monthly (30 Days)'), findsOneWidget);
-      expect(find.text('INR (₹)'), findsOneWidget);
-    });
+        expect(find.text('Compensation Overview'), findsOneWidget);
+        expect(find.text('Monthly (30 Days)'), findsOneWidget);
+        expect(find.text('INR (₹)'), findsOneWidget);
+      },
+    );
 
     testWidgets('tapping Employees navigates to EmployeeDirectoryScreen', (
       tester,
@@ -113,7 +128,7 @@ void main() {
       expect(find.byType(EmployeeDirectoryScreen), findsOneWidget);
     });
 
-    testWidgets('tapping Attendance navigates to AttendanceListScreen', (
+    testWidgets('tapping Attendance navigates to AttendanceHomeScreen', (
       tester,
     ) async {
       await tester.pumpWidget(buildWidget(user: adminUser));
@@ -122,7 +137,8 @@ void main() {
       await tester.tap(find.byKey(const Key('hr_feature_card_attendance')));
       await tester.pumpAndSettle();
 
-      expect(find.byType(AttendanceListScreen), findsOneWidget);
+      expect(find.byType(AttendanceHomeScreen), findsOneWidget);
+      expect(find.byKey(const Key('attendance_home_scaffold')), findsOneWidget);
     });
 
     testWidgets('tapping KPI navigates to EmployeeKpiListScreen', (
