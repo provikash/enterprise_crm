@@ -2,6 +2,9 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:enterprise_crm/features/auth/domain/entities/account_type.dart';
+import 'package:enterprise_crm/features/auth/domain/entities/crm_module.dart';
+import 'package:enterprise_crm/features/auth/domain/entities/current_user.dart';
 import 'package:enterprise_crm/features/dispatch/data/repositories/mock_dispatch_repository.dart';
 import 'package:enterprise_crm/features/dispatch/domain/entities/dispatch_filter_query.dart';
 import 'package:enterprise_crm/features/dispatch/presentation/services/dispatch_file_saver.dart';
@@ -143,5 +146,41 @@ void main() {
 
     expect(find.byKey(const Key('dispatch_export_dialog')), findsNothing);
     expect(fileSaver.lastBytes, isNull);
+  });
+
+  testWidgets('disables unauthorized formats and restricts export according to user permissions', (
+    tester,
+  ) async {
+    final pdfOnlyUser = CurrentUser(
+      id: 'usr_pdf',
+      displayName: 'PDF Only User',
+      accountType: AccountType.user,
+      modules: const {CrmModule.dispatch},
+      permissions: const {'dispatch.view', 'dispatch.export.pdf'},
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DispatchExportDialog(
+            repository: repository,
+            fileSaver: fileSaver,
+            user: pdfOnlyUser,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // PDF is allowed, XLSX & CSV show permission required
+    expect(find.text('Formatted multi-page register report'), findsOneWidget);
+    expect(find.text('Permission required (dispatch.export.xlsx)'), findsOneWidget);
+    expect(find.text('Permission required (dispatch.export.csv)'), findsOneWidget);
+
+    // Can still export allowed format (PDF)
+    await tester.tap(find.byKey(const Key('dispatch_confirm_export_button')));
+    await tester.pumpAndSettle();
+
+    expect(fileSaver.lastExtension, equals('pdf'));
   });
 }

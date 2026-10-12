@@ -218,12 +218,14 @@ class _DispatchDetailsView extends StatelessWidget {
                           context,
                           title: 'Shipment Overview',
                           icon: Icons.local_shipping_outlined,
-                          action: OutlinedButton.icon(
-                            key: const Key('download_dispatch_bill_button'),
-                            icon: const Icon(Icons.picture_as_pdf_outlined, size: 16),
-                            label: const Text('Download Bill (PDF)'),
-                            onPressed: () => _downloadBill(context, record),
-                          ),
+                          action: DispatchAccessPolicy.canDownloadBill(user)
+                              ? OutlinedButton.icon(
+                                  key: const Key('download_dispatch_bill_button'),
+                                  icon: const Icon(Icons.picture_as_pdf_outlined, size: 16),
+                                  label: const Text('Download Bill (PDF)'),
+                                  onPressed: () => _downloadBill(context, record),
+                                )
+                              : null,
                           children: [
                             _buildInfoRow(
                               'Dispatch Code',

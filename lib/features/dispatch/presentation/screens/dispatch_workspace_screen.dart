@@ -137,6 +137,7 @@ class _DispatchWorkspaceViewState extends State<_DispatchWorkspaceView> {
     showDispatchExportDialog(
       context: context,
       repository: widget.repository,
+      user: widget.user,
       currentQuery: state.query,
       currentFilteredRecords:
           state is DispatchListLoaded ? state.dispatches : null,
@@ -153,13 +154,15 @@ class _DispatchWorkspaceViewState extends State<_DispatchWorkspaceView> {
       appBar: AppBar(
         title: const Text('Dispatch Management'),
         actions: [
-          IconButton(
-            key: const Key('dispatch_export_button'),
-            icon: const Icon(Icons.file_download_outlined),
-            tooltip: 'Export Dispatches',
-            onPressed: () => _handleExportDispatches(context),
-          ),
-          const SizedBox(width: 8),
+          if (DispatchAccessPolicy.canExportAny(widget.user)) ...[
+            IconButton(
+              key: const Key('dispatch_export_button'),
+              icon: const Icon(Icons.file_download_outlined),
+              tooltip: 'Export Dispatches',
+              onPressed: () => _handleExportDispatches(context),
+            ),
+            const SizedBox(width: 8),
+          ],
           if (DispatchAccessPolicy.canCreate(widget.user))
             Padding(
               padding: const EdgeInsets.only(right: 16.0),

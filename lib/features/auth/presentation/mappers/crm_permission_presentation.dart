@@ -19,6 +19,13 @@ abstract final class CrmPermissionPresentation {
     CrmPermissions.inventoryExportXlsx: 'Export inventory (Excel)',
     CrmPermissions.purchaseView: 'View purchases',
     CrmPermissions.vendorView: 'View vendors',
+    CrmPermissions.dispatchView: 'View dispatch records',
+    CrmPermissions.dispatchCreate: 'Create dispatch orders',
+    CrmPermissions.dispatchUpdateStatus: 'Update shipment status',
+    CrmPermissions.dispatchExportCsv: 'Export dispatch (CSV)',
+    CrmPermissions.dispatchExportXlsx: 'Export dispatch (Excel)',
+    CrmPermissions.dispatchExportPdf: 'Export dispatch register (PDF)',
+    CrmPermissions.dispatchDownloadBill: 'Download bill / challan (PDF)',
   };
 
   /// Returns the human-readable display label for [permissionId].

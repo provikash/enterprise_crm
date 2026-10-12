@@ -1,5 +1,8 @@
 import 'dart:typed_data';
 
+import 'package:enterprise_crm/features/auth/domain/entities/account_type.dart';
+import 'package:enterprise_crm/features/auth/domain/entities/crm_module.dart';
+import 'package:enterprise_crm/features/auth/domain/entities/current_user.dart';
 import 'package:enterprise_crm/features/auth/presentation/screens/access_restricted_screen.dart';
 import 'package:enterprise_crm/features/dispatch/data/repositories/mock_dispatch_repository.dart';
 import 'package:enterprise_crm/features/dispatch/domain/entities/dispatch_status.dart';
@@ -166,6 +169,96 @@ void main() {
       expect(fileSaver.lastMimeType, equals('application/pdf'));
       expect(fileSaver.lastFileName, contains('DSP-2026-001'));
       expect(fileSaver.lastBytes, isNotNull);
+    });
+
+    testWidgets('User 1 (view only) cannot see download bill or update status buttons', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final user1 = CurrentUser(
+        id: 'usr_1',
+        displayName: 'User 1',
+        accountType: AccountType.user,
+        modules: const {CrmModule.dispatch},
+        permissions: const {'dispatch.view'},
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DispatchDetailsScreen(
+            dispatchId: 'dsp_001',
+            user: user1,
+            repository: repository,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Dispatch Details'), findsOneWidget);
+      expect(find.byKey(const Key('open_update_status_dialog_button')), findsNothing);
+      expect(find.byKey(const Key('download_dispatch_bill_button')), findsNothing);
+    });
+
+    testWidgets('User 2 (view + bill download) sees download bill button but NOT update status button', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final user2 = CurrentUser(
+        id: 'usr_2',
+        displayName: 'User 2',
+        accountType: AccountType.user,
+        modules: const {CrmModule.dispatch},
+        permissions: const {'dispatch.view', 'dispatch.bill.download'},
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DispatchDetailsScreen(
+            dispatchId: 'dsp_001',
+            user: user2,
+            repository: repository,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Dispatch Details'), findsOneWidget);
+      expect(find.byKey(const Key('download_dispatch_bill_button')), findsOneWidget);
+      expect(find.byKey(const Key('open_update_status_dialog_button')), findsNothing);
+    });
+
+    testWidgets('User 3 (view + edit/update) sees update status button but NOT download bill button', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final user3 = CurrentUser(
+        id: 'usr_3',
+        displayName: 'User 3',
+        accountType: AccountType.user,
+        modules: const {CrmModule.dispatch},
+        permissions: const {'dispatch.view', 'dispatch.update_status'},
+      );
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DispatchDetailsScreen(
+            dispatchId: 'dsp_001',
+            user: user3,
+            repository: repository,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Dispatch Details'), findsOneWidget);
+      expect(find.byKey(const Key('open_update_status_dialog_button')), findsOneWidget);
+      expect(find.byKey(const Key('download_dispatch_bill_button')), findsNothing);
     });
   });
 }

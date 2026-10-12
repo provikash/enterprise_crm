@@ -2,8 +2,10 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
+import '../../../auth/domain/entities/current_user.dart';
 import '../../domain/entities/dispatch_filter_query.dart';
 import '../../domain/entities/dispatch_record.dart';
+import '../../domain/policies/dispatch_access_policy.dart';
 import '../../domain/repositories/dispatch_repository.dart';
 import '../services/dispatch_csv_serializer.dart';
 import '../services/dispatch_file_saver.dart';
@@ -25,6 +27,7 @@ enum DispatchExportScope {
 Future<bool?> showDispatchExportDialog({
   required BuildContext context,
   required DispatchRepository repository,
+  CurrentUser? user,
   DispatchFilterQuery? currentQuery,
   List<DispatchRecord>? currentFilteredRecords,
   DispatchFileSaver? fileSaver,
@@ -33,6 +36,7 @@ Future<bool?> showDispatchExportDialog({
     context: context,
     builder: (_) => DispatchExportDialog(
       repository: repository,
+      user: user,
       currentQuery: currentQuery,
       currentFilteredRecords: currentFilteredRecords,
       fileSaver: fileSaver,
@@ -43,6 +47,7 @@ Future<bool?> showDispatchExportDialog({
 /// Modal dialog for configuring and executing Dispatch exports (PDF, Excel, CSV).
 class DispatchExportDialog extends StatefulWidget {
   final DispatchRepository repository;
+  final CurrentUser? user;
   final DispatchFilterQuery? currentQuery;
   final List<DispatchRecord>? currentFilteredRecords;
   final DispatchFileSaver? fileSaver;
@@ -50,6 +55,7 @@ class DispatchExportDialog extends StatefulWidget {
   const DispatchExportDialog({
     super.key,
     required this.repository,
+    this.user,
     this.currentQuery,
     this.currentFilteredRecords,
     this.fileSaver,
@@ -67,6 +73,16 @@ class _DispatchExportDialogState extends State<DispatchExportDialog> {
 
   late final DispatchFileSaver _fileSaver;
 
+  bool _canExport(DispatchExportFormat format) {
+    final user = widget.user;
+    if (user == null) return true;
+    return switch (format) {
+      DispatchExportFormat.pdf => DispatchAccessPolicy.canExportPdf(user),
+      DispatchExportFormat.xlsx => DispatchAccessPolicy.canExportXlsx(user),
+      DispatchExportFormat.csv => DispatchAccessPolicy.canExportCsv(user),
+    };
+  }
+
   @override
   void initState() {
     super.initState();
@@ -76,9 +92,25 @@ class _DispatchExportDialogState extends State<DispatchExportDialog> {
         (widget.currentQuery?.searchText?.isNotEmpty ?? false)) {
       _scope = DispatchExportScope.filtered;
     }
+
+    if (!_canExport(_format)) {
+      if (_canExport(DispatchExportFormat.xlsx)) {
+        _format = DispatchExportFormat.xlsx;
+      } else if (_canExport(DispatchExportFormat.csv)) {
+        _format = DispatchExportFormat.csv;
+      }
+    }
   }
 
   Future<void> _handleExport() async {
+    if (!_canExport(_format)) {
+      setState(() {
+        _errorMessage =
+            'You do not have permission to export in ${_format.name.toUpperCase()} format.';
+      });
+      return;
+    }
+
     setState(() {
       _isExporting = true;
       _errorMessage = null;
@@ -170,6 +202,9 @@ class _DispatchExportDialogState extends State<DispatchExportDialog> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final canPdf = _canExport(DispatchExportFormat.pdf);
+    final canXlsx = _canExport(DispatchExportFormat.xlsx);
+    final canCsv = _canExport(DispatchExportFormat.csv);
 
     return AlertDialog(
       key: const Key('dispatch_export_dialog'),
@@ -190,15 +225,20 @@ class _DispatchExportDialogState extends State<DispatchExportDialog> {
               style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
+
             RadioListTile<DispatchExportFormat>(
               key: const Key('dispatch_export_format_pdf'),
               dense: true,
               value: DispatchExportFormat.pdf,
               groupValue: _format,
               title: const Text('PDF Document (.pdf)'),
-              subtitle: const Text('Formatted multi-page register report'),
+              subtitle: Text(canPdf
+                  ? 'Formatted multi-page register report'
+                  : 'Permission required (dispatch.export.pdf)'),
               secondary: const Icon(Icons.picture_as_pdf_outlined),
-              onChanged: _isExporting ? null : (v) => setState(() => _format = v!),
+              onChanged: (_isExporting || !canPdf)
+                  ? null
+                  : (v) => setState(() => _format = v!),
             ),
             RadioListTile<DispatchExportFormat>(
               key: const Key('dispatch_export_format_xlsx'),
@@ -206,9 +246,13 @@ class _DispatchExportDialogState extends State<DispatchExportDialog> {
               value: DispatchExportFormat.xlsx,
               groupValue: _format,
               title: const Text('Excel Spreadsheet (.xlsx)'),
-              subtitle: const Text('Styled spreadsheet with all metadata'),
+              subtitle: Text(canXlsx
+                  ? 'Styled spreadsheet with all metadata'
+                  : 'Permission required (dispatch.export.xlsx)'),
               secondary: const Icon(Icons.table_chart_outlined),
-              onChanged: _isExporting ? null : (v) => setState(() => _format = v!),
+              onChanged: (_isExporting || !canXlsx)
+                  ? null
+                  : (v) => setState(() => _format = v!),
             ),
             RadioListTile<DispatchExportFormat>(
               key: const Key('dispatch_export_format_csv'),
@@ -216,9 +260,13 @@ class _DispatchExportDialogState extends State<DispatchExportDialog> {
               value: DispatchExportFormat.csv,
               groupValue: _format,
               title: const Text('CSV Document (.csv)'),
-              subtitle: const Text('Plain text comma-separated values'),
+              subtitle: Text(canCsv
+                  ? 'Plain text comma-separated values'
+                  : 'Permission required (dispatch.export.csv)'),
               secondary: const Icon(Icons.text_snippet_outlined),
-              onChanged: _isExporting ? null : (v) => setState(() => _format = v!),
+              onChanged: (_isExporting || !canCsv)
+                  ? null
+                  : (v) => setState(() => _format = v!),
             ),
             const Divider(height: 24),
             Text(

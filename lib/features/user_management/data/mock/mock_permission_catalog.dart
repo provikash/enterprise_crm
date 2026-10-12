@@ -106,6 +106,42 @@ abstract final class MockPermissionCatalog {
       module: CrmModule.vendorManagement,
       displayName: 'View Vendors',
     ),
+    // Dispatch
+    MockPermissionDefinition(
+      id: CrmPermissions.dispatchView,
+      module: CrmModule.dispatch,
+      displayName: 'View Dispatch Records',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.dispatchCreate,
+      module: CrmModule.dispatch,
+      displayName: 'Create Dispatch Orders',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.dispatchUpdateStatus,
+      module: CrmModule.dispatch,
+      displayName: 'Update Shipment Status',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.dispatchExportCsv,
+      module: CrmModule.dispatch,
+      displayName: 'Export Dispatch (CSV)',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.dispatchExportXlsx,
+      module: CrmModule.dispatch,
+      displayName: 'Export Dispatch (Excel)',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.dispatchExportPdf,
+      module: CrmModule.dispatch,
+      displayName: 'Export Dispatch Register (PDF)',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.dispatchDownloadBill,
+      module: CrmModule.dispatch,
+      displayName: 'Download Dispatch Bill (PDF)',
+    ),
   ];
 
   /// Returns whether [permissionId] is a recognized permission identifier.

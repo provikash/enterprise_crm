@@ -1,3 +1,5 @@
+import 'package:enterprise_crm/features/auth/domain/entities/account_type.dart';
+import 'package:enterprise_crm/features/auth/domain/entities/crm_module.dart';
 import 'package:enterprise_crm/features/auth/domain/entities/current_user.dart';
 import 'package:enterprise_crm/features/auth/presentation/screens/access_restricted_screen.dart';
 import 'package:enterprise_crm/features/dispatch/data/repositories/mock_dispatch_repository.dart';
@@ -246,6 +248,85 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('dispatch_export_dialog')), findsOneWidget);
+    });
+
+    testWidgets('User 1 (view only) cannot see create dispatch or export buttons', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final user1 = CurrentUser(
+        id: 'usr_1',
+        displayName: 'User 1',
+        accountType: AccountType.user,
+        modules: const {CrmModule.dispatch},
+        permissions: const {'dispatch.view'},
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          user: user1,
+          repository: repository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Dispatch Management'), findsOneWidget);
+      expect(find.byKey(const Key('create_dispatch_button')), findsNothing);
+      expect(find.byKey(const Key('dispatch_export_button')), findsNothing);
+    });
+
+    testWidgets('User with dispatch.create sees create button', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final creator = CurrentUser(
+        id: 'usr_creator',
+        displayName: 'Creator',
+        accountType: AccountType.user,
+        modules: const {CrmModule.dispatch},
+        permissions: const {'dispatch.view', 'dispatch.create'},
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          user: creator,
+          repository: repository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('create_dispatch_button')), findsOneWidget);
+      expect(find.byKey(const Key('dispatch_export_button')), findsNothing);
+    });
+
+    testWidgets('User with dispatch.export.pdf sees export button', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final exporter = CurrentUser(
+        id: 'usr_exporter',
+        displayName: 'Exporter',
+        accountType: AccountType.user,
+        modules: const {CrmModule.dispatch},
+        permissions: const {'dispatch.view', 'dispatch.export.pdf'},
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          user: exporter,
+          repository: repository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('dispatch_export_button')), findsOneWidget);
+      expect(find.byKey(const Key('create_dispatch_button')), findsNothing);
     });
   });
 }
