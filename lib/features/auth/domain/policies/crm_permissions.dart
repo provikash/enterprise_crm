@@ -14,6 +14,11 @@ abstract final class CrmPermissions {
 
   // HR / Payroll
   static const String hrView = 'hr.view';
+  static const String attendanceManage = 'attendance.manage';
+  static const String shiftManage = 'shift.manage';
+  static const String attendancePolicyManage = 'attendance_policy.manage';
+  static const String timesheetApprove = 'timesheet.approve';
+  static const String leaveManage = 'leave.manage';
   static const String payrollView = 'payroll.view';
 
   // Inventory
@@ -39,6 +44,11 @@ abstract final class CrmPermissions {
     leadUpdate: CrmModule.leadManagement,
     callingUse: CrmModule.calling,
     hrView: CrmModule.hrPayroll,
+    attendanceManage: CrmModule.hrPayroll,
+    shiftManage: CrmModule.hrPayroll,
+    attendancePolicyManage: CrmModule.hrPayroll,
+    timesheetApprove: CrmModule.hrPayroll,
+    leaveManage: CrmModule.hrPayroll,
     payrollView: CrmModule.hrPayroll,
     inventoryView: CrmModule.inventory,
     inventoryCreate: CrmModule.inventory,

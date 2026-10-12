@@ -34,6 +34,7 @@ void main() {
     fullName: 'Alice Johnson',
     email: 'alice.johnson@enterprise.com',
     phone: '+1 555-0101',
+    documentNumber: 'ID-EMP-001',
     department: 'Human Resources',
     designation: 'HR Manager',
     employmentStatus: EmploymentStatus.active,

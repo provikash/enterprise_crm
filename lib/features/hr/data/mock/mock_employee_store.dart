@@ -3,6 +3,7 @@ import '../../domain/entities/employment_status.dart';
 import '../../domain/inputs/create_employee_input.dart';
 import '../../domain/inputs/update_employee_input.dart';
 import '../../domain/repositories/employee_repository.dart';
+import '../../domain/validation/employee_validators.dart';
 
 /// In-memory mock store for HR Employee records.
 ///
@@ -23,6 +24,7 @@ class MockEmployeeStore {
         fullName: 'Alice Johnson',
         email: 'alice.johnson@enterprise.com',
         phone: '+1 555-0101',
+        documentNumber: 'ID-EMP-001',
         department: 'Human Resources',
         designation: 'HR Manager',
         employmentStatus: EmploymentStatus.active,
@@ -36,6 +38,7 @@ class MockEmployeeStore {
         fullName: 'Bob Miller',
         email: 'bob.miller@enterprise.com',
         phone: '+1 555-0102',
+        documentNumber: 'ID-EMP-002',
         department: 'Inventory & Logistics',
         designation: 'Warehouse Supervisor',
         employmentStatus: EmploymentStatus.active,
@@ -49,6 +52,7 @@ class MockEmployeeStore {
         fullName: 'Charlie Davis',
         email: 'charlie.davis@enterprise.com',
         phone: '+1 555-0103',
+        documentNumber: 'ID-EMP-003',
         department: 'Sales & Marketing',
         designation: 'Senior Account Executive',
         employmentStatus: EmploymentStatus.active,
@@ -62,6 +66,7 @@ class MockEmployeeStore {
         fullName: 'Dana White',
         email: 'dana.white@enterprise.com',
         phone: '+1 555-0104',
+        documentNumber: 'ID-EMP-004',
         department: 'Customer Operations',
         designation: 'Support Specialist',
         employmentStatus: EmploymentStatus.probation,
@@ -75,6 +80,7 @@ class MockEmployeeStore {
         fullName: 'Evan Wright',
         email: 'evan.wright@enterprise.com',
         phone: '+1 555-0105',
+        documentNumber: 'ID-EMP-005',
         department: 'Finance & Accounts',
         designation: 'Financial Analyst',
         employmentStatus: EmploymentStatus.inactive,
@@ -129,10 +135,17 @@ class MockEmployeeStore {
     }
 
     final trimmedEmail = input.email?.trim();
-    if (trimmedEmail != null &&
-        trimmedEmail.isNotEmpty &&
-        !trimmedEmail.contains('@')) {
-      throw const EmployeeException('Please enter a valid email address.');
+    final emailError = EmployeeValidators.email(trimmedEmail);
+    if (emailError != null) throw EmployeeException(emailError);
+    final phoneError = EmployeeValidators.phone(input.phone);
+    if (phoneError != null) throw EmployeeException(phoneError);
+    for (final field in [
+      (input.documentNumber, 'Identity document number'),
+      (input.department, 'Department'),
+      (input.designation, 'Designation'),
+    ]) {
+      final error = EmployeeValidators.requiredText(field.$1, field.$2);
+      if (error != null) throw EmployeeException(error);
     }
 
     _sequence++;
@@ -149,6 +162,7 @@ class MockEmployeeStore {
           ? trimmedEmail
           : null,
       phone: input.phone?.trim(),
+      documentNumber: input.documentNumber?.trim(),
       department: input.department?.trim(),
       designation: input.designation?.trim(),
       employmentStatus: input.employmentStatus,
@@ -189,10 +203,17 @@ class MockEmployeeStore {
     }
 
     final trimmedEmail = input.email?.trim();
-    if (trimmedEmail != null &&
-        trimmedEmail.isNotEmpty &&
-        !trimmedEmail.contains('@')) {
-      throw const EmployeeException('Please enter a valid email address.');
+    final emailError = EmployeeValidators.email(trimmedEmail);
+    if (emailError != null) throw EmployeeException(emailError);
+    final phoneError = EmployeeValidators.phone(input.phone);
+    if (phoneError != null) throw EmployeeException(phoneError);
+    for (final field in [
+      (input.documentNumber, 'Identity document number'),
+      (input.department, 'Department'),
+      (input.designation, 'Designation'),
+    ]) {
+      final error = EmployeeValidators.requiredText(field.$1, field.$2);
+      if (error != null) throw EmployeeException(error);
     }
 
     final now = DateTime.now();
@@ -203,6 +224,7 @@ class MockEmployeeStore {
           ? trimmedEmail
           : null,
       phone: input.phone?.trim(),
+      documentNumber: input.documentNumber?.trim(),
       department: input.department?.trim(),
       designation: input.designation?.trim(),
       employmentStatus: input.employmentStatus,

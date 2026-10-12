@@ -1,5 +1,7 @@
 # Attendance Enterprise Requirements
 
+> Superseded scope note (2026-10-12): the product owner subsequently supplied explicit frontend contracts for raw `AttendanceLog` events, computed `AttendanceDaily` summaries, manual attendance, shifts, policies, timesheets, regularization, leave, and holidays. The implemented frontend foundation and backend ownership boundaries are recorded in `HR_ATTENDANCE_FRONTEND_CONTRACT.md`. Earlier "unconfirmed" classifications below describe the state before that clarification.
+
 ## 1. Purpose and evidence boundary
 
 This contract records what the current Flutter repository actually supports. It does not create backend endpoints, statuses, permissions, formulas, approval rules, shift rules, leave rules, holiday rules, or payroll rules.

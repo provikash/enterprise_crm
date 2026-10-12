@@ -135,6 +135,9 @@ void main() {
       await repository.createEmployee(
         const CreateEmployeeInput(
           fullName: 'Helen Troy',
+          email: 'helen.troy@enterprise.com',
+          phone: '+1 555-0199',
+          documentNumber: 'ID-HELEN-0199',
           department: 'Human Resources',
           designation: 'HR Coordinator',
         ),

@@ -10,6 +10,7 @@ class Employee {
   final String fullName;
   final String? email;
   final String? phone;
+  final String? documentNumber;
   final String? department;
   final String? designation;
   final EmploymentStatus employmentStatus;
@@ -24,6 +25,7 @@ class Employee {
     required this.fullName,
     this.email,
     this.phone,
+    this.documentNumber,
     this.department,
     this.designation,
     this.employmentStatus = EmploymentStatus.active,
@@ -46,6 +48,7 @@ class Employee {
     String? fullName,
     String? email,
     String? phone,
+    String? documentNumber,
     String? department,
     String? designation,
     EmploymentStatus? employmentStatus,
@@ -61,6 +64,7 @@ class Employee {
       fullName: fullName ?? this.fullName,
       email: email ?? this.email,
       phone: phone ?? this.phone,
+      documentNumber: documentNumber ?? this.documentNumber,
       department: department ?? this.department,
       designation: designation ?? this.designation,
       employmentStatus: employmentStatus ?? this.employmentStatus,
@@ -81,6 +85,7 @@ class Employee {
           fullName == other.fullName &&
           email == other.email &&
           phone == other.phone &&
+          documentNumber == other.documentNumber &&
           department == other.department &&
           designation == other.designation &&
           employmentStatus == other.employmentStatus &&
@@ -94,6 +99,7 @@ class Employee {
     fullName,
     email,
     phone,
+    documentNumber,
     department,
     designation,
     employmentStatus,

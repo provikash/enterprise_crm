@@ -137,6 +137,7 @@ class HrHomeScreen extends StatelessWidget {
                   user: user,
                   repository:
                       attendanceRepository ?? MockAttendanceRepository(),
+                  employeeRepository: repository,
                 ),
               ),
             );

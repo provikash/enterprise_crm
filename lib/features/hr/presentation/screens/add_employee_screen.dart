@@ -5,6 +5,7 @@ import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../domain/entities/employment_status.dart';
 import '../../domain/inputs/create_employee_input.dart';
 import '../../domain/repositories/employee_repository.dart';
+import '../../domain/validation/employee_validators.dart';
 
 /// Form screen for creating a new Employee record in the HR module.
 ///
@@ -30,6 +31,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
   final _codeController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _documentNumberController = TextEditingController();
   final _departmentController = TextEditingController();
   final _designationController = TextEditingController();
   final _userIdController = TextEditingController();
@@ -46,6 +48,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
     _codeController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _documentNumberController.dispose();
     _departmentController.dispose();
     _designationController.dispose();
     _userIdController.dispose();
@@ -167,11 +170,16 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
                               key: const Key('add_employee_dept_field'),
                               controller: _departmentController,
                               decoration: const InputDecoration(
-                                labelText: 'Department',
+                                labelText: 'Department *',
                                 hintText: 'e.g. Human Resources',
                                 prefixIcon: Icon(Icons.business_outlined),
                                 border: OutlineInputBorder(),
                               ),
+                              validator: (value) =>
+                                  EmployeeValidators.requiredText(
+                                    value,
+                                    'Department',
+                                  ),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -180,11 +188,16 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
                               key: const Key('add_employee_designation_field'),
                               controller: _designationController,
                               decoration: const InputDecoration(
-                                labelText: 'Designation',
+                                labelText: 'Designation *',
                                 hintText: 'e.g. HR Manager',
                                 prefixIcon: Icon(Icons.work_outline),
                                 border: OutlineInputBorder(),
                               ),
+                              validator: (value) =>
+                                  EmployeeValidators.requiredText(
+                                    value,
+                                    'Designation',
+                                  ),
                             ),
                           ),
                         ],
@@ -256,20 +269,12 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
-                          labelText: 'Email Address',
+                          labelText: 'Email Address *',
                           hintText: 'e.g. employee@enterprise.com',
                           prefixIcon: Icon(Icons.email_outlined),
                           border: OutlineInputBorder(),
                         ),
-                        validator: (value) {
-                          final trimmed = value?.trim();
-                          if (trimmed != null &&
-                              trimmed.isNotEmpty &&
-                              !trimmed.contains('@')) {
-                            return 'Please enter a valid email address';
-                          }
-                          return null;
-                        },
+                        validator: EmployeeValidators.email,
                       ),
                       const SizedBox(height: 16),
 
@@ -278,10 +283,28 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
                         decoration: const InputDecoration(
-                          labelText: 'Phone Number',
+                          labelText: 'Phone Number *',
                           hintText: 'e.g. +1 555-0123',
                           prefixIcon: Icon(Icons.phone_outlined),
                           border: OutlineInputBorder(),
+                        ),
+                        validator: EmployeeValidators.phone,
+                      ),
+                      const SizedBox(height: 16),
+
+                      TextFormField(
+                        key: const Key('add_employee_document_field'),
+                        controller: _documentNumberController,
+                        textCapitalization: TextCapitalization.characters,
+                        decoration: const InputDecoration(
+                          labelText: 'Identity Document Number *',
+                          hintText: 'National ID, passport, or work permit',
+                          prefixIcon: Icon(Icons.contact_page_outlined),
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) => EmployeeValidators.requiredText(
+                          value,
+                          'Identity document number',
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -348,6 +371,9 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
             : null,
         phone: _phoneController.text.trim().isNotEmpty
             ? _phoneController.text.trim()
+            : null,
+        documentNumber: _documentNumberController.text.trim().isNotEmpty
+            ? _documentNumberController.text.trim()
             : null,
         department: _departmentController.text.trim().isNotEmpty
             ? _departmentController.text.trim()

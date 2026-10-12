@@ -7,6 +7,7 @@ class UpdateEmployeeInput {
   final String fullName;
   final String? email;
   final String? phone;
+  final String? documentNumber;
   final String? department;
   final String? designation;
   final EmploymentStatus employmentStatus;
@@ -20,6 +21,7 @@ class UpdateEmployeeInput {
     required this.fullName,
     this.email,
     this.phone,
+    this.documentNumber,
     this.department,
     this.designation,
     required this.employmentStatus,

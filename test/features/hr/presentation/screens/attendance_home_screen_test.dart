@@ -4,8 +4,10 @@ import 'package:enterprise_crm/features/auth/domain/entities/current_user.dart';
 import 'package:enterprise_crm/features/auth/domain/policies/crm_permissions.dart';
 import 'package:enterprise_crm/features/auth/presentation/screens/access_restricted_screen.dart';
 import 'package:enterprise_crm/features/hr/data/repositories/mock_attendance_repository.dart';
+import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_repository.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/attendance_home_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/attendance_list_screen.dart';
+import 'package:enterprise_crm/features/hr/presentation/screens/manual_attendance_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -28,6 +30,7 @@ void main() {
   Widget buildApp({
     CurrentUser user = admin,
     Size size = const Size(1000, 800),
+    bool includeEmployees = false,
   }) {
     return MaterialApp(
       home: MediaQuery(
@@ -36,6 +39,9 @@ void main() {
           user: user,
           repository: MockAttendanceRepository(),
           initialDate: DateTime.utc(2026, 9, 24),
+          employeeRepository: includeEmployees
+              ? MockEmployeeRepository()
+              : null,
         ),
       ),
     );
@@ -91,6 +97,23 @@ void main() {
 
     expect(find.byType(AttendanceListScreen), findsOneWidget);
     expect(find.byKey(const Key('calendar_month_title')), findsOneWidget);
+  });
+
+  testWidgets('admin sees team and manual attendance operations', (
+    tester,
+  ) async {
+    await tester.pumpWidget(buildApp(includeEmployees: true));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('attendance_feature_team')), findsOneWidget);
+    final manualCard = find.byKey(
+      const Key('attendance_feature_manual_entry'),
+    );
+    expect(manualCard, findsOneWidget);
+    await tester.ensureVisible(manualCard);
+    await tester.tap(manualCard);
+    await tester.pumpAndSettle();
+    expect(find.byType(ManualAttendanceScreen), findsOneWidget);
   });
 
   testWidgets('renders without overflow at required widths', (tester) async {

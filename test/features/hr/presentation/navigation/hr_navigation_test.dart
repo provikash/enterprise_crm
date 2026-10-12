@@ -93,15 +93,15 @@ void main() {
       expect(find.text('Employee Directory'), findsOneWidget);
       expect(find.text('Alice Johnson'), findsOneWidget);
 
-        // Back to HR home, then to the main dashboard.
-        await tester.tap(find.byType(BackButton));
-        await tester.pumpAndSettle();
+      // Back to HR home, then to the main dashboard.
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
 
-        expect(find.byType(HrHomeScreen), findsOneWidget);
-        await tester.tap(find.byType(BackButton));
-        await tester.pumpAndSettle();
+      expect(find.byType(HrHomeScreen), findsOneWidget);
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
 
-        expect(find.byType(AdminDashboardScreen), findsOneWidget);
+      expect(find.byType(AdminDashboardScreen), findsOneWidget);
     });
 
     testWidgets(
@@ -151,6 +151,14 @@ void main() {
         await tester.enterText(
           find.byKey(const Key('add_employee_email_field')),
           'diana.prince@enterprise.com',
+        );
+        await tester.enterText(
+          find.byKey(const Key('add_employee_phone_field')),
+          '+1 555-0999',
+        );
+        await tester.enterText(
+          find.byKey(const Key('add_employee_document_field')),
+          'ID-DIANA-999',
         );
 
         final submitBtn = find.byKey(const Key('add_employee_submit_button'));

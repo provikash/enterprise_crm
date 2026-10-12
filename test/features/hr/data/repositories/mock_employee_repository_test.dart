@@ -50,6 +50,7 @@ void main() {
         employeeCode: 'EMP-999',
         email: 'new.hire@enterprise.com',
         phone: '+1 555-0999',
+        documentNumber: 'ID-NEW-999',
         department: 'Engineering',
         designation: 'Junior Developer',
         employmentStatus: EmploymentStatus.probation,
@@ -114,11 +115,37 @@ void main() {
       );
     });
 
+    test(
+      'createEmployee requires email, phone, document and position',
+      () async {
+        const missingEmail = CreateEmployeeInput(
+          fullName: 'Incomplete Employee',
+          phone: '+1 555-0198',
+          documentNumber: 'ID-198',
+          department: 'Operations',
+          designation: 'Coordinator',
+        );
+        expect(
+          () => repository.createEmployee(missingEmail),
+          throwsA(
+            isA<EmployeeException>().having(
+              (error) => error.message,
+              'message',
+              contains('Email address is required'),
+            ),
+          ),
+        );
+      },
+    );
+
     test('updateEmployee updates existing record successfully', () async {
       const input = UpdateEmployeeInput(
         id: 'emp_2',
         fullName: 'Robert Miller',
         employeeCode: 'EMP-002-MOD',
+        email: 'bob.miller@enterprise.com',
+        phone: '+1 555-0102',
+        documentNumber: 'ID-EMP-002',
         department: 'Logistics Central',
         designation: 'Director of Logistics',
         employmentStatus: EmploymentStatus.active,

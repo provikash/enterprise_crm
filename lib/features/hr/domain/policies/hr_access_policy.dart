@@ -34,4 +34,28 @@ abstract final class HrAccessPolicy {
   static bool canViewPayroll(CurrentUser user) {
     return AccessPolicy.hasPermission(user, CrmPermissions.payrollView);
   }
+
+  /// Administrators and HR users explicitly granted attendance mutation access.
+  static bool canManageAttendance(CurrentUser user) {
+    return AccessPolicy.hasPermission(user, CrmPermissions.attendanceManage);
+  }
+
+  static bool canManageShifts(CurrentUser user) {
+    return AccessPolicy.hasPermission(user, CrmPermissions.shiftManage);
+  }
+
+  static bool canManageAttendancePolicies(CurrentUser user) {
+    return AccessPolicy.hasPermission(
+      user,
+      CrmPermissions.attendancePolicyManage,
+    );
+  }
+
+  static bool canApproveTimesheets(CurrentUser user) {
+    return AccessPolicy.hasPermission(user, CrmPermissions.timesheetApprove);
+  }
+
+  static bool canManageLeave(CurrentUser user) {
+    return AccessPolicy.hasPermission(user, CrmPermissions.leaveManage);
+  }
 }

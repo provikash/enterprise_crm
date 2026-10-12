@@ -5,23 +5,30 @@ import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../domain/policies/hr_access_policy.dart';
 import '../../domain/repositories/attendance_repository.dart';
+import '../../domain/repositories/attendance_management_repository.dart';
+import '../../domain/repositories/employee_repository.dart';
 import '../bloc/attendance_dashboard_cubit.dart';
 import '../bloc/attendance_dashboard_state.dart';
 import '../bloc/attendance_list_state.dart';
 import '../widgets/attendance_feature_card.dart';
 import 'attendance_list_screen.dart';
+import 'manual_attendance_screen.dart';
+import 'team_attendance_screen.dart';
+import 'workforce_operations_screen.dart';
 
 /// Date-scoped landing dashboard for the implemented Attendance capabilities.
 class AttendanceHomeScreen extends StatelessWidget {
   final CurrentUser user;
   final AttendanceRepository repository;
   final DateTime? initialDate;
+  final EmployeeRepository? employeeRepository;
 
   const AttendanceHomeScreen({
     super.key,
     required this.user,
     required this.repository,
     this.initialDate,
+    this.employeeRepository,
   });
 
   @override
@@ -35,7 +42,11 @@ class AttendanceHomeScreen extends StatelessWidget {
       create: (_) =>
           AttendanceDashboardCubit(repository: repository, initialDate: today)
             ..loadDate(today),
-      child: _AttendanceHomeView(user: user, repository: repository),
+      child: _AttendanceHomeView(
+        user: user,
+        repository: repository,
+        employeeRepository: employeeRepository,
+      ),
     );
   }
 }
@@ -43,8 +54,13 @@ class AttendanceHomeScreen extends StatelessWidget {
 class _AttendanceHomeView extends StatelessWidget {
   final CurrentUser user;
   final AttendanceRepository repository;
+  final EmployeeRepository? employeeRepository;
 
-  const _AttendanceHomeView({required this.user, required this.repository});
+  const _AttendanceHomeView({
+    required this.user,
+    required this.repository,
+    this.employeeRepository,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +107,7 @@ class _AttendanceHomeView extends StatelessWidget {
                   user: user,
                   repository: repository,
                   selectedDate: state.selectedDate,
+                  employeeRepository: employeeRepository,
                 ),
               ],
             ),
@@ -287,16 +304,59 @@ class _FeatureGrid extends StatelessWidget {
   final CurrentUser user;
   final AttendanceRepository repository;
   final DateTime selectedDate;
+  final EmployeeRepository? employeeRepository;
 
   const _FeatureGrid({
     required this.user,
     required this.repository,
     required this.selectedDate,
+    this.employeeRepository,
   });
 
   @override
   Widget build(BuildContext context) {
     final cards = [
+      if (employeeRepository != null)
+        AttendanceFeatureCard(
+          key: const Key('attendance_feature_team'),
+          icon: Icons.groups_outlined,
+          title: 'Team / company attendance',
+          description: 'Daily employee table and not-yet-checked-in list',
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => TeamAttendanceScreen(
+                user: user,
+                attendanceRepository: repository,
+                employeeRepository: employeeRepository!,
+                initialDate: selectedDate,
+              ),
+            ),
+          ),
+        ),
+      if (employeeRepository != null &&
+          repository is AttendanceManagementRepository &&
+          HrAccessPolicy.canManageAttendance(user))
+        AttendanceFeatureCard(
+          key: const Key('attendance_feature_manual_entry'),
+          icon: Icons.edit_calendar_outlined,
+          title: 'Add manual attendance',
+          description: 'Authorized, reason-required raw punch entry',
+          onTap: () async {
+            final saved = await Navigator.of(context).push<bool>(
+              MaterialPageRoute(
+                builder: (_) => ManualAttendanceScreen(
+                  user: user,
+                  repository: repository as AttendanceManagementRepository,
+                  employeeRepository: employeeRepository!,
+                  initialDate: selectedDate,
+                ),
+              ),
+            );
+            if (saved == true && context.mounted) {
+              await context.read<AttendanceDashboardCubit>().refresh();
+            }
+          },
+        ),
       AttendanceFeatureCard(
         key: const Key('attendance_feature_daily_records'),
         icon: Icons.today_outlined,
@@ -321,6 +381,17 @@ class _FeatureGrid extends StatelessWidget {
         title: 'Attendance history',
         description: 'Search and filter all available attendance records',
         onTap: () => _openList(context),
+      ),
+      AttendanceFeatureCard(
+        key: const Key('attendance_feature_workforce_operations'),
+        icon: Icons.account_tree_outlined,
+        title: 'Workforce operations',
+        description: 'Shifts, policies, timesheets, leave and holidays',
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => WorkforceOperationsScreen(user: user),
+          ),
+        ),
       ),
     ];
 
