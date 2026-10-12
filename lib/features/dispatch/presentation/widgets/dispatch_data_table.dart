@@ -3,8 +3,9 @@ import 'package:flutter/material.dart';
 import '../../domain/entities/dispatch_record.dart';
 import 'dispatch_status_badge.dart';
 
-/// Desktop & Web data table presenting dispatch orders.
-class DispatchDataTable extends StatelessWidget {
+/// Desktop & Web data table presenting dispatch orders with responsive
+/// horizontal left-to-right / right-to-left bottom scroll navigation.
+class DispatchDataTable extends StatefulWidget {
   final List<DispatchRecord> dispatches;
   final ScrollController? horizontalScrollController;
   final ScrollController? verticalScrollController;
@@ -19,23 +20,196 @@ class DispatchDataTable extends StatelessWidget {
   });
 
   @override
+  State<DispatchDataTable> createState() => _DispatchDataTableState();
+}
+
+class _DispatchDataTableState extends State<DispatchDataTable> {
+  ScrollController? _internalHController;
+  ScrollController? _internalVController;
+
+  ScrollController get _effectiveHController =>
+      widget.horizontalScrollController ??
+      (_internalHController ??= ScrollController());
+
+  ScrollController get _effectiveVController =>
+      widget.verticalScrollController ??
+      (_internalVController ??= ScrollController());
+
+  @override
+  void dispose() {
+    _internalHController?.dispose();
+    _internalVController?.dispose();
+    super.dispose();
+  }
+
+  void _scrollTableHorizontallyBy(double delta) {
+    final controller = _effectiveHController;
+    if (!controller.hasClients) return;
+    final maxScroll = controller.position.maxScrollExtent;
+    final target = (controller.offset + delta).clamp(0.0, maxScroll);
+    controller.animateTo(
+      target,
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  void _scrollTableHorizontallyTo(double target) {
+    final controller = _effectiveHController;
+    if (!controller.hasClients) return;
+    controller.animateTo(
+      target.clamp(0.0, controller.position.maxScrollExtent),
+      duration: const Duration(milliseconds: 350),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  Widget _buildHorizontalScrollNavigation(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final controller = _effectiveHController;
+
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, _) {
+        final hasDimensions = controller.hasClients &&
+            controller.position.hasContentDimensions;
+        final maxScroll = hasDimensions
+            ? controller.position.maxScrollExtent
+            : 0.0;
+        final current = hasDimensions
+            ? controller.offset.clamp(0.0, maxScroll > 0 ? maxScroll : 0.0)
+            : 0.0;
+        final canScroll = maxScroll > 0;
+
+        return Container(
+          key: const Key('dispatch_horizontal_scroll_bar'),
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainer,
+            border: Border(
+              top: BorderSide(color: colorScheme.outlineVariant),
+            ),
+          ),
+          child: Row(
+            children: [
+              IconButton.filledTonal(
+                key: const Key('dispatch_scroll_start_button'),
+                tooltip: 'Scroll to Start',
+                icon: const Icon(Icons.first_page, size: 20),
+                onPressed: canScroll && current > 0
+                    ? () => _scrollTableHorizontallyTo(0.0)
+                    : null,
+              ),
+              const SizedBox(width: 4),
+              IconButton.filledTonal(
+                key: const Key('dispatch_scroll_left_button'),
+                tooltip: 'Scroll Left',
+                icon: const Icon(Icons.chevron_left, size: 22),
+                onPressed: canScroll && current > 0
+                    ? () => _scrollTableHorizontallyBy(-350.0)
+                    : null,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        trackHeight: 6,
+                        thumbShape:
+                            const RoundSliderThumbShape(enabledThumbRadius: 8),
+                        overlayShape:
+                            const RoundSliderOverlayShape(overlayRadius: 16),
+                        activeTrackColor: const Color(0xFF1A365D),
+                        thumbColor: const Color(0xFF1A365D),
+                      ),
+                      child: Slider(
+                        key: const Key('dispatch_horizontal_scroll_slider'),
+                        value: canScroll ? current.clamp(0.0, maxScroll) : 0.0,
+                        min: 0.0,
+                        max: canScroll ? maxScroll : 1.0,
+                        onChanged: canScroll
+                            ? (value) {
+                                controller.jumpTo(value);
+                              }
+                            : null,
+                      ),
+                    ),
+                    Text(
+                      '◀ Scroll Horizontally (Left ↔ Right) to View All Columns ▶',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: colorScheme.onSurfaceVariant,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              IconButton.filledTonal(
+                key: const Key('dispatch_scroll_right_button'),
+                tooltip: 'Scroll Right',
+                icon: const Icon(Icons.chevron_right, size: 22),
+                onPressed: canScroll && current < maxScroll
+                    ? () => _scrollTableHorizontallyBy(350.0)
+                    : null,
+              ),
+              const SizedBox(width: 4),
+              IconButton.filledTonal(
+                key: const Key('dispatch_scroll_end_button'),
+                tooltip: 'Scroll to End',
+                icon: const Icon(Icons.last_page, size: 20),
+                onPressed: canScroll && current < maxScroll
+                    ? () => _scrollTableHorizontallyTo(maxScroll)
+                    : null,
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final isAndroidApk =
+        !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+    final hController = _effectiveHController;
+    final vController = _effectiveVController;
 
     final columns = const [
-      DataColumn(label: Text('Dispatch #', style: TextStyle(fontWeight: FontWeight.bold))),
-      DataColumn(label: Text('Customer', style: TextStyle(fontWeight: FontWeight.bold))),
-      DataColumn(label: Text('Invoice #', style: TextStyle(fontWeight: FontWeight.bold))),
-      DataColumn(label: Text('Transporter & Vehicle', style: TextStyle(fontWeight: FontWeight.bold))),
-      DataColumn(label: Text('Builty (LR) #', style: TextStyle(fontWeight: FontWeight.bold))),
-      DataColumn(label: Text('Items', style: TextStyle(fontWeight: FontWeight.bold))),
-      DataColumn(label: Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
-      DataColumn(label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
-      DataColumn(label: Text('Action', style: TextStyle(fontWeight: FontWeight.bold))),
+      DataColumn(
+          label: Text('Dispatch #',
+              style: TextStyle(fontWeight: FontWeight.bold))),
+      DataColumn(
+          label:
+              Text('Customer', style: TextStyle(fontWeight: FontWeight.bold))),
+      DataColumn(
+          label:
+              Text('Invoice #', style: TextStyle(fontWeight: FontWeight.bold))),
+      DataColumn(
+          label: Text('Transporter & Vehicle',
+              style: TextStyle(fontWeight: FontWeight.bold))),
+      DataColumn(
+          label: Text('Builty (LR) #',
+              style: TextStyle(fontWeight: FontWeight.bold))),
+      DataColumn(
+          label: Text('Items', style: TextStyle(fontWeight: FontWeight.bold))),
+      DataColumn(
+          label: Text('Total', style: TextStyle(fontWeight: FontWeight.bold))),
+      DataColumn(
+          label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold))),
+      DataColumn(
+          label: Text('Action', style: TextStyle(fontWeight: FontWeight.bold))),
     ];
 
-    final rows = dispatches.map((record) {
+    final rows = widget.dispatches.map((record) {
       return DataRow(
         key: ValueKey('dispatch_table_row_${record.id}'),
         cells: [
@@ -92,7 +266,8 @@ class DispatchDataTable extends StatelessWidget {
             ),
           ),
           DataCell(
-            Text('${record.items.length} ${record.items.length == 1 ? "item" : "items"}'),
+            Text(
+                '${record.items.length} ${record.items.length == 1 ? "item" : "items"}'),
           ),
           DataCell(
             Text(
@@ -106,15 +281,12 @@ class DispatchDataTable extends StatelessWidget {
               key: Key('dispatch_view_button_${record.id}'),
               icon: const Icon(Icons.remove_red_eye_outlined, size: 20),
               tooltip: 'View details',
-              onPressed: () => onViewRecord(record),
+              onPressed: () => widget.onViewRecord(record),
             ),
           ),
         ],
       );
     }).toList();
-
-    final isAndroidApk =
-        !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
 
     final dataTableWidget = DataTable(
       key: const Key('dispatch_records_table'),
@@ -134,32 +306,58 @@ class DispatchDataTable extends StatelessWidget {
       rows: rows,
     );
 
-    final innerVertical = SingleChildScrollView(
-      controller: verticalScrollController,
-      scrollDirection: Axis.vertical,
-      padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: dataTableWidget,
-    );
-
-    // On Android APK: touch scrolling without horizontal scrollbar.
-    // On Web/Desktop: explicit horizontal scrollbar.
-    if (isAndroidApk) {
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: innerVertical,
-      );
-    }
-
-    return Scrollbar(
-      controller: horizontalScrollController,
+    final innerVertical = Scrollbar(
+      controller: vController,
       thumbVisibility: true,
       trackVisibility: true,
       interactive: true,
       child: SingleChildScrollView(
-        controller: horizontalScrollController,
-        scrollDirection: Axis.horizontal,
-        child: innerVertical,
+        controller: vController,
+        scrollDirection: Axis.vertical,
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: dataTableWidget,
       ),
+    );
+
+    final tableWidget = isAndroidApk
+        ? SingleChildScrollView(
+            controller: hController,
+            scrollDirection: Axis.horizontal,
+            child: innerVertical,
+          )
+        : Scrollbar(
+            controller: hController,
+            thumbVisibility: true,
+            trackVisibility: true,
+            interactive: true,
+            child: SingleChildScrollView(
+              controller: hController,
+              scrollDirection: Axis.horizontal,
+              child: innerVertical,
+            ),
+          );
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxHeight.isFinite) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(child: tableWidget),
+              if (!isAndroidApk) _buildHorizontalScrollNavigation(context),
+            ],
+          );
+        }
+
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            tableWidget,
+            if (!isAndroidApk) _buildHorizontalScrollNavigation(context),
+          ],
+        );
+      },
     );
   }
 }

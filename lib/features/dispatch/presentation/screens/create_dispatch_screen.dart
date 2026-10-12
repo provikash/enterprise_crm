@@ -244,19 +244,21 @@ class _CreateDispatchViewState extends State<_CreateDispatchView> {
               child: Center(
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 900),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      // Section 1: Customer & Delivery Details
-                      _buildSectionCard(
-                        context,
-                        title: 'Customer & Delivery Destination',
-                        icon: Icons.person_pin_circle_outlined,
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isNarrow = constraints.maxWidth < 600;
+
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          Row(
+                          // Section 1: Customer & Delivery Details
+                          _buildSectionCard(
+                            context,
+                            title: 'Customer & Delivery Destination',
+                            icon: Icons.person_pin_circle_outlined,
                             children: [
-                              Expanded(
-                                child: TextFormField(
+                              if (isNarrow) ...[
+                                TextFormField(
                                   key: const Key('dispatch_form_customer_name'),
                                   controller: _customerNameController,
                                   decoration: const InputDecoration(
@@ -266,10 +268,8 @@ class _CreateDispatchViewState extends State<_CreateDispatchView> {
                                   validator: (v) =>
                                       (v == null || v.trim().isEmpty) ? 'Customer name required' : null,
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: TextFormField(
+                                const SizedBox(height: 12),
+                                TextFormField(
                                   key: const Key('dispatch_form_customer_phone'),
                                   controller: _customerPhoneController,
                                   decoration: const InputDecoration(
@@ -279,35 +279,60 @@ class _CreateDispatchViewState extends State<_CreateDispatchView> {
                                   validator: (v) =>
                                       (v == null || v.trim().isEmpty) ? 'Customer phone required' : null,
                                 ),
+                              ] else
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        key: const Key('dispatch_form_customer_name'),
+                                        controller: _customerNameController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Customer / Consignee Name *',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        validator: (v) =>
+                                            (v == null || v.trim().isEmpty) ? 'Customer name required' : null,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: TextFormField(
+                                        key: const Key('dispatch_form_customer_phone'),
+                                        controller: _customerPhoneController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Customer Phone *',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        validator: (v) =>
+                                            (v == null || v.trim().isEmpty) ? 'Customer phone required' : null,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              const SizedBox(height: 16),
+                              TextFormField(
+                                key: const Key('dispatch_form_delivery_address'),
+                                controller: _deliveryAddressController,
+                                maxLines: 2,
+                                decoration: const InputDecoration(
+                                  labelText: 'Delivery Address *',
+                                  border: OutlineInputBorder(),
+                                ),
+                                validator: (v) =>
+                                    (v == null || v.trim().isEmpty) ? 'Delivery address required' : null,
                               ),
                             ],
                           ),
                           const SizedBox(height: 16),
-                          TextFormField(
-                            key: const Key('dispatch_form_delivery_address'),
-                            controller: _deliveryAddressController,
-                            maxLines: 2,
-                            decoration: const InputDecoration(
-                              labelText: 'Delivery Address *',
-                              border: OutlineInputBorder(),
-                            ),
-                            validator: (v) =>
-                                (v == null || v.trim().isEmpty) ? 'Delivery address required' : null,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
 
-                      // Section 2: Invoice & Reference Information
-                      _buildSectionCard(
-                        context,
-                        title: 'Invoice & Commercial Details',
-                        icon: Icons.receipt_long_outlined,
-                        children: [
-                          Row(
+                          // Section 2: Invoice & Reference Information
+                          _buildSectionCard(
+                            context,
+                            title: 'Invoice & Commercial Details',
+                            icon: Icons.receipt_long_outlined,
                             children: [
-                              Expanded(
-                                child: TextFormField(
+                              if (isNarrow) ...[
+                                TextFormField(
                                   key: const Key('dispatch_form_order_number'),
                                   controller: _orderNumberController,
                                   decoration: const InputDecoration(
@@ -315,10 +340,8 @@ class _CreateDispatchViewState extends State<_CreateDispatchView> {
                                     border: OutlineInputBorder(),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: TextFormField(
+                                const SizedBox(height: 12),
+                                TextFormField(
                                   key: const Key('dispatch_form_invoice_number'),
                                   controller: _invoiceNumberController,
                                   decoration: const InputDecoration(
@@ -328,10 +351,8 @@ class _CreateDispatchViewState extends State<_CreateDispatchView> {
                                   validator: (v) =>
                                       (v == null || v.trim().isEmpty) ? 'Invoice number required' : null,
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: TextFormField(
+                                const SizedBox(height: 12),
+                                TextFormField(
                                   key: const Key('dispatch_form_invoice_amount'),
                                   controller: _invoiceAmountController,
                                   keyboardType: TextInputType.number,
@@ -340,23 +361,58 @@ class _CreateDispatchViewState extends State<_CreateDispatchView> {
                                     border: OutlineInputBorder(),
                                   ),
                                 ),
-                              ),
+                              ] else
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        key: const Key('dispatch_form_order_number'),
+                                        controller: _orderNumberController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Order # (Optional)',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: TextFormField(
+                                        key: const Key('dispatch_form_invoice_number'),
+                                        controller: _invoiceNumberController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Invoice Number *',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        validator: (v) =>
+                                            (v == null || v.trim().isEmpty) ? 'Invoice number required' : null,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: TextFormField(
+                                        key: const Key('dispatch_form_invoice_amount'),
+                                        controller: _invoiceAmountController,
+                                        keyboardType: TextInputType.number,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Invoice Amount (₹)',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
                             ],
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
+                          const SizedBox(height: 16),
 
-                      // Section 3: Transport & Logistics
-                      _buildSectionCard(
-                        context,
-                        title: 'Transport & Logistics Information',
-                        icon: Icons.local_shipping_outlined,
-                        children: [
-                          Row(
+                          // Section 3: Transport & Logistics
+                          _buildSectionCard(
+                            context,
+                            title: 'Transport & Logistics Information',
+                            icon: Icons.local_shipping_outlined,
                             children: [
-                              Expanded(
-                                child: TextFormField(
+                              if (isNarrow) ...[
+                                TextFormField(
                                   key: const Key('dispatch_form_transporter_name'),
                                   controller: _transporterNameController,
                                   decoration: const InputDecoration(
@@ -364,10 +420,8 @@ class _CreateDispatchViewState extends State<_CreateDispatchView> {
                                     border: OutlineInputBorder(),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: TextFormField(
+                                const SizedBox(height: 12),
+                                TextFormField(
                                   key: const Key('dispatch_form_vehicle_number'),
                                   controller: _vehicleNumberController,
                                   decoration: const InputDecoration(
@@ -378,10 +432,8 @@ class _CreateDispatchViewState extends State<_CreateDispatchView> {
                                   validator: (v) =>
                                       (v == null || v.trim().isEmpty) ? 'Vehicle number required' : null,
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: TextFormField(
+                                const SizedBox(height: 12),
+                                TextFormField(
                                   key: const Key('dispatch_form_vehicle_type'),
                                   controller: _vehicleTypeController,
                                   decoration: const InputDecoration(
@@ -390,14 +442,8 @@ class _CreateDispatchViewState extends State<_CreateDispatchView> {
                                     border: OutlineInputBorder(),
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 16),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: TextFormField(
+                                const SizedBox(height: 12),
+                                TextFormField(
                                   key: const Key('dispatch_form_driver_name'),
                                   controller: _driverNameController,
                                   decoration: const InputDecoration(
@@ -407,10 +453,8 @@ class _CreateDispatchViewState extends State<_CreateDispatchView> {
                                   validator: (v) =>
                                       (v == null || v.trim().isEmpty) ? 'Driver name required' : null,
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: TextFormField(
+                                const SizedBox(height: 12),
+                                TextFormField(
                                   key: const Key('dispatch_form_driver_phone'),
                                   controller: _driverPhoneController,
                                   decoration: const InputDecoration(
@@ -420,10 +464,8 @@ class _CreateDispatchViewState extends State<_CreateDispatchView> {
                                   validator: (v) =>
                                       (v == null || v.trim().isEmpty) ? 'Driver phone required' : null,
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: TextFormField(
+                                const SizedBox(height: 12),
+                                TextFormField(
                                   key: const Key('dispatch_form_builty_number'),
                                   controller: _builtyNumberController,
                                   decoration: const InputDecoration(
@@ -434,169 +476,358 @@ class _CreateDispatchViewState extends State<_CreateDispatchView> {
                                   validator: (v) =>
                                       (v == null || v.trim().isEmpty) ? 'Builty number required' : null,
                                 ),
+                              ] else ...[
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        key: const Key('dispatch_form_transporter_name'),
+                                        controller: _transporterNameController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Transporter Name',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: TextFormField(
+                                        key: const Key('dispatch_form_vehicle_number'),
+                                        controller: _vehicleNumberController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Vehicle Number *',
+                                          hintText: 'e.g. DL-01-AB-1234',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        validator: (v) =>
+                                            (v == null || v.trim().isEmpty) ? 'Vehicle number required' : null,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: TextFormField(
+                                        key: const Key('dispatch_form_vehicle_type'),
+                                        controller: _vehicleTypeController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Vehicle Type',
+                                          hintText: 'e.g. Truck, Van',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 16),
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextFormField(
+                                        key: const Key('dispatch_form_driver_name'),
+                                        controller: _driverNameController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Driver Name *',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        validator: (v) =>
+                                            (v == null || v.trim().isEmpty) ? 'Driver name required' : null,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: TextFormField(
+                                        key: const Key('dispatch_form_driver_phone'),
+                                        controller: _driverPhoneController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Driver Phone *',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        validator: (v) =>
+                                            (v == null || v.trim().isEmpty) ? 'Driver phone required' : null,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: TextFormField(
+                                        key: const Key('dispatch_form_builty_number'),
+                                        controller: _builtyNumberController,
+                                        decoration: const InputDecoration(
+                                          labelText: 'Builty / LR # *',
+                                          hintText: 'e.g. BL-VRL-9921',
+                                          border: OutlineInputBorder(),
+                                        ),
+                                        validator: (v) =>
+                                            (v == null || v.trim().isEmpty) ? 'Builty number required' : null,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Section 4: Line Items (Dynamic Table)
+                          _buildSectionCard(
+                            context,
+                            title: 'Shipment Line Items',
+                            icon: Icons.inventory_2_outlined,
+                            trailing: OutlinedButton.icon(
+                              key: const Key('dispatch_add_item_button'),
+                              icon: const Icon(Icons.add, size: 16),
+                              label: const Text('Add Item'),
+                              onPressed: _addItem,
+                            ),
+                            children: [
+                              ..._lineItems.asMap().entries.map((entry) {
+                                final idx = entry.key;
+                                final item = entry.value;
+
+                                if (isNarrow) {
+                                  return Container(
+                                    key: Key('dispatch_line_item_row_$idx'),
+                                    margin: const EdgeInsets.only(bottom: 12),
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                                      borderRadius: BorderRadius.circular(8),
+                                      border: Border.all(
+                                        color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                                      children: [
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: TextFormField(
+                                                key: Key('item_name_$idx'),
+                                                controller: item.nameController,
+                                                decoration: InputDecoration(
+                                                  labelText: 'Item Name *',
+                                                  isDense: true,
+                                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                                ),
+                                                validator: (v) =>
+                                                    (v == null || v.trim().isEmpty) ? 'Name required' : null,
+                                              ),
+                                            ),
+                                            if (_lineItems.length > 1) ...[
+                                              const SizedBox(width: 8),
+                                              IconButton(
+                                                key: Key('item_remove_$idx'),
+                                                icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                                                tooltip: 'Remove Item',
+                                                onPressed: () => _removeItem(idx),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              flex: 2,
+                                              child: TextFormField(
+                                                key: Key('item_sku_$idx'),
+                                                controller: item.skuController,
+                                                decoration: InputDecoration(
+                                                  labelText: 'SKU',
+                                                  isDense: true,
+                                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              flex: 1,
+                                              child: TextFormField(
+                                                key: Key('item_quantity_$idx'),
+                                                controller: item.quantityController,
+                                                keyboardType: TextInputType.number,
+                                                decoration: InputDecoration(
+                                                  labelText: 'Qty',
+                                                  isDense: true,
+                                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              flex: 1,
+                                              child: TextFormField(
+                                                key: Key('item_unit_$idx'),
+                                                controller: item.unitController,
+                                                decoration: InputDecoration(
+                                                  labelText: 'Unit',
+                                                  isDense: true,
+                                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              flex: 2,
+                                              child: TextFormField(
+                                                key: Key('item_price_$idx'),
+                                                controller: item.priceController,
+                                                keyboardType: TextInputType.number,
+                                                decoration: InputDecoration(
+                                                  labelText: 'Price (₹)',
+                                                  isDense: true,
+                                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                }
+
+                                return Container(
+                                  key: Key('dispatch_line_item_row_$idx'),
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: colorScheme.outlineVariant.withValues(alpha: 0.5),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(
+                                        flex: 3,
+                                        child: TextFormField(
+                                          key: Key('item_name_$idx'),
+                                          controller: item.nameController,
+                                          decoration: InputDecoration(
+                                            labelText: 'Item Name *',
+                                            isDense: true,
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                          ),
+                                          validator: (v) =>
+                                              (v == null || v.trim().isEmpty) ? 'Name required' : null,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        flex: 2,
+                                        child: TextFormField(
+                                          key: Key('item_sku_$idx'),
+                                          controller: item.skuController,
+                                          decoration: InputDecoration(
+                                            labelText: 'SKU',
+                                            isDense: true,
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        flex: 1,
+                                        child: TextFormField(
+                                          key: Key('item_quantity_$idx'),
+                                          controller: item.quantityController,
+                                          keyboardType: TextInputType.number,
+                                          decoration: InputDecoration(
+                                            labelText: 'Qty',
+                                            isDense: true,
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        flex: 1,
+                                        child: TextFormField(
+                                          key: Key('item_unit_$idx'),
+                                          controller: item.unitController,
+                                          decoration: InputDecoration(
+                                            labelText: 'Unit',
+                                            isDense: true,
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        flex: 2,
+                                        child: TextFormField(
+                                          key: Key('item_price_$idx'),
+                                          controller: item.priceController,
+                                          keyboardType: TextInputType.number,
+                                          decoration: InputDecoration(
+                                            labelText: 'Price (₹)',
+                                            isDense: true,
+                                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
+                                          ),
+                                        ),
+                                      ),
+                                      if (_lineItems.length > 1) ...[
+                                        const SizedBox(width: 4),
+                                        IconButton(
+                                          key: Key('item_remove_$idx'),
+                                          icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
+                                          tooltip: 'Remove Item',
+                                          onPressed: () => _removeItem(idx),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                );
+                              }),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          // Section 5: Notes
+                          _buildSectionCard(
+                            context,
+                            title: 'Handling & Delivery Notes',
+                            icon: Icons.note_outlined,
+                            children: [
+                              TextFormField(
+                                key: const Key('dispatch_form_notes'),
+                                controller: _notesController,
+                                maxLines: 2,
+                                decoration: const InputDecoration(
+                                  labelText: 'Additional Instructions / Delivery Notes',
+                                  border: OutlineInputBorder(),
+                                ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
+                          const SizedBox(height: 24),
 
-                      // Section 4: Line Items (Dynamic Table)
-                      _buildSectionCard(
-                        context,
-                        title: 'Shipment Line Items',
-                        icon: Icons.inventory_2_outlined,
-                        trailing: OutlinedButton.icon(
-                          key: const Key('dispatch_add_item_button'),
-                          icon: const Icon(Icons.add, size: 16),
-                          label: const Text('Add Item'),
-                          onPressed: _addItem,
-                        ),
-                        children: [
-                          ..._lineItems.asMap().entries.map((entry) {
-                            final idx = entry.key;
-                            final item = entry.value;
-
-                            return Container(
-                              key: Key('dispatch_line_item_row_$idx'),
-                              margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(
-                                  color: colorScheme.outlineVariant.withValues(alpha: 0.5),
-                                ),
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Expanded(
-                                    flex: 3,
-                                    child: TextFormField(
-                                      key: Key('item_name_$idx'),
-                                      controller: item.nameController,
-                                      decoration: InputDecoration(
-                                        labelText: 'Item Name *',
-                                        isDense: true,
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                                      ),
-                                      validator: (v) =>
-                                          (v == null || v.trim().isEmpty) ? 'Name required' : null,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    flex: 2,
-                                    child: TextFormField(
-                                      key: Key('item_sku_$idx'),
-                                      controller: item.skuController,
-                                      decoration: InputDecoration(
-                                        labelText: 'SKU',
-                                        isDense: true,
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    flex: 1,
-                                    child: TextFormField(
-                                      key: Key('item_quantity_$idx'),
-                                      controller: item.quantityController,
-                                      keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(
-                                        labelText: 'Qty',
-                                        isDense: true,
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    flex: 1,
-                                    child: TextFormField(
-                                      key: Key('item_unit_$idx'),
-                                      controller: item.unitController,
-                                      decoration: InputDecoration(
-                                        labelText: 'Unit',
-                                        isDense: true,
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                                      ),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    flex: 2,
-                                    child: TextFormField(
-                                      key: Key('item_price_$idx'),
-                                      controller: item.priceController,
-                                      keyboardType: TextInputType.number,
-                                      decoration: InputDecoration(
-                                        labelText: 'Price (₹)',
-                                        isDense: true,
-                                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(6)),
-                                      ),
-                                    ),
-                                  ),
-                                  if (_lineItems.length > 1) ...[
-                                    const SizedBox(width: 4),
-                                    IconButton(
-                                      key: Key('item_remove_$idx'),
-                                      icon: const Icon(Icons.delete_outline, size: 20, color: Colors.red),
-                                      tooltip: 'Remove Item',
-                                      onPressed: () => _removeItem(idx),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            );
-                          }),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-
-                      // Section 5: Notes
-                      _buildSectionCard(
-                        context,
-                        title: 'Handling & Delivery Notes',
-                        icon: Icons.note_outlined,
-                        children: [
-                          TextFormField(
-                            key: const Key('dispatch_form_notes'),
-                            controller: _notesController,
-                            maxLines: 2,
-                            decoration: const InputDecoration(
-                              labelText: 'Additional Instructions / Delivery Notes',
-                              border: OutlineInputBorder(),
+                          // Bottom Submit Action
+                          FilledButton.icon(
+                            key: const Key('dispatch_form_submit_button'),
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                             ),
+                            icon: isSubmitting
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                                  )
+                                : const Icon(Icons.check_circle_outline),
+                            label: Text(
+                              isSubmitting ? 'Creating Dispatch...' : 'Create Dispatch Order',
+                              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                            onPressed: isSubmitting ? null : () => _handleSubmit(context),
                           ),
+                          const SizedBox(height: 32),
                         ],
-                      ),
-                      const SizedBox(height: 24),
-
-                      // Bottom Submit Action
-                      FilledButton.icon(
-                        key: const Key('dispatch_form_submit_button'),
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        ),
-                        icon: isSubmitting
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
-                              )
-                            : const Icon(Icons.check_circle_outline),
-                        label: Text(
-                          isSubmitting ? 'Creating Dispatch...' : 'Create Dispatch Order',
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                        onPressed: isSubmitting ? null : () => _handleSubmit(context),
-                      ),
-                      const SizedBox(height: 32),
-                    ],
+                      );
+                    },
                   ),
                 ),
               ),

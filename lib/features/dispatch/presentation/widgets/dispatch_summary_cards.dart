@@ -74,15 +74,18 @@ class DispatchSummaryCards extends StatelessWidget {
         ];
 
         if (isNarrow) {
+          final availableWidth = constraints.maxWidth - 32;
+          final columns = availableWidth < 320 ? 1 : (availableWidth < 600 ? 2 : 3);
+          final cardWidth = (availableWidth - (columns - 1) * 8) / columns;
+
           return Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Wrap(
               spacing: 8,
               runSpacing: 8,
               children: items.map((item) {
-                final cardWidth = (constraints.maxWidth - 40) / 2;
                 return SizedBox(
-                  width: cardWidth.clamp(140.0, 240.0),
+                  width: cardWidth,
                   child: _buildCard(context, item),
                 );
               }).toList(),
