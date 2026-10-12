@@ -14,6 +14,7 @@ import '../widgets/dispatch_filter_bar.dart';
 import '../widgets/dispatch_mobile_card.dart';
 import '../widgets/dispatch_pagination_controls.dart';
 import '../widgets/dispatch_summary_cards.dart';
+import 'create_dispatch_screen.dart';
 
 /// Main workspace screen for Dispatch logistics and shipment tracking.
 ///
@@ -82,16 +83,22 @@ class _DispatchWorkspaceViewState extends State<_DispatchWorkspaceView> {
     super.dispose();
   }
 
-  void _handleCreateDispatch(BuildContext context) {
+  void _handleCreateDispatch(BuildContext context) async {
     if (widget.onCreateDispatch != null) {
       widget.onCreateDispatch!();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Dispatch creation workflow ready.'),
-          behavior: SnackBarBehavior.floating,
+      final cubit = context.read<DispatchListCubit>();
+      final created = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => CreateDispatchScreen(
+            user: widget.user,
+            repository: widget.repository,
+          ),
         ),
       );
+      if (created == true && mounted) {
+        cubit.refresh();
+      }
     }
   }
 
