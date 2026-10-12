@@ -9,6 +9,9 @@ import '../../../auth/domain/repositories/user_lead_link_repository.dart';
 import '../../../calling/domain/repositories/lead_call_activity_repository.dart';
 import '../../../calling/domain/repositories/lead_follow_up_repository.dart';
 import '../../../calling/presentation/screens/user_calling_workspace_screen.dart';
+import '../../../dispatch/data/repositories/mock_dispatch_repository.dart';
+import '../../../dispatch/domain/repositories/dispatch_repository.dart';
+import '../../../dispatch/presentation/screens/dispatch_workspace_screen.dart';
 import '../../../hr/data/repositories/mock_employee_repository.dart';
 import '../../../hr/domain/repositories/attendance_repository.dart';
 import '../../../hr/domain/repositories/employee_document_repository.dart';
@@ -39,6 +42,7 @@ class UserDashboardScreen extends StatelessWidget {
   final AttendanceRepository? attendanceRepository;
   final EmployeeKpiRepository? employeeKpiRepository;
   final InventoryRepository? inventoryRepository;
+  final DispatchRepository? dispatchRepository;
 
   const UserDashboardScreen({
     super.key,
@@ -53,6 +57,7 @@ class UserDashboardScreen extends StatelessWidget {
     this.attendanceRepository,
     this.employeeKpiRepository,
     this.inventoryRepository,
+    this.dispatchRepository,
   });
 
   void _openModule(BuildContext context, CrmModule module) {
@@ -124,6 +129,15 @@ class UserDashboardScreen extends StatelessWidget {
           builder: (_) => screen,
         ),
       );
+    } else if (module == CrmModule.dispatch) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => DispatchWorkspaceScreen(
+            user: user,
+            repository: dispatchRepository ?? MockDispatchRepository(),
+          ),
+        ),
+      );
     } else {
       Navigator.of(context).push(
         MaterialPageRoute(
@@ -133,7 +147,6 @@ class UserDashboardScreen extends StatelessWidget {
     }
   }
 
-  @override
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

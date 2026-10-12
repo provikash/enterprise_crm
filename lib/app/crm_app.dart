@@ -24,6 +24,8 @@ import '../features/leads/data/services/lead_export_file_saver.dart';
 import '../features/leads/presentation/screens/lead_list_screen.dart';
 import '../features/calling/domain/repositories/lead_call_activity_repository.dart';
 import '../features/calling/domain/repositories/lead_follow_up_repository.dart';
+import '../features/dispatch/data/repositories/mock_dispatch_repository.dart';
+import '../features/dispatch/domain/repositories/dispatch_repository.dart';
 import '../features/hr/data/repositories/mock_attendance_repository.dart';
 import '../features/hr/data/repositories/mock_employee_document_repository.dart';
 import '../features/hr/data/repositories/mock_employee_kpi_repository.dart';
@@ -51,6 +53,7 @@ class CrmApp extends StatefulWidget {
   final AttendanceRepository? attendanceRepository;
   final EmployeeKpiRepository? employeeKpiRepository;
   final InventoryRepository? inventoryRepository;
+  final DispatchRepository? dispatchRepository;
 
   const CrmApp({
     super.key,
@@ -67,6 +70,7 @@ class CrmApp extends StatefulWidget {
     this.attendanceRepository,
     this.employeeKpiRepository,
     this.inventoryRepository,
+    this.dispatchRepository,
   }) : assert(
          authRepository == null || userManagementRepository != null,
          'userManagementRepository must be provided when authRepository is enabled',
@@ -100,6 +104,7 @@ class _CrmAppState extends State<CrmApp> {
   late final EmployeeDocumentRepository _employeeDocumentRepository;
   late final AttendanceRepository _attendanceRepository;
   late final EmployeeKpiRepository _employeeKpiRepository;
+  late final DispatchRepository _dispatchRepository;
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
@@ -112,6 +117,7 @@ class _CrmAppState extends State<CrmApp> {
         widget.attendanceRepository ?? MockAttendanceRepository();
     _employeeKpiRepository =
         widget.employeeKpiRepository ?? MockEmployeeKpiRepository();
+    _dispatchRepository = widget.dispatchRepository ?? MockDispatchRepository();
     if (widget.authRepository != null) {
       _authCubit = AuthCubit(widget.authRepository!);
     }
@@ -155,6 +161,7 @@ class _CrmAppState extends State<CrmApp> {
                     user: user,
                     onLogout: () => _authCubit!.logout(),
                     inventoryRepository: widget.inventoryRepository!,
+                    dispatchRepository: _dispatchRepository,
                     userManagementRepository: widget.userManagementRepository,
                     employeeRepository: _employeeRepository,
                     employeeDocumentRepository: _employeeDocumentRepository,
@@ -186,6 +193,7 @@ class _CrmAppState extends State<CrmApp> {
                     attendanceRepository: _attendanceRepository,
                     employeeKpiRepository: _employeeKpiRepository,
                     inventoryRepository: widget.inventoryRepository!,
+                    dispatchRepository: _dispatchRepository,
                   );
                 }
               case AuthUnauthenticated():

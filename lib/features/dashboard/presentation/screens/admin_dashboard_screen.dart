@@ -5,6 +5,9 @@ import '../../../auth/domain/entities/crm_module.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/domain/entities/current_user.dart';
+import '../../../dispatch/data/repositories/mock_dispatch_repository.dart';
+import '../../../dispatch/domain/repositories/dispatch_repository.dart';
+import '../../../dispatch/presentation/screens/dispatch_workspace_screen.dart';
 import '../../../hr/data/repositories/mock_employee_repository.dart';
 import '../../../hr/domain/repositories/attendance_repository.dart';
 import '../../../hr/domain/repositories/employee_document_repository.dart';
@@ -27,6 +30,7 @@ class AdminDashboardScreen extends StatelessWidget {
   final VoidCallback onLogout;
   final VoidCallback onOpenLeadManagement;
   final InventoryRepository? inventoryRepository;
+  final DispatchRepository? dispatchRepository;
   final UserManagementRepository? userManagementRepository;
   final EmployeeRepository? employeeRepository;
   final EmployeeDocumentRepository? employeeDocumentRepository;
@@ -39,6 +43,7 @@ class AdminDashboardScreen extends StatelessWidget {
     required this.onLogout,
     required this.onOpenLeadManagement,
     this.inventoryRepository,
+    this.dispatchRepository,
     this.userManagementRepository,
     this.employeeRepository,
     this.employeeDocumentRepository,
@@ -91,6 +96,15 @@ class AdminDashboardScreen extends StatelessWidget {
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => screen,
+        ),
+      );
+    } else if (module == CrmModule.dispatch) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => DispatchWorkspaceScreen(
+            user: user,
+            repository: dispatchRepository ?? MockDispatchRepository(),
+          ),
         ),
       );
     } else {
