@@ -260,7 +260,7 @@ class _DispatchDataTableState extends State<DispatchDataTable> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        if (constraints.maxHeight.isFinite) {
+        if (constraints.maxHeight.isFinite && constraints.maxHeight > 140) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

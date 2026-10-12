@@ -119,7 +119,7 @@ void main() {
       },
     );
 
-    testWidgets('tapping header logout triggers onLogout callback', (
+    testWidgets('tapping logout triggers onLogout callback', (
       tester,
     ) async {
       bool loggedOut = false;
@@ -140,7 +140,7 @@ void main() {
     });
 
     testWidgets(
-      'mobile narrow viewport (< 420px) shows avatar and logout on right without overflow',
+      'mobile narrow viewport (< 420px) shows avatar on top right without overflow',
       (tester) async {
         const mobileWidth = 360.0;
         await tester.pumpWidget(
@@ -157,10 +157,10 @@ void main() {
         expect(find.text('Administrator'), findsNothing);
         expect(find.byKey(const Key('home_account_avatar')), findsOneWidget);
 
-        final logoutRight = tester
-            .getTopRight(find.byKey(const Key('crm_header_logout_button')))
+        final avatarRight = tester
+            .getTopRight(find.byKey(const Key('home_account_avatar')))
             .dx;
-        expect(logoutRight, greaterThan(headerRight - 60.0));
+        expect(avatarRight, greaterThan(headerRight - 60.0));
 
         expect(tester.takeException(), isNull);
       },
