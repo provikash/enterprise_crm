@@ -66,6 +66,7 @@ class _UpdateDispatchStatusDialogState extends State<UpdateDispatchStatusDialog>
             const SizedBox(height: 8),
             DropdownButtonFormField<DispatchStatus>(
               key: const Key('dispatch_status_dropdown'),
+              isExpanded: true,
               initialValue: _selectedStatus,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),

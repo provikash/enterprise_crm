@@ -6,6 +6,7 @@ import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/domain/policies/access_policy.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../domain/entities/dispatch_record.dart';
+import '../../domain/policies/dispatch_access_policy.dart';
 import '../../domain/repositories/dispatch_repository.dart';
 import '../bloc/dispatch_list_cubit.dart';
 import '../bloc/dispatch_list_state.dart';
@@ -132,15 +133,16 @@ class _DispatchWorkspaceViewState extends State<_DispatchWorkspaceView> {
       appBar: AppBar(
         title: const Text('Dispatch Management'),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: FilledButton.icon(
-              key: const Key('create_dispatch_button'),
-              icon: const Icon(Icons.add, size: 18),
-              label: const Text('New Dispatch'),
-              onPressed: () => _handleCreateDispatch(context),
+          if (DispatchAccessPolicy.canCreate(widget.user))
+            Padding(
+              padding: const EdgeInsets.only(right: 16.0),
+              child: FilledButton.icon(
+                key: const Key('create_dispatch_button'),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('New Dispatch'),
+                onPressed: () => _handleCreateDispatch(context),
+              ),
             ),
-          ),
         ],
       ),
       body: BlocBuilder<DispatchListCubit, DispatchListState>(

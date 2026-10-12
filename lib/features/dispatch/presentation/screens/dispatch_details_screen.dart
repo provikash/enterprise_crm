@@ -154,12 +154,15 @@ class _DispatchDetailsView extends StatelessWidget {
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(
-                                      'Shipment Progress',
-                                      style: theme.textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
+                                    Expanded(
+                                      child: Text(
+                                        'Shipment Progress',
+                                        style: theme.textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
                                     ),
+                                    const SizedBox(width: 8),
                                     DispatchStatusBadge(status: record.status),
                                   ],
                                 ),
@@ -402,10 +405,12 @@ class _DispatchDetailsView extends StatelessWidget {
               children: [
                 Icon(icon, size: 20, color: colorScheme.primary),
                 const SizedBox(width: 8),
-                Text(
-                  title,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ],
@@ -432,7 +437,7 @@ class _DispatchDetailsView extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 150,
+            width: 130,
             child: Text(
               label,
               style: const TextStyle(

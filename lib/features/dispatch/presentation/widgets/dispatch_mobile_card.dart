@@ -38,13 +38,17 @@ class DispatchMobileCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    record.dispatchCode,
-                    key: Key('dispatch_mobile_code_${record.id}'),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Text(
+                      record.dispatchCode,
+                      key: Key('dispatch_mobile_code_${record.id}'),
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
+                  const SizedBox(width: 8),
                   DispatchStatusBadge(status: record.status),
                 ],
               ),
