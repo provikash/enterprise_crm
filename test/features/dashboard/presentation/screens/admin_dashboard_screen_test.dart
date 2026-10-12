@@ -1,5 +1,6 @@
 import 'package:enterprise_crm/features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import 'package:enterprise_crm/features/dashboard/presentation/screens/module_placeholder_screen.dart';
+import 'package:enterprise_crm/features/hr/presentation/screens/hr_home_screen.dart';
 import 'package:enterprise_crm/features/inventory/data/repositories/mock_inventory_repository.dart';
 import 'package:enterprise_crm/features/user_management/data/mock/mock_account_store.dart';
 import 'package:enterprise_crm/features/user_management/data/repositories/mock_user_management_repository.dart';
@@ -83,6 +84,20 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(opened, isTrue);
+    });
+
+    testWidgets('tapping HR / Payroll opens the HR dashboard', (tester) async {
+      await tester.pumpWidget(_buildAdminDashboardTestApp());
+      await tester.pumpAndSettle();
+
+      final hrPayrollCard = find.byKey(const Key('module_card_hrPayroll'));
+      await tester.ensureVisible(hrPayrollCard);
+      await tester.tap(hrPayrollCard);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(HrHomeScreen), findsOneWidget);
+      expect(find.byKey(const Key('hr_home_scaffold')), findsOneWidget);
+      expect(find.text('HR & Payroll Management'), findsOneWidget);
     });
 
     testWidgets('tapping Calling opens ModulePlaceholderScreen', (

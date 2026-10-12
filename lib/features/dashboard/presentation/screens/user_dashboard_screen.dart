@@ -14,7 +14,7 @@ import '../../../hr/domain/repositories/attendance_repository.dart';
 import '../../../hr/domain/repositories/employee_document_repository.dart';
 import '../../../hr/domain/repositories/employee_kpi_repository.dart';
 import '../../../hr/domain/repositories/employee_repository.dart';
-import '../../../hr/presentation/screens/employee_directory_screen.dart';
+import '../../../hr/presentation/screens/hr_home_screen.dart';
 import '../../../inventory/domain/repositories/inventory_repository.dart';
 import '../../../inventory/data/repositories/mock_inventory_repository.dart';
 import '../../../inventory/presentation/screens/inventory_workspace_screen.dart';
@@ -83,7 +83,7 @@ class UserDashboardScreen extends StatelessWidget {
     } else if (module == CrmModule.hrPayroll) {
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => EmployeeDirectoryScreen(
+          builder: (_) => HrHomeScreen(
             user: user,
             repository: employeeRepository ?? MockEmployeeRepository(),
             documentRepository: employeeDocumentRepository,
