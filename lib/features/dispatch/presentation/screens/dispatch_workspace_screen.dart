@@ -15,6 +15,7 @@ import '../widgets/dispatch_mobile_card.dart';
 import '../widgets/dispatch_pagination_controls.dart';
 import '../widgets/dispatch_summary_cards.dart';
 import 'create_dispatch_screen.dart';
+import 'dispatch_details_screen.dart';
 
 /// Main workspace screen for Dispatch logistics and shipment tracking.
 ///
@@ -102,16 +103,23 @@ class _DispatchWorkspaceViewState extends State<_DispatchWorkspaceView> {
     }
   }
 
-  void _handleViewDispatch(BuildContext context, DispatchRecord record) {
+  void _handleViewDispatch(BuildContext context, DispatchRecord record) async {
     if (widget.onViewDispatch != null) {
       widget.onViewDispatch!(record);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Viewing dispatch: ${record.dispatchCode}'),
-          behavior: SnackBarBehavior.floating,
+      final cubit = context.read<DispatchListCubit>();
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => DispatchDetailsScreen(
+            dispatchId: record.id,
+            user: widget.user,
+            repository: widget.repository,
+          ),
         ),
       );
+      if (mounted) {
+        cubit.refresh();
+      }
     }
   }
 
