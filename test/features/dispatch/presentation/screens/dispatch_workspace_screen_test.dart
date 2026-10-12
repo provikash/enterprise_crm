@@ -192,5 +192,60 @@ void main() {
 
       expect(created, isTrue);
     });
+
+    testWidgets('tapping summary card filters records and clear filters resets view', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          user: MockAuthTestFixtures.admin,
+          repository: repository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      // Tap delivered summary card
+      await tester.tap(find.byKey(const Key('dispatch_summary_delivered')));
+      await tester.pumpAndSettle();
+
+      // Only delivered records shown
+      expect(find.text('DSP-2026-006'), findsOneWidget);
+      expect(find.text('DSP-2026-001'), findsNothing);
+
+      // Tap clear filters button
+      final clearButtonFinder = find.byKey(const Key('dispatch_clear_filters_button'));
+      expect(clearButtonFinder, findsOneWidget);
+      await tester.tap(clearButtonFinder);
+      await tester.pumpAndSettle();
+
+      // All records shown again
+      expect(find.text('DSP-2026-001'), findsOneWidget);
+    });
+
+    testWidgets('tapping export button opens DispatchExportDialog', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 900));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          user: MockAuthTestFixtures.admin,
+          repository: repository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final exportButton = find.byKey(const Key('dispatch_export_button'));
+      expect(exportButton, findsOneWidget);
+
+      await tester.tap(exportButton);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('dispatch_export_dialog')), findsOneWidget);
+    });
   });
 }

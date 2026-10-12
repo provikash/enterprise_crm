@@ -8,6 +8,8 @@ import '../../domain/policies/dispatch_access_policy.dart';
 import '../../domain/repositories/dispatch_repository.dart';
 import '../bloc/dispatch_details_cubit.dart';
 import '../bloc/dispatch_details_state.dart';
+import '../services/dispatch_file_saver.dart';
+import '../services/dispatch_pdf_serializer.dart';
 import '../widgets/dispatch_lifecycle_stepper.dart';
 import '../widgets/dispatch_status_badge.dart';
 import '../widgets/update_dispatch_status_dialog.dart';
@@ -17,12 +19,14 @@ class DispatchDetailsScreen extends StatelessWidget {
   final String dispatchId;
   final CurrentUser user;
   final DispatchRepository repository;
+  final DispatchFileSaver? fileSaver;
 
   const DispatchDetailsScreen({
     super.key,
     required this.dispatchId,
     required this.user,
     required this.repository,
+    this.fileSaver,
   });
 
   @override
@@ -36,6 +40,7 @@ class DispatchDetailsScreen extends StatelessWidget {
       child: _DispatchDetailsView(
         dispatchId: dispatchId,
         user: user,
+        fileSaver: fileSaver,
       ),
     );
   }
@@ -44,11 +49,45 @@ class DispatchDetailsScreen extends StatelessWidget {
 class _DispatchDetailsView extends StatelessWidget {
   final String dispatchId;
   final CurrentUser user;
+  final DispatchFileSaver? fileSaver;
 
   const _DispatchDetailsView({
     required this.dispatchId,
     required this.user,
+    this.fileSaver,
   });
+
+  Future<void> _downloadBill(BuildContext context, DispatchRecord record) async {
+    try {
+      final saver = fileSaver ?? const DefaultDispatchFileSaver();
+      final bytes = const DispatchPdfSerializer().generateBillPdf(record);
+      final fileName = 'Dispatch_Bill_${record.dispatchCode}.pdf';
+      final uri = await saver.saveFile(
+        fileName: fileName,
+        bytes: bytes,
+        mimeType: 'application/pdf',
+        extension: 'pdf',
+        dialogTitle: 'Save Dispatch Bill (${record.dispatchCode})',
+      );
+      if (context.mounted && uri != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Successfully saved $fileName'),
+            backgroundColor: Colors.green.shade700,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate bill: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
 
   void _openUpdateStatusDialog(BuildContext context, DispatchRecord record) {
     showDialog(
@@ -179,6 +218,12 @@ class _DispatchDetailsView extends StatelessWidget {
                           context,
                           title: 'Shipment Overview',
                           icon: Icons.local_shipping_outlined,
+                          action: OutlinedButton.icon(
+                            key: const Key('download_dispatch_bill_button'),
+                            icon: const Icon(Icons.picture_as_pdf_outlined, size: 16),
+                            label: const Text('Download Bill (PDF)'),
+                            onPressed: () => _downloadBill(context, record),
+                          ),
                           children: [
                             _buildInfoRow(
                               'Dispatch Code',
@@ -384,6 +429,7 @@ class _DispatchDetailsView extends StatelessWidget {
     BuildContext context, {
     required String title,
     required IconData icon,
+    Widget? action,
     required List<Widget> children,
   }) {
     final theme = Theme.of(context);
@@ -401,19 +447,48 @@ class _DispatchDetailsView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Icon(icon, size: 20, color: colorScheme.primary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 450;
+                if (isNarrow && action != null) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(icon, size: 20, color: colorScheme.primary),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      action,
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Icon(icon, size: 20, color: colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ],
+                    ?action,
+                  ],
+                );
+              },
             ),
             const Divider(height: 20),
             ...children,

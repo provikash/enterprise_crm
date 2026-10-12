@@ -9,6 +9,7 @@ class DispatchFilterBar extends StatelessWidget {
   final VoidCallback onSearchCleared;
   final ValueChanged<DispatchStatus?> onStatusChanged;
   final VoidCallback onRefresh;
+  final VoidCallback? onClearFilters;
 
   const DispatchFilterBar({
     super.key,
@@ -18,6 +19,7 @@ class DispatchFilterBar extends StatelessWidget {
     required this.onSearchCleared,
     required this.onStatusChanged,
     required this.onRefresh,
+    this.onClearFilters,
   });
 
   @override
@@ -92,6 +94,17 @@ class DispatchFilterBar extends StatelessWidget {
             onPressed: onRefresh,
           );
 
+          final hasActiveFilters =
+              selectedStatus != null || searchController.text.isNotEmpty;
+
+          final clearFiltersButton = OutlinedButton.icon(
+            key: const Key('dispatch_clear_filters_button'),
+            icon: const Icon(Icons.filter_alt_off_outlined, size: 16),
+            label: const Text('Clear Filters'),
+            onPressed:
+                hasActiveFilters && onClearFilters != null ? onClearFilters : null,
+          );
+
           if (isNarrow) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -105,6 +118,10 @@ class DispatchFilterBar extends StatelessWidget {
                     refreshButton,
                   ],
                 ),
+                if (onClearFilters != null) ...[
+                  const SizedBox(height: 8),
+                  clearFiltersButton,
+                ],
               ],
             );
           }
@@ -114,6 +131,10 @@ class DispatchFilterBar extends StatelessWidget {
               Expanded(child: searchField),
               const SizedBox(width: 12),
               statusDropdown,
+              if (onClearFilters != null) ...[
+                const SizedBox(width: 8),
+                clearFiltersButton,
+              ],
               const SizedBox(width: 8),
               refreshButton,
             ],

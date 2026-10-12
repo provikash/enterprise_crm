@@ -10,11 +10,13 @@ import '../../domain/policies/dispatch_access_policy.dart';
 import '../../domain/repositories/dispatch_repository.dart';
 import '../bloc/dispatch_list_cubit.dart';
 import '../bloc/dispatch_list_state.dart';
+import '../widgets/dispatch_export_dialog.dart';
 import '../widgets/dispatch_data_table.dart';
 import '../widgets/dispatch_filter_bar.dart';
 import '../widgets/dispatch_mobile_card.dart';
 import '../widgets/dispatch_pagination_controls.dart';
 import '../widgets/dispatch_summary_cards.dart';
+import '../services/dispatch_file_saver.dart';
 import 'create_dispatch_screen.dart';
 import 'dispatch_details_screen.dart';
 
@@ -26,6 +28,7 @@ class DispatchWorkspaceScreen extends StatelessWidget {
   final DispatchRepository repository;
   final VoidCallback? onCreateDispatch;
   final ValueChanged<DispatchRecord>? onViewDispatch;
+  final DispatchFileSaver? fileSaver;
 
   const DispatchWorkspaceScreen({
     super.key,
@@ -33,6 +36,7 @@ class DispatchWorkspaceScreen extends StatelessWidget {
     required this.repository,
     this.onCreateDispatch,
     this.onViewDispatch,
+    this.fileSaver,
   });
 
   @override
@@ -50,6 +54,7 @@ class DispatchWorkspaceScreen extends StatelessWidget {
         repository: repository,
         onCreateDispatch: onCreateDispatch,
         onViewDispatch: onViewDispatch,
+        fileSaver: fileSaver,
       ),
     );
   }
@@ -60,12 +65,14 @@ class _DispatchWorkspaceView extends StatefulWidget {
   final DispatchRepository repository;
   final VoidCallback? onCreateDispatch;
   final ValueChanged<DispatchRecord>? onViewDispatch;
+  final DispatchFileSaver? fileSaver;
 
   const _DispatchWorkspaceView({
     required this.user,
     required this.repository,
     this.onCreateDispatch,
     this.onViewDispatch,
+    this.fileSaver,
   });
 
   @override
@@ -124,6 +131,19 @@ class _DispatchWorkspaceViewState extends State<_DispatchWorkspaceView> {
     }
   }
 
+  void _handleExportDispatches(BuildContext context) {
+    final cubit = context.read<DispatchListCubit>();
+    final state = cubit.state;
+    showDispatchExportDialog(
+      context: context,
+      repository: widget.repository,
+      currentQuery: state.query,
+      currentFilteredRecords:
+          state is DispatchListLoaded ? state.dispatches : null,
+      fileSaver: widget.fileSaver,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -133,6 +153,13 @@ class _DispatchWorkspaceViewState extends State<_DispatchWorkspaceView> {
       appBar: AppBar(
         title: const Text('Dispatch Management'),
         actions: [
+          IconButton(
+            key: const Key('dispatch_export_button'),
+            icon: const Icon(Icons.file_download_outlined),
+            tooltip: 'Export Dispatches',
+            onPressed: () => _handleExportDispatches(context),
+          ),
+          const SizedBox(width: 8),
           if (DispatchAccessPolicy.canCreate(widget.user))
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
@@ -152,7 +179,11 @@ class _DispatchWorkspaceViewState extends State<_DispatchWorkspaceView> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              DispatchSummaryCards(summary: state.summary),
+              DispatchSummaryCards(
+                summary: state.summary,
+                selectedStatus: state.query.status,
+                onStatusSelected: (status) => cubit.updateStatusFilter(status),
+              ),
               DispatchFilterBar(
                 searchController: _searchController,
                 selectedStatus: state.query.status,
@@ -162,6 +193,10 @@ class _DispatchWorkspaceViewState extends State<_DispatchWorkspaceView> {
                   cubit.updateSearch('');
                 },
                 onStatusChanged: (status) => cubit.updateStatusFilter(status),
+                onClearFilters: () {
+                  _searchController.clear();
+                  cubit.clearFilters();
+                },
                 onRefresh: () => cubit.refresh(),
               ),
               const Divider(height: 1),

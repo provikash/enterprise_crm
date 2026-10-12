@@ -1,7 +1,10 @@
+import 'dart:typed_data';
+
 import 'package:enterprise_crm/features/auth/presentation/screens/access_restricted_screen.dart';
 import 'package:enterprise_crm/features/dispatch/data/repositories/mock_dispatch_repository.dart';
 import 'package:enterprise_crm/features/dispatch/domain/entities/dispatch_status.dart';
 import 'package:enterprise_crm/features/dispatch/presentation/screens/dispatch_details_screen.dart';
+import 'package:enterprise_crm/features/dispatch/presentation/services/dispatch_file_saver.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -132,5 +135,59 @@ void main() {
       expect(find.text('DSP-2026-006'), findsOneWidget);
       expect(find.byKey(const Key('open_update_status_dialog_button')), findsNothing);
     });
+
+    testWidgets('tapping download bill button triggers bill PDF saving', (
+      tester,
+    ) async {
+      await tester.binding.setSurfaceSize(const Size(1200, 1000));
+      addTearDown(() => tester.binding.setSurfaceSize(null));
+
+      final fileSaver = _TestDispatchFileSaver();
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DispatchDetailsScreen(
+            dispatchId: 'dsp_001',
+            user: MockAuthTestFixtures.admin,
+            repository: repository,
+            fileSaver: fileSaver,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final downloadButton = find.byKey(const Key('download_dispatch_bill_button'));
+      expect(downloadButton, findsOneWidget);
+
+      await tester.tap(downloadButton);
+      await tester.pumpAndSettle();
+
+      expect(fileSaver.lastExtension, equals('pdf'));
+      expect(fileSaver.lastMimeType, equals('application/pdf'));
+      expect(fileSaver.lastFileName, contains('DSP-2026-001'));
+      expect(fileSaver.lastBytes, isNotNull);
+    });
   });
+}
+
+class _TestDispatchFileSaver implements DispatchFileSaver {
+  String? lastFileName;
+  Uint8List? lastBytes;
+  String? lastMimeType;
+  String? lastExtension;
+
+  @override
+  Future<Uri?> saveFile({
+    required String fileName,
+    required Uint8List bytes,
+    required String mimeType,
+    required String extension,
+    String? dialogTitle,
+  }) async {
+    lastFileName = fileName;
+    lastBytes = bytes;
+    lastMimeType = mimeType;
+    lastExtension = extension;
+    return Uri.parse('file:///mock/$fileName');
+  }
 }

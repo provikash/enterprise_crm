@@ -61,6 +61,15 @@ class DispatchListCubit extends Cubit<DispatchListState> {
     loadDispatches(newQuery: updated);
   }
 
+  void clearFilters() {
+    final updated = state.query.copyWith(
+      clearSearchText: true,
+      clearStatus: true,
+      page: 1,
+    );
+    loadDispatches(newQuery: updated);
+  }
+
   void refresh() {
     loadDispatches();
   }
