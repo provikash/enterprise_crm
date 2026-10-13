@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/config/app_config.dart';
 import '../../../auth/domain/entities/crm_module.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -28,6 +29,7 @@ import 'user_lead_placeholder_screen.dart';
 ///
 /// Administrative sections (e.g. Users & Access) are strictly excluded.
 class UserDashboardScreen extends StatelessWidget {
+  final AppConfig appConfig;
   final CurrentUser user;
   final VoidCallback onLogout;
   final UserLeadLinkRepository userLeadLinkRepository;
@@ -42,6 +44,7 @@ class UserDashboardScreen extends StatelessWidget {
 
   const UserDashboardScreen({
     super.key,
+    this.appConfig = AppConfig.development,
     required this.user,
     required this.onLogout,
     required this.userLeadLinkRepository,
@@ -85,6 +88,7 @@ class UserDashboardScreen extends StatelessWidget {
         MaterialPageRoute(
           builder: (_) => HrHomeScreen(
             user: user,
+            appConfig: appConfig,
             repository: employeeRepository ?? MockEmployeeRepository(),
             documentRepository: employeeDocumentRepository,
             attendanceRepository: attendanceRepository,
@@ -113,17 +117,10 @@ class UserDashboardScreen extends StatelessWidget {
       );
 
       if (authCubit != null) {
-        screen = BlocProvider<AuthCubit>.value(
-          value: authCubit,
-          child: screen,
-        );
+        screen = BlocProvider<AuthCubit>.value(value: authCubit, child: screen);
       }
 
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => screen,
-        ),
-      );
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
     } else {
       Navigator.of(context).push(
         MaterialPageRoute(

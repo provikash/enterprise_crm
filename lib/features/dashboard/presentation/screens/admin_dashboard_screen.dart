@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/config/app_config.dart';
 import '../../../auth/domain/entities/crm_module.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -23,6 +24,7 @@ import 'module_placeholder_screen.dart';
 /// Global Admin Dashboard providing access to all 8 CRM business modules
 /// and the Administration section.
 class AdminDashboardScreen extends StatelessWidget {
+  final AppConfig appConfig;
   final CurrentUser user;
   final VoidCallback onLogout;
   final VoidCallback onOpenLeadManagement;
@@ -35,6 +37,7 @@ class AdminDashboardScreen extends StatelessWidget {
 
   const AdminDashboardScreen({
     super.key,
+    this.appConfig = AppConfig.development,
     required this.user,
     required this.onLogout,
     required this.onOpenLeadManagement,
@@ -54,6 +57,7 @@ class AdminDashboardScreen extends StatelessWidget {
         MaterialPageRoute(
           builder: (_) => HrHomeScreen(
             user: user,
+            appConfig: appConfig,
             repository: employeeRepository ?? MockEmployeeRepository(),
             documentRepository: employeeDocumentRepository,
             attendanceRepository: attendanceRepository,
@@ -82,17 +86,10 @@ class AdminDashboardScreen extends StatelessWidget {
       );
 
       if (authCubit != null) {
-        screen = BlocProvider<AuthCubit>.value(
-          value: authCubit,
-          child: screen,
-        );
+        screen = BlocProvider<AuthCubit>.value(value: authCubit, child: screen);
       }
 
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => screen,
-        ),
-      );
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
     } else {
       Navigator.of(context).push(
         MaterialPageRoute(

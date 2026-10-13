@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../core/config/app_config.dart';
 import '../features/auth/domain/repositories/auth_repository.dart';
 import '../features/auth/domain/repositories/user_lead_link_repository.dart';
 import '../features/auth/presentation/bloc/auth_cubit.dart';
@@ -35,9 +36,11 @@ import '../features/hr/domain/repositories/employee_repository.dart';
 import '../features/inventory/domain/repositories/inventory_repository.dart';
 import '../features/leads/presentation/services/lead_import_file_picker.dart';
 import '../features/leads/presentation/widgets/lead_export_dialog.dart';
+import '../features/payroll/presentation/navigation/payroll_routes.dart';
 
 /// Top-level application widget for the Enterprise CRM.
 class CrmApp extends StatefulWidget {
+  final AppConfig appConfig;
   final LeadRepository leadRepository;
   final LeadImportFilePicker? filePicker;
   final LeadExportFileSaver? exportFileSaver;
@@ -54,6 +57,7 @@ class CrmApp extends StatefulWidget {
 
   const CrmApp({
     super.key,
+    this.appConfig = AppConfig.development,
     required this.leadRepository,
     this.filePicker,
     this.exportFileSaver,
@@ -153,6 +157,7 @@ class _CrmAppState extends State<CrmApp> {
                 if (user.isAdmin) {
                   return AdminDashboardScreen(
                     user: user,
+                    appConfig: widget.appConfig,
                     onLogout: () => _authCubit!.logout(),
                     inventoryRepository: widget.inventoryRepository!,
                     userManagementRepository: widget.userManagementRepository,
@@ -176,6 +181,7 @@ class _CrmAppState extends State<CrmApp> {
                 } else {
                   return UserDashboardScreen(
                     user: user,
+                    appConfig: widget.appConfig,
                     onLogout: () => _authCubit!.logout(),
                     userLeadLinkRepository: widget.userLeadLinkRepository!,
                     leadRepository: widget.leadRepository,
@@ -225,6 +231,17 @@ class _CrmAppState extends State<CrmApp> {
       ),
       themeMode: ThemeMode.system,
       home: content,
+      onGenerateRoute: (settings) {
+        final authState = _authCubit?.state;
+        final currentUser = authState is AuthAuthenticated
+            ? authState.user
+            : null;
+        return PayrollRoutes.onGenerateRoute(
+          settings,
+          user: currentUser,
+          config: widget.appConfig,
+        );
+      },
     );
 
     if (widget.authRepository != null) {

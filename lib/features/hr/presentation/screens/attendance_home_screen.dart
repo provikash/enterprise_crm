@@ -14,7 +14,6 @@ import '../widgets/attendance_feature_card.dart';
 import 'attendance_list_screen.dart';
 import 'manual_attendance_screen.dart';
 import 'team_attendance_screen.dart';
-import 'workforce_operations_screen.dart';
 
 /// Date-scoped landing dashboard for the implemented Attendance capabilities.
 class AttendanceHomeScreen extends StatelessWidget {
@@ -381,17 +380,6 @@ class _FeatureGrid extends StatelessWidget {
         title: 'Attendance history',
         description: 'Search and filter all available attendance records',
         onTap: () => _openList(context),
-      ),
-      AttendanceFeatureCard(
-        key: const Key('attendance_feature_workforce_operations'),
-        icon: Icons.account_tree_outlined,
-        title: 'Workforce operations',
-        description: 'Shifts, policies, timesheets, leave and holidays',
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => WorkforceOperationsScreen(user: user),
-          ),
-        ),
       ),
     ];
 

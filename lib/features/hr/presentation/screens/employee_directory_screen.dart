@@ -3,8 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
-import '../../data/repositories/mock_attendance_repository.dart';
-import '../../data/repositories/mock_employee_kpi_repository.dart';
 import '../../domain/entities/employee.dart';
 import '../../domain/entities/employment_status.dart';
 import '../../domain/policies/hr_access_policy.dart';
@@ -15,10 +13,7 @@ import '../../domain/repositories/employee_repository.dart';
 import '../bloc/employee_directory_cubit.dart';
 import '../bloc/employee_directory_state.dart';
 import 'add_employee_screen.dart';
-import 'attendance_list_screen.dart';
 import 'employee_details_screen.dart';
-import 'employee_kpi_list_screen.dart';
-import 'hr_home_screen.dart';
 
 /// Main Employee Directory workspace screen in the HR module.
 ///
@@ -102,58 +97,6 @@ class _EmployeeDirectoryViewState extends State<_EmployeeDirectoryView> {
       appBar: AppBar(
         title: const Text('Employee Directory'),
         actions: [
-          IconButton(
-            key: const Key('employee_directory_attendance_button'),
-            tooltip: 'Attendance Management',
-            icon: const Icon(Icons.calendar_month_outlined),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => AttendanceListScreen(
-                    user: widget.user,
-                    repository:
-                        widget.attendanceRepository ??
-                        MockAttendanceRepository(),
-                  ),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            key: const Key('employee_directory_kpi_button'),
-            tooltip: 'KPI Management',
-            icon: const Icon(Icons.assessment_outlined),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => EmployeeKpiListScreen(
-                    user: widget.user,
-                    kpiRepository:
-                        widget.kpiRepository ?? MockEmployeeKpiRepository(),
-                    employeeRepository: widget.repository,
-                  ),
-                ),
-              );
-            },
-          ),
-          IconButton(
-            key: const Key('employee_directory_home_grid_button'),
-            tooltip: 'HR Dashboard Grid',
-            icon: const Icon(Icons.grid_view_outlined),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => HrHomeScreen(
-                    user: widget.user,
-                    repository: widget.repository,
-                    documentRepository: widget.documentRepository,
-                    attendanceRepository: widget.attendanceRepository,
-                    kpiRepository: widget.kpiRepository,
-                  ),
-                ),
-              );
-            },
-          ),
           IconButton(
             key: const Key('employee_directory_refresh_button'),
             tooltip: 'Refresh',

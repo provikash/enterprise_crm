@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/config/app_config.dart';
 import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
+import '../../../payroll/presentation/screens/payroll_home_screen.dart';
+import '../../../payroll/shared/domain/payroll_access_policy.dart';
 import '../../data/repositories/mock_attendance_repository.dart';
 import '../../data/repositories/mock_employee_kpi_repository.dart';
 import '../../domain/policies/hr_access_policy.dart';
@@ -22,6 +25,7 @@ import 'employee_kpi_list_screen.dart';
 /// Implements the enterprise interaction model:
 /// HR / Payroll → Main Feature Grid → Feature-Specific Grid / Overview → Detailed View
 class HrHomeScreen extends StatelessWidget {
+  final AppConfig appConfig;
   final CurrentUser user;
   final EmployeeRepository repository;
   final EmployeeDocumentRepository? documentRepository;
@@ -30,6 +34,7 @@ class HrHomeScreen extends StatelessWidget {
 
   const HrHomeScreen({
     super.key,
+    this.appConfig = AppConfig.development,
     required this.user,
     required this.repository,
     this.documentRepository,
@@ -97,7 +102,9 @@ class HrHomeScreen extends StatelessWidget {
   }
 
   Widget _buildMainGrid(BuildContext context) {
-    final canViewPayroll = HrAccessPolicy.canViewPayroll(user);
+    final canViewPayroll =
+        appConfig.isPayrollEnabled(PayrollFeature.foundations) &&
+        PayrollAccessPolicy.canEnter(user);
 
     return HrResponsiveGrid(
       key: const Key('hr_main_feature_grid'),
@@ -282,6 +289,14 @@ class HrHomeScreen extends StatelessWidget {
   }
 
   void _showPayrollOverview(BuildContext context) {
+    if (appConfig.isPayrollEnabled(PayrollFeature.foundations)) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PayrollHomeScreen(user: user, config: appConfig),
+        ),
+      );
+      return;
+    }
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 

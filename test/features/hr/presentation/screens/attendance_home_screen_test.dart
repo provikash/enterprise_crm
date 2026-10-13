@@ -70,6 +70,10 @@ void main() {
     expect(find.text('Corrections'), findsNothing);
     expect(find.text('Shifts'), findsNothing);
     expect(find.text('Exceptions'), findsNothing);
+    expect(
+      find.byKey(const Key('attendance_feature_workforce_operations')),
+      findsNothing,
+    );
   });
 
   testWidgets('selected-date card opens a filtered attendance list', (

@@ -98,7 +98,7 @@ void main() {
     });
 
     testWidgets(
-      'user with payrollView sees payroll card and can open overview',
+      'user with payrollView sees payroll card and opens Payroll workspace',
       (tester) async {
         await tester.pumpWidget(buildWidget(user: hrPayrollUser));
         await tester.pumpAndSettle();
@@ -110,9 +110,8 @@ void main() {
         await tester.tap(payrollCard);
         await tester.pumpAndSettle();
 
-        expect(find.text('Compensation Overview'), findsOneWidget);
-        expect(find.text('Monthly (30 Days)'), findsOneWidget);
-        expect(find.text('INR (₹)'), findsOneWidget);
+        expect(find.byKey(const Key('payroll_home_screen')), findsOneWidget);
+        expect(find.text('Payroll workspace'), findsOneWidget);
       },
     );
 
