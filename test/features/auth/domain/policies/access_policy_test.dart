@@ -90,15 +90,23 @@ void main() {
         CrmPermissions.inventoryExportCsv,
         CrmPermissions.inventoryExportXlsx,
       });
-      expect(CrmPermissions.permissionsFor(CrmModule.dispatch), isEmpty);
+      expect(CrmPermissions.permissionsFor(CrmModule.dispatch), {
+        CrmPermissions.dispatchView,
+        CrmPermissions.dispatchCreate,
+        CrmPermissions.dispatchUpdateStatus,
+        CrmPermissions.dispatchExportCsv,
+        CrmPermissions.dispatchExportXlsx,
+        CrmPermissions.dispatchExportPdf,
+        CrmPermissions.dispatchDownloadBill,
+      });
       expect(
         CrmPermissions.permissionsFor(CrmModule.approvalsNotifications),
         isEmpty,
       );
     });
 
-    test('allKnown contains exactly 16 permissions', () {
-      expect(CrmPermissions.allKnown.length, 16);
+    test('allKnown contains exactly 23 permissions', () {
+      expect(CrmPermissions.allKnown.length, 23);
     });
 
     test('CrmPermissionPresentation returns human-readable labels', () {

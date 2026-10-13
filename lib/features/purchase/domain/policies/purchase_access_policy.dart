@@ -18,4 +18,8 @@ abstract final class PurchaseAccessPolicy {
   /// Checks whether [user] can receive goods against an ordered PO.
   static bool canReceive(CurrentUser user) =>
       user.isAdmin || user.hasModule(CrmModule.purchase);
+
+  /// Checks whether [user] can export purchase reports or PO bills.
+  static bool canExport(CurrentUser user) =>
+      user.isAdmin || user.hasModule(CrmModule.purchase);
 }

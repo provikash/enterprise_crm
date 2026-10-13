@@ -8,7 +8,9 @@ import '../../domain/policies/purchase_access_policy.dart';
 import '../../domain/repositories/purchase_repository.dart';
 import '../bloc/purchase_list_cubit.dart';
 import '../bloc/purchase_list_state.dart';
+import '../services/purchase_file_saver.dart';
 import '../widgets/purchase_data_table.dart';
+import '../widgets/purchase_export_dialog.dart';
 import '../widgets/purchase_filter_bar.dart';
 import '../widgets/purchase_mobile_card.dart';
 import '../widgets/purchase_pagination_controls.dart';
@@ -24,6 +26,7 @@ class PurchaseWorkspaceScreen extends StatelessWidget {
   final PurchaseRepository repository;
   final VoidCallback? onCreatePurchaseOrder;
   final ValueChanged<PurchaseOrderRecord>? onViewPurchaseOrder;
+  final PurchaseFileSaver? fileSaver;
 
   const PurchaseWorkspaceScreen({
     super.key,
@@ -31,6 +34,7 @@ class PurchaseWorkspaceScreen extends StatelessWidget {
     required this.repository,
     this.onCreatePurchaseOrder,
     this.onViewPurchaseOrder,
+    this.fileSaver,
   });
 
   @override
@@ -48,6 +52,7 @@ class PurchaseWorkspaceScreen extends StatelessWidget {
         repository: repository,
         onCreatePurchaseOrder: onCreatePurchaseOrder,
         onViewPurchaseOrder: onViewPurchaseOrder,
+        fileSaver: fileSaver,
       ),
     );
   }
@@ -58,12 +63,14 @@ class _PurchaseWorkspaceView extends StatefulWidget {
   final PurchaseRepository repository;
   final VoidCallback? onCreatePurchaseOrder;
   final ValueChanged<PurchaseOrderRecord>? onViewPurchaseOrder;
+  final PurchaseFileSaver? fileSaver;
 
   const _PurchaseWorkspaceView({
     required this.user,
     required this.repository,
     this.onCreatePurchaseOrder,
     this.onViewPurchaseOrder,
+    this.fileSaver,
   });
 
   @override
@@ -126,6 +133,20 @@ class _PurchaseWorkspaceViewState extends State<_PurchaseWorkspaceView> {
     }
   }
 
+  void _handleExportPurchaseOrders(BuildContext context) {
+    final cubit = context.read<PurchaseListCubit>();
+    final state = cubit.state;
+    showPurchaseExportDialog(
+      context: context,
+      repository: widget.repository,
+      user: widget.user,
+      currentQuery: state.query,
+      currentFilteredRecords:
+          state is PurchaseListLoaded ? state.orders : null,
+      fileSaver: widget.fileSaver,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -138,6 +159,13 @@ class _PurchaseWorkspaceViewState extends State<_PurchaseWorkspaceView> {
           overflow: TextOverflow.ellipsis,
         ),
         actions: [
+          if (PurchaseAccessPolicy.canExport(widget.user))
+            IconButton(
+              key: const Key('purchase_export_button'),
+              icon: const Icon(Icons.file_download_outlined),
+              tooltip: 'Export Purchase Orders',
+              onPressed: () => _handleExportPurchaseOrders(context),
+            ),
           if (PurchaseAccessPolicy.canCreate(widget.user))
             Builder(
               builder: (context) {

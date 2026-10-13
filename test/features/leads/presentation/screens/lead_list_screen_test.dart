@@ -1584,7 +1584,9 @@ void main() {
         );
         expect(prevButton.onPressed, isNull);
 
-        await tester.tap(find.byKey(const Key('pagination_previous_button')));
+        final prevBtn = find.byKey(const Key('pagination_previous_button'));
+        await tester.ensureVisible(prevBtn);
+        await tester.tap(prevBtn, warnIfMissed: false);
         await tester.pumpAndSettle();
 
         expect(repository.getLeadsCallCount, initialCalls);
@@ -1609,7 +1611,9 @@ void main() {
         await tester.pumpAndSettle();
 
         // Tap Next
-        await tester.tap(find.byKey(const Key('pagination_next_button')));
+        final nextBtn = find.byKey(const Key('pagination_next_button'));
+        await tester.ensureVisible(nextBtn);
+        await tester.tap(nextBtn);
         await tester.pumpAndSettle();
 
         expect(cubit.currentQuery.page, 2);
@@ -1638,7 +1642,9 @@ void main() {
       expect(find.text('Page 2 of 3'), findsOneWidget);
 
       // Tap Previous
-      await tester.tap(find.byKey(const Key('pagination_previous_button')));
+      final prevBtn = find.byKey(const Key('pagination_previous_button'));
+      await tester.ensureVisible(prevBtn);
+      await tester.tap(prevBtn);
       await tester.pumpAndSettle();
 
       expect(cubit.currentQuery.page, 1);
@@ -1670,7 +1676,9 @@ void main() {
         expect(nextButton.onPressed, isNull);
 
         final callsBefore = repository.getLeadsCallCount;
-        await tester.tap(find.byKey(const Key('pagination_next_button')));
+        final nextBtn = find.byKey(const Key('pagination_next_button'));
+        await tester.ensureVisible(nextBtn);
+        await tester.tap(nextBtn, warnIfMissed: false);
         await tester.pumpAndSettle();
 
         expect(repository.getLeadsCallCount, callsBefore);

@@ -1,22 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
+import 'dart:typed_data';
+
 import 'package:enterprise_crm/features/auth/domain/entities/current_user.dart';
 import 'package:enterprise_crm/features/auth/presentation/screens/access_restricted_screen.dart';
 import 'package:enterprise_crm/features/purchase/data/repositories/mock_purchase_repository.dart';
 import 'package:enterprise_crm/features/purchase/domain/entities/purchase_order_record.dart';
 import 'package:enterprise_crm/features/purchase/domain/entities/purchase_order_status.dart';
 import 'package:enterprise_crm/features/purchase/presentation/screens/purchase_workspace_screen.dart';
+import 'package:enterprise_crm/features/purchase/presentation/services/purchase_file_saver.dart';
 import 'package:enterprise_crm/features/purchase/presentation/widgets/purchase_data_table.dart';
 import 'package:enterprise_crm/features/purchase/presentation/widgets/purchase_mobile_card.dart';
 
 import '../../../../helpers/mock_auth_test_fixtures.dart';
+
+class MockTestPurchaseFileSaver implements PurchaseFileSaver {
+  String? lastFileName;
+  Uint8List? lastBytes;
+  String? lastMimeType;
+  String? lastExtension;
+
+  @override
+  Future<Uri?> saveFile({
+    required String fileName,
+    required Uint8List bytes,
+    required String mimeType,
+    required String extension,
+    String? dialogTitle,
+  }) async {
+    lastFileName = fileName;
+    lastBytes = bytes;
+    lastMimeType = mimeType;
+    lastExtension = extension;
+    return Uri.parse('file:///mock/downloads/$fileName');
+  }
+}
 
 Widget _buildTestApp({
   required CurrentUser user,
   required MockPurchaseRepository repository,
   VoidCallback? onCreatePurchaseOrder,
   ValueChanged<PurchaseOrderRecord>? onViewPurchaseOrder,
+  PurchaseFileSaver? fileSaver,
   Size surfaceSize = const Size(1200, 800),
 }) {
   return MaterialApp(
@@ -28,6 +54,7 @@ Widget _buildTestApp({
         repository: repository,
         onCreatePurchaseOrder: onCreatePurchaseOrder,
         onViewPurchaseOrder: onViewPurchaseOrder,
+        fileSaver: fileSaver,
       ),
     ),
   );
@@ -256,6 +283,34 @@ void main() {
 
       expect(selected, isNotNull);
       expect(selected!.id, equals('po_004'));
+    });
+
+    testWidgets('tapping export button opens export dialog and downloads file', (
+      tester,
+    ) async {
+      final fileSaver = MockTestPurchaseFileSaver();
+      await tester.pumpWidget(
+        _buildTestApp(
+          user: MockAuthTestFixtures.admin,
+          repository: repository,
+          fileSaver: fileSaver,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final exportButton = find.byKey(const Key('purchase_export_button'));
+      expect(exportButton, findsOneWidget);
+
+      await tester.tap(exportButton);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('purchase_export_dialog')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('purchase_confirm_export_button')));
+      await tester.pumpAndSettle();
+
+      expect(fileSaver.lastBytes, isNotNull);
+      expect(fileSaver.lastExtension, equals('pdf'));
     });
   });
 }

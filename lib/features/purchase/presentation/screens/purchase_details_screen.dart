@@ -9,6 +9,8 @@ import '../../domain/policies/purchase_access_policy.dart';
 import '../../domain/repositories/purchase_repository.dart';
 import '../bloc/purchase_details_cubit.dart';
 import '../bloc/purchase_details_state.dart';
+import '../services/purchase_file_saver.dart';
+import '../services/purchase_pdf_serializer.dart';
 import '../widgets/purchase_lifecycle_stepper.dart';
 import '../widgets/purchase_status_badge.dart';
 import '../widgets/receive_stock_dialog.dart';
@@ -19,12 +21,14 @@ class PurchaseDetailsScreen extends StatelessWidget {
   final String purchaseOrderId;
   final CurrentUser user;
   final PurchaseRepository repository;
+  final PurchaseFileSaver? fileSaver;
 
   const PurchaseDetailsScreen({
     super.key,
     required this.purchaseOrderId,
     required this.user,
     required this.repository,
+    this.fileSaver,
   });
 
   @override
@@ -39,6 +43,7 @@ class PurchaseDetailsScreen extends StatelessWidget {
       child: _PurchaseDetailsView(
         purchaseOrderId: purchaseOrderId,
         user: user,
+        fileSaver: fileSaver,
       ),
     );
   }
@@ -47,10 +52,12 @@ class PurchaseDetailsScreen extends StatelessWidget {
 class _PurchaseDetailsView extends StatelessWidget {
   final String purchaseOrderId;
   final CurrentUser user;
+  final PurchaseFileSaver? fileSaver;
 
   const _PurchaseDetailsView({
     required this.purchaseOrderId,
     required this.user,
+    this.fileSaver,
   });
 
   void _openReceiveStockDialog(BuildContext context, PurchaseOrderRecord record) {
@@ -92,6 +99,38 @@ class _PurchaseDetailsView extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _downloadBill(BuildContext context, PurchaseOrderRecord record) async {
+    try {
+      final saver = fileSaver ?? const DefaultPurchaseFileSaver();
+      final bytes = const PurchasePdfSerializer().generatePurchaseOrderBillPdf(record);
+      final fileName = 'Purchase_Order_${record.poNumber}.pdf';
+      final uri = await saver.saveFile(
+        fileName: fileName,
+        bytes: bytes,
+        mimeType: 'application/pdf',
+        extension: 'pdf',
+        dialogTitle: 'Save Purchase Order (${record.poNumber})',
+      );
+      if (context.mounted && uri != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Successfully saved $fileName'),
+            backgroundColor: Colors.green.shade700,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to generate PO bill: $e'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    }
   }
 
   @override
@@ -251,6 +290,14 @@ class _PurchaseDetailsView extends StatelessWidget {
                               context,
                               title: 'Logistics & Commercial Terms',
                               icon: Icons.local_shipping_outlined,
+                              action: PurchaseAccessPolicy.canExport(user)
+                                  ? OutlinedButton.icon(
+                                      key: const Key('purchase_download_bill_button'),
+                                      icon: const Icon(Icons.picture_as_pdf_outlined, size: 16),
+                                      label: const Text('Download Bill (PDF)'),
+                                      onPressed: () => _downloadBill(context, record),
+                                    )
+                                  : null,
                               children: [
                                 _buildDetailRow(
                                   context,
@@ -593,16 +640,41 @@ class _PurchaseDetailsView extends StatelessWidget {
           onSelected: (val) {
             if (val == 'cancel') {
               _confirmCancelOrder(context, record);
+            } else if (val == 'download_bill') {
+              _downloadBill(context, record);
             }
           },
           itemBuilder: (ctx) => [
+            if (PurchaseAccessPolicy.canExport(user))
+              const PopupMenuItem(
+                key: Key('purchase_menu_download_bill'),
+                value: 'download_bill',
+                child: Row(
+                  children: [
+                    Icon(Icons.picture_as_pdf_outlined, size: 18),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Download Bill (PDF)',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
             const PopupMenuItem(
               value: 'cancel',
               child: Row(
                 children: [
                   Icon(Icons.cancel_outlined, size: 18, color: Colors.red),
                   SizedBox(width: 8),
-                  Text('Cancel PO', style: TextStyle(color: Colors.red)),
+                  Expanded(
+                    child: Text(
+                      'Cancel PO',
+                      style: TextStyle(color: Colors.red),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -649,6 +721,7 @@ class _PurchaseDetailsView extends StatelessWidget {
     BuildContext context, {
     required String title,
     required IconData icon,
+    Widget? action,
     required List<Widget> children,
   }) {
     final theme = Theme.of(context);
@@ -665,19 +738,48 @@ class _PurchaseDetailsView extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Icon(icon, size: 20, color: colorScheme.primary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final isNarrow = constraints.maxWidth < 450;
+                if (isNarrow && action != null) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(icon, size: 20, color: colorScheme.primary),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              title,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      action,
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    Icon(icon, size: 20, color: colorScheme.primary),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-              ],
+                    ?action,
+                  ],
+                );
+              },
             ),
             const Divider(height: 20),
             ...children,
