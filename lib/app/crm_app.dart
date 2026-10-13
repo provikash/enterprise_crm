@@ -174,6 +174,10 @@ class _CrmAppState extends State<CrmApp> {
                     employeeDocumentRepository: _employeeDocumentRepository,
                     attendanceRepository: _attendanceRepository,
                     employeeKpiRepository: _employeeKpiRepository,
+                    leadRepository: widget.leadRepository,
+                    userLeadLinkRepository: widget.userLeadLinkRepository,
+                    callActivityRepository: widget.leadCallActivityRepository,
+                    leadFollowUpRepository: widget.leadFollowUpRepository,
                     onOpenLeadManagement: () {
                       _navigatorKey.currentState?.push(
                         MaterialPageRoute(

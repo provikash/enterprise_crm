@@ -76,7 +76,7 @@ class LeadFollowUpHistoryCubit extends Cubit<LeadFollowUpHistoryState> {
     try {
       // 5. Resolve identity link
       final link = await _linkRepository.getLinkForUser(_user.id);
-      if (link == null) {
+      if (!_user.isAdmin && link == null) {
         emit(
           const LeadFollowUpHistoryAccessDenied(
             'User is not linked to an assignee identity.',
@@ -86,15 +86,15 @@ class LeadFollowUpHistoryCubit extends Cubit<LeadFollowUpHistoryState> {
       }
 
       // 6. Validate assignee identity exists
-      final assignees = await _leadRepository.getAssignableUsers();
-      final assigneeExists = assignees.any((a) => a.id == link.leadAssigneeId);
-      if (!assigneeExists) {
-        emit(
-          const LeadFollowUpHistoryAccessDenied(
-            'Assigned identity is invalid.',
-          ),
-        );
-        return;
+      if (link != null) {
+        final assignees = await _leadRepository.getAssignableUsers();
+        final assigneeExists = assignees.any((a) => a.id == link.leadAssigneeId);
+        if (!_user.isAdmin && !assigneeExists) {
+          emit(
+            const LeadFollowUpHistoryAccessDenied('Assigned identity is invalid.'),
+          );
+          return;
+        }
       }
 
       // 7. Retrieve fresh lead
@@ -105,7 +105,7 @@ class LeadFollowUpHistoryCubit extends Cubit<LeadFollowUpHistoryState> {
       }
 
       // 8. Strict ownership check
-      if (lead.assignedUserId != link.leadAssigneeId) {
+      if (!_user.isAdmin && lead.assignedUserId != link?.leadAssigneeId) {
         emit(
           const LeadFollowUpHistoryAccessDenied(
             'Access restricted to assigned leads only.',

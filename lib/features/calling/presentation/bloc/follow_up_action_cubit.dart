@@ -148,7 +148,7 @@ class FollowUpActionCubit extends Cubit<FollowUpActionState> {
     try {
       // 2. Re-resolve UserLeadLink
       final link = await _linkRepository.getLinkForUser(_user.id);
-      if (link == null) {
+      if (!_user.isAdmin && link == null) {
         return (
           isSuccess: false,
           errorMessage: 'Identity link is no longer valid.',
@@ -156,13 +156,15 @@ class FollowUpActionCubit extends Cubit<FollowUpActionState> {
       }
 
       // 3. Validate assignee exists
-      final assignees = await _leadRepository.getAssignableUsers();
-      final assigneeExists = assignees.any((a) => a.id == link.leadAssigneeId);
-      if (!assigneeExists) {
-        return (
-          isSuccess: false,
-          errorMessage: 'Assigned identity is invalid.',
-        );
+      if (link != null) {
+        final assignees = await _leadRepository.getAssignableUsers();
+        final assigneeExists = assignees.any((a) => a.id == link.leadAssigneeId);
+        if (!_user.isAdmin && !assigneeExists) {
+          return (
+            isSuccess: false,
+            errorMessage: 'Assigned identity is invalid.',
+          );
+        }
       }
 
       // 4. Re-fetch fresh lead
@@ -172,7 +174,7 @@ class FollowUpActionCubit extends Cubit<FollowUpActionState> {
       }
 
       // 5. Strict current ownership check (anti-reassignment guard)
-      if (freshLead.assignedUserId != link.leadAssigneeId) {
+      if (!_user.isAdmin && freshLead.assignedUserId != link?.leadAssigneeId) {
         return (
           isSuccess: false,
           errorMessage:

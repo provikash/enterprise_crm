@@ -1,5 +1,5 @@
+import 'package:enterprise_crm/features/calling/presentation/screens/user_calling_workspace_screen.dart';
 import 'package:enterprise_crm/features/dashboard/presentation/screens/admin_dashboard_screen.dart';
-import 'package:enterprise_crm/features/dashboard/presentation/screens/module_placeholder_screen.dart';
 import 'package:enterprise_crm/features/inventory/data/repositories/mock_inventory_repository.dart';
 import 'package:enterprise_crm/features/user_management/data/mock/mock_account_store.dart';
 import 'package:enterprise_crm/features/user_management/data/repositories/mock_user_management_repository.dart';
@@ -85,7 +85,7 @@ void main() {
       expect(opened, isTrue);
     });
 
-    testWidgets('tapping Calling opens ModulePlaceholderScreen', (
+    testWidgets('tapping Calling opens UserCallingWorkspaceScreen', (
       tester,
     ) async {
       await tester.pumpWidget(_buildAdminDashboardTestApp());
@@ -94,11 +94,14 @@ void main() {
       await tester.tap(find.byKey(const Key('module_card_calling')));
       await tester.pumpAndSettle();
 
-      expect(find.byType(ModulePlaceholderScreen), findsOneWidget);
-      expect(find.text('Coming in a later module phase.'), findsOneWidget);
+      expect(find.byType(UserCallingWorkspaceScreen), findsOneWidget);
+      expect(find.text('Calling'), findsOneWidget);
+      expect(find.text('CALLING'), findsOneWidget);
 
       // Tap Back
-      await tester.tap(find.text('Back to Dashboard'));
+      await tester.tap(
+        find.byKey(const Key('user_calling_workspace_back_button')),
+      );
       await tester.pumpAndSettle();
 
       expect(find.byType(AdminDashboardScreen), findsOneWidget);

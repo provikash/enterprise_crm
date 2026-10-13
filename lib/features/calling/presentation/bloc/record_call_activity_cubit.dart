@@ -101,7 +101,7 @@ class RecordCallActivityCubit extends Cubit<RecordCallActivityState> {
     try {
       // 5. Resolve identity link
       final link = await _linkRepository.getLinkForUser(_user.id);
-      if (link == null) {
+      if (!_user.isAdmin && link == null) {
         emit(
           const RecordCallActivityAccessDenied(
             'User is not linked to an assignee identity.',
@@ -111,13 +111,15 @@ class RecordCallActivityCubit extends Cubit<RecordCallActivityState> {
       }
 
       // 6. Validate assignee identity exists
-      final assignees = await _leadRepository.getAssignableUsers();
-      final assigneeExists = assignees.any((a) => a.id == link.leadAssigneeId);
-      if (!assigneeExists) {
-        emit(
-          const RecordCallActivityAccessDenied('Assigned identity is invalid.'),
-        );
-        return;
+      if (link != null) {
+        final assignees = await _leadRepository.getAssignableUsers();
+        final assigneeExists = assignees.any((a) => a.id == link.leadAssigneeId);
+        if (!_user.isAdmin && !assigneeExists) {
+          emit(
+            const RecordCallActivityAccessDenied('Assigned identity is invalid.'),
+          );
+          return;
+        }
       }
 
       // 7. Retrieve lead
@@ -131,7 +133,7 @@ class RecordCallActivityCubit extends Cubit<RecordCallActivityState> {
       if (!UserCallingPolicy.canRecordActivityForLead(
         user: _user,
         lead: lead,
-        linkedAssigneeId: link.leadAssigneeId,
+        linkedAssigneeId: link?.leadAssigneeId,
       )) {
         emit(
           const RecordCallActivityAccessDenied(
@@ -144,7 +146,8 @@ class RecordCallActivityCubit extends Cubit<RecordCallActivityState> {
       emit(
         RecordCallActivityReady(
           lead: lead,
-          linkedAssigneeId: link.leadAssigneeId,
+          linkedAssigneeId:
+              link?.leadAssigneeId ?? (lead.assignedUserId ?? 'agent-1'),
         ),
       );
     } catch (_) {
@@ -214,7 +217,7 @@ class RecordCallActivityCubit extends Cubit<RecordCallActivityState> {
     try {
       // 1. Re-resolve link at save time
       final link = await _linkRepository.getLinkForUser(_user.id);
-      if (link == null) {
+      if (!_user.isAdmin && link == null) {
         emit(
           const RecordCallActivityAccessDenied(
             'Identity link is no longer valid.',
@@ -224,13 +227,15 @@ class RecordCallActivityCubit extends Cubit<RecordCallActivityState> {
       }
 
       // 2. Validate assignee exists
-      final assignees = await _leadRepository.getAssignableUsers();
-      final assigneeExists = assignees.any((a) => a.id == link.leadAssigneeId);
-      if (!assigneeExists) {
-        emit(
-          const RecordCallActivityAccessDenied('Assigned identity is invalid.'),
-        );
-        return;
+      if (link != null) {
+        final assignees = await _leadRepository.getAssignableUsers();
+        final assigneeExists = assignees.any((a) => a.id == link.leadAssigneeId);
+        if (!_user.isAdmin && !assigneeExists) {
+          emit(
+            const RecordCallActivityAccessDenied('Assigned identity is invalid.'),
+          );
+          return;
+        }
       }
 
       // 3. Re-fetch fresh lead from repository
@@ -244,7 +249,7 @@ class RecordCallActivityCubit extends Cubit<RecordCallActivityState> {
       if (!UserCallingPolicy.canRecordActivityForLead(
         user: _user,
         lead: freshLead,
-        linkedAssigneeId: link.leadAssigneeId,
+        linkedAssigneeId: link?.leadAssigneeId,
       )) {
         emit(
           const RecordCallActivityAccessDenied(

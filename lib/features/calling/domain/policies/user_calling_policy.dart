@@ -10,10 +10,10 @@ import '../../../leads/domain/entities/lead.dart';
 abstract final class UserCallingPolicy {
   /// Returns whether [user] is authorized to access the Calling module.
   ///
-  /// Requires standard user account, [CrmModule.calling] assigned,
-  /// and [CrmPermissions.callingUse] granted.
+  /// Administrators hold unrestricted access across all modules.
+  /// Standard users require [CrmModule.calling] assigned and [CrmPermissions.callingUse] granted.
   static bool canUseCalling(CurrentUser user) {
-    if (user.isAdmin) return false;
+    if (user.isAdmin) return true;
 
     return AccessPolicy.canAccessModule(user, CrmModule.calling) &&
         AccessPolicy.hasPermission(user, CrmPermissions.callingUse);
@@ -21,7 +21,8 @@ abstract final class UserCallingPolicy {
 
   /// Returns whether [user] is authorized to record a call outcome on [lead].
   ///
-  /// Requires:
+  /// Administrators hold unrestricted authority to record call outcomes on any lead.
+  /// Standard users require:
   /// 1. Calling module + `calling.use` permission.
   /// 2. Lead Management module + `lead.view_assigned` permission.
   /// 3. Valid identity link mapping to a non-empty [linkedAssigneeId].
@@ -34,6 +35,8 @@ abstract final class UserCallingPolicy {
     required String? linkedAssigneeId,
   }) {
     if (!canUseCalling(user)) return false;
+
+    if (user.isAdmin) return true;
 
     if (!AccessPolicy.canAccessModule(user, CrmModule.leadManagement)) {
       return false;
@@ -57,13 +60,15 @@ abstract final class UserCallingPolicy {
 
   /// Returns whether [user] is authorized to view call history for [lead].
   ///
-  /// For CALL-1A, exposes history only when the user is authorized for Calling
-  /// and strictly owns the lead.
+  /// Administrators have full authority. For standard users, exposes history
+  /// only when the user is authorized for Calling and strictly owns the lead.
   static bool canViewLeadHistory({
     required CurrentUser user,
     required Lead lead,
     required String? linkedAssigneeId,
   }) {
+    if (user.isAdmin) return true;
+
     return canRecordActivityForLead(
       user: user,
       lead: lead,

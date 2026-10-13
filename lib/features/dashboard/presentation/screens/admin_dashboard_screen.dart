@@ -17,6 +17,15 @@ import '../../../hr/presentation/screens/employee_directory_screen.dart';
 import '../../../inventory/domain/repositories/inventory_repository.dart';
 import '../../../inventory/data/repositories/mock_inventory_repository.dart';
 import '../../../inventory/presentation/screens/inventory_workspace_screen.dart';
+import '../../../auth/domain/repositories/user_lead_link_repository.dart';
+import '../../../auth/data/repositories/mock_user_lead_link_repository.dart';
+import '../../../calling/data/repositories/mock_lead_call_activity_repository.dart';
+import '../../../calling/data/repositories/mock_lead_follow_up_repository.dart';
+import '../../../calling/domain/repositories/lead_call_activity_repository.dart';
+import '../../../calling/domain/repositories/lead_follow_up_repository.dart';
+import '../../../calling/presentation/screens/user_calling_workspace_screen.dart';
+import '../../../leads/data/repositories/mock_lead_repository.dart';
+import '../../../leads/domain/repositories/lead_repository.dart';
 import '../../../purchase/data/repositories/mock_purchase_repository.dart';
 import '../../../purchase/domain/repositories/purchase_repository.dart';
 import '../../../purchase/presentation/screens/purchase_workspace_screen.dart';
@@ -40,6 +49,10 @@ class AdminDashboardScreen extends StatelessWidget {
   final AttendanceRepository? attendanceRepository;
   final EmployeeKpiRepository? employeeKpiRepository;
   final PurchaseRepository? purchaseRepository;
+  final LeadRepository? leadRepository;
+  final UserLeadLinkRepository? userLeadLinkRepository;
+  final LeadCallActivityRepository? callActivityRepository;
+  final LeadFollowUpRepository? leadFollowUpRepository;
 
   const AdminDashboardScreen({
     super.key,
@@ -54,6 +67,10 @@ class AdminDashboardScreen extends StatelessWidget {
     this.attendanceRepository,
     this.employeeKpiRepository,
     this.purchaseRepository,
+    this.leadRepository,
+    this.userLeadLinkRepository,
+    this.callActivityRepository,
+    this.leadFollowUpRepository,
   });
 
   void _openModule(BuildContext context, CrmModule module) {
@@ -118,6 +135,21 @@ class AdminDashboardScreen extends StatelessWidget {
           builder: (_) => PurchaseWorkspaceScreen(
             user: user,
             repository: purchaseRepository ?? MockPurchaseRepository(),
+          ),
+        ),
+      );
+    } else if (module == CrmModule.calling) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => UserCallingWorkspaceScreen(
+            user: user,
+            leadRepository: leadRepository ?? MockLeadRepository(),
+            linkRepository:
+                userLeadLinkRepository ?? MockUserLeadLinkRepository(),
+            callActivityRepository:
+                callActivityRepository ?? MockLeadCallActivityRepository(),
+            leadFollowUpRepository:
+                leadFollowUpRepository ?? MockLeadFollowUpRepository(),
           ),
         ),
       );

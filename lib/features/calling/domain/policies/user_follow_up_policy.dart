@@ -22,6 +22,8 @@ class UserFollowUpPolicy {
   ///
   /// Does NOT require `lead.update`.
   static bool canManageFollowUps(CurrentUser user) {
+    if (user.isAdmin) return true;
+
     return AccessPolicy.canAccessModule(user, CrmModule.calling) &&
         AccessPolicy.hasPermission(user, CrmPermissions.callingUse) &&
         AccessPolicy.canAccessModule(user, CrmModule.leadManagement) &&
@@ -33,7 +35,7 @@ class UserFollowUpPolicy {
   ///
   /// Criteria:
   /// 1. General follow-up management access is granted.
-  /// 2. [lead] is currently assigned to the user's [linkedAssigneeId].
+  /// 2. For standard users, [lead] is currently assigned to the user's [linkedAssigneeId]. Admins have full access.
   /// 3. [followUp] is currently in [FollowUpStatus.pending] state.
   static bool canActOnFollowUp({
     required CurrentUser user,
@@ -45,7 +47,7 @@ class UserFollowUpPolicy {
       return false;
     }
 
-    if (lead.assignedUserId != linkedAssigneeId) {
+    if (!user.isAdmin && lead.assignedUserId != linkedAssigneeId) {
       return false;
     }
 
