@@ -21,6 +21,8 @@ class PurchaseSummary {
     this.totalSpendAmount = 0.0,
   });
 
+  const PurchaseSummary.empty() : this();
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||

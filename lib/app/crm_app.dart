@@ -26,6 +26,8 @@ import '../features/calling/domain/repositories/lead_call_activity_repository.da
 import '../features/calling/domain/repositories/lead_follow_up_repository.dart';
 import '../features/dispatch/data/repositories/mock_dispatch_repository.dart';
 import '../features/dispatch/domain/repositories/dispatch_repository.dart';
+import '../features/purchase/data/repositories/mock_purchase_repository.dart';
+import '../features/purchase/domain/repositories/purchase_repository.dart';
 import '../features/hr/data/repositories/mock_attendance_repository.dart';
 import '../features/hr/data/repositories/mock_employee_document_repository.dart';
 import '../features/hr/data/repositories/mock_employee_kpi_repository.dart';
@@ -54,6 +56,7 @@ class CrmApp extends StatefulWidget {
   final EmployeeKpiRepository? employeeKpiRepository;
   final InventoryRepository? inventoryRepository;
   final DispatchRepository? dispatchRepository;
+  final PurchaseRepository? purchaseRepository;
 
   const CrmApp({
     super.key,
@@ -71,6 +74,7 @@ class CrmApp extends StatefulWidget {
     this.employeeKpiRepository,
     this.inventoryRepository,
     this.dispatchRepository,
+    this.purchaseRepository,
   }) : assert(
          authRepository == null || userManagementRepository != null,
          'userManagementRepository must be provided when authRepository is enabled',
@@ -105,6 +109,7 @@ class _CrmAppState extends State<CrmApp> {
   late final AttendanceRepository _attendanceRepository;
   late final EmployeeKpiRepository _employeeKpiRepository;
   late final DispatchRepository _dispatchRepository;
+  late final PurchaseRepository _purchaseRepository;
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   @override
@@ -118,6 +123,7 @@ class _CrmAppState extends State<CrmApp> {
     _employeeKpiRepository =
         widget.employeeKpiRepository ?? MockEmployeeKpiRepository();
     _dispatchRepository = widget.dispatchRepository ?? MockDispatchRepository();
+    _purchaseRepository = widget.purchaseRepository ?? MockPurchaseRepository();
     if (widget.authRepository != null) {
       _authCubit = AuthCubit(widget.authRepository!);
     }
@@ -162,6 +168,7 @@ class _CrmAppState extends State<CrmApp> {
                     onLogout: () => _authCubit!.logout(),
                     inventoryRepository: widget.inventoryRepository!,
                     dispatchRepository: _dispatchRepository,
+                    purchaseRepository: _purchaseRepository,
                     userManagementRepository: widget.userManagementRepository,
                     employeeRepository: _employeeRepository,
                     employeeDocumentRepository: _employeeDocumentRepository,
@@ -194,6 +201,7 @@ class _CrmAppState extends State<CrmApp> {
                     employeeKpiRepository: _employeeKpiRepository,
                     inventoryRepository: widget.inventoryRepository!,
                     dispatchRepository: _dispatchRepository,
+                    purchaseRepository: _purchaseRepository,
                   );
                 }
               case AuthUnauthenticated():

@@ -25,6 +25,7 @@ class PurchaseFilterQuery {
 
   PurchaseFilterQuery copyWith({
     String? searchText,
+    bool clearSearchText = false,
     PurchaseOrderStatus? status,
     String? vendorName,
     DateTime? startDate,
@@ -34,7 +35,7 @@ class PurchaseFilterQuery {
     bool clearStatus = false,
   }) {
     return PurchaseFilterQuery(
-      searchText: searchText ?? this.searchText,
+      searchText: clearSearchText ? null : (searchText ?? this.searchText),
       status: clearStatus ? null : (status ?? this.status),
       vendorName: vendorName ?? this.vendorName,
       startDate: startDate ?? this.startDate,

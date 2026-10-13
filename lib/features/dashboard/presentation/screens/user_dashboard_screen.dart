@@ -22,6 +22,9 @@ import '../../../inventory/domain/repositories/inventory_repository.dart';
 import '../../../inventory/data/repositories/mock_inventory_repository.dart';
 import '../../../inventory/presentation/screens/inventory_workspace_screen.dart';
 import '../../../leads/domain/repositories/lead_repository.dart';
+import '../../../purchase/data/repositories/mock_purchase_repository.dart';
+import '../../../purchase/domain/repositories/purchase_repository.dart';
+import '../../../purchase/presentation/screens/purchase_workspace_screen.dart';
 import '../widgets/crm_app_header.dart';
 import '../widgets/crm_module_card.dart';
 import 'module_placeholder_screen.dart';
@@ -43,6 +46,7 @@ class UserDashboardScreen extends StatelessWidget {
   final EmployeeKpiRepository? employeeKpiRepository;
   final InventoryRepository? inventoryRepository;
   final DispatchRepository? dispatchRepository;
+  final PurchaseRepository? purchaseRepository;
 
   const UserDashboardScreen({
     super.key,
@@ -58,6 +62,7 @@ class UserDashboardScreen extends StatelessWidget {
     this.employeeKpiRepository,
     this.inventoryRepository,
     this.dispatchRepository,
+    this.purchaseRepository,
   });
 
   void _openModule(BuildContext context, CrmModule module) {
@@ -135,6 +140,15 @@ class UserDashboardScreen extends StatelessWidget {
           builder: (_) => DispatchWorkspaceScreen(
             user: user,
             repository: dispatchRepository ?? MockDispatchRepository(),
+          ),
+        ),
+      );
+    } else if (module == CrmModule.purchase) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PurchaseWorkspaceScreen(
+            user: user,
+            repository: purchaseRepository ?? MockPurchaseRepository(),
           ),
         ),
       );
