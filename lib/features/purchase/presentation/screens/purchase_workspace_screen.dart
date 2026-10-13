@@ -13,6 +13,7 @@ import '../widgets/purchase_filter_bar.dart';
 import '../widgets/purchase_mobile_card.dart';
 import '../widgets/purchase_pagination_controls.dart';
 import '../widgets/purchase_summary_cards.dart';
+import 'create_purchase_order_screen.dart';
 
 /// Main workspace screen for Purchase Order procurement and supplier management.
 ///
@@ -85,12 +86,20 @@ class _PurchaseWorkspaceViewState extends State<_PurchaseWorkspaceView> {
     if (widget.onCreatePurchaseOrder != null) {
       widget.onCreatePurchaseOrder!();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('PO Creation workflow available in Part 3'),
-          duration: Duration(seconds: 2),
+      Navigator.of(context)
+          .push<bool>(
+        MaterialPageRoute(
+          builder: (_) => CreatePurchaseOrderScreen(
+            user: widget.user,
+            repository: widget.repository,
+          ),
         ),
-      );
+      )
+          .then((created) {
+        if (created == true && context.mounted) {
+          context.read<PurchaseListCubit>().refresh();
+        }
+      });
     }
   }
 
