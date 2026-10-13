@@ -395,6 +395,18 @@ void main() {
         );
       });
 
+      test('succeeds when id is login username (e.g. "user" or "admin")', () {
+        store.resetPassword(
+          id: 'user',
+          newPassword: 'brandNewPassword456',
+        );
+
+        expect(
+          store.authenticate(userId: 'user', password: 'brandNewPassword456'),
+          isNotNull,
+        );
+      });
+
       test('establishes login credential for directory-only account', () {
         // usr_hr has no initial password
         expect(store.authenticate(userId: 'hr_user', password: 'any'), isNull);

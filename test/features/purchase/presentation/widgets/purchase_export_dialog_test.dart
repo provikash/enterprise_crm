@@ -134,7 +134,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(
-      find.text('You do not have permission to export purchase orders.'),
+      find.text('Permission required (purchase.export.pdf).'),
       findsOneWidget,
     );
     expect(fileSaver.lastBytes, isNull);

@@ -58,6 +58,30 @@ void main() {
         CrmModule.purchase,
       );
       expect(
+        CrmPermissions.moduleFor(CrmPermissions.purchaseCreate),
+        CrmModule.purchase,
+      );
+      expect(
+        CrmPermissions.moduleFor(CrmPermissions.purchaseApprove),
+        CrmModule.purchase,
+      );
+      expect(
+        CrmPermissions.moduleFor(CrmPermissions.purchaseReceiveStock),
+        CrmModule.purchase,
+      );
+      expect(
+        CrmPermissions.moduleFor(CrmPermissions.purchaseExportCsv),
+        CrmModule.purchase,
+      );
+      expect(
+        CrmPermissions.moduleFor(CrmPermissions.purchaseExportPdf),
+        CrmModule.purchase,
+      );
+      expect(
+        CrmPermissions.moduleFor(CrmPermissions.purchaseDownloadBill),
+        CrmModule.purchase,
+      );
+      expect(
         CrmPermissions.moduleFor(CrmPermissions.vendorView),
         CrmModule.vendorManagement,
       );
@@ -66,6 +90,7 @@ void main() {
     test('isKnown validates known catalog and rejects arbitrary strings', () {
       expect(CrmPermissions.isKnown(CrmPermissions.leadViewAssigned), isTrue);
       expect(CrmPermissions.isKnown(CrmPermissions.inventoryCreate), isTrue);
+      expect(CrmPermissions.isKnown(CrmPermissions.purchaseCreate), isTrue);
       expect(CrmPermissions.isKnown('lead.delete'), isFalse);
       expect(CrmPermissions.isKnown('*'), isFalse);
       expect(CrmPermissions.isKnown(''), isFalse);
@@ -90,6 +115,15 @@ void main() {
         CrmPermissions.inventoryExportCsv,
         CrmPermissions.inventoryExportXlsx,
       });
+      expect(CrmPermissions.permissionsFor(CrmModule.purchase), {
+        CrmPermissions.purchaseView,
+        CrmPermissions.purchaseCreate,
+        CrmPermissions.purchaseApprove,
+        CrmPermissions.purchaseReceiveStock,
+        CrmPermissions.purchaseExportCsv,
+        CrmPermissions.purchaseExportPdf,
+        CrmPermissions.purchaseDownloadBill,
+      });
       expect(CrmPermissions.permissionsFor(CrmModule.dispatch), {
         CrmPermissions.dispatchView,
         CrmPermissions.dispatchCreate,
@@ -105,8 +139,8 @@ void main() {
       );
     });
 
-    test('allKnown contains exactly 23 permissions', () {
-      expect(CrmPermissions.allKnown.length, 23);
+    test('allKnown contains exactly 29 permissions', () {
+      expect(CrmPermissions.allKnown.length, 29);
     });
 
     test('CrmPermissionPresentation returns human-readable labels', () {
@@ -123,6 +157,16 @@ void main() {
       expect(
         CrmPermissionPresentation.displayNameFor(CrmPermissions.callingUse),
         'Use calling',
+      );
+      expect(
+        CrmPermissionPresentation.displayNameFor(CrmPermissions.purchaseCreate),
+        'Create purchase orders',
+      );
+      expect(
+        CrmPermissionPresentation.displayNameFor(
+          CrmPermissions.purchaseDownloadBill,
+        ),
+        'Download purchase bill (PDF)',
       );
       expect(
         CrmPermissionPresentation.displayNameFor('unknown.perm'),

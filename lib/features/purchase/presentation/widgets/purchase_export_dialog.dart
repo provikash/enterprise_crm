@@ -79,15 +79,31 @@ class _PurchaseExportDialogState extends State<PurchaseExportDialog> {
         (widget.currentQuery?.searchText?.isNotEmpty ?? false)) {
       _scope = PurchaseExportScope.filtered;
     }
+    if (widget.user != null) {
+      if (!PurchaseAccessPolicy.canExportPdf(widget.user!) &&
+          PurchaseAccessPolicy.canExportCsv(widget.user!)) {
+        _format = PurchaseExportFormat.csv;
+      }
+    }
   }
 
   Future<void> _handleExport() async {
     final user = widget.user;
-    if (user != null && !PurchaseAccessPolicy.canExport(user)) {
-      setState(() {
-        _errorMessage = 'You do not have permission to export purchase orders.';
-      });
-      return;
+    if (user != null) {
+      if (_format == PurchaseExportFormat.pdf &&
+          !PurchaseAccessPolicy.canExportPdf(user)) {
+        setState(() {
+          _errorMessage = 'Permission required (purchase.export.pdf).';
+        });
+        return;
+      }
+      if (_format == PurchaseExportFormat.csv &&
+          !PurchaseAccessPolicy.canExportCsv(user)) {
+        setState(() {
+          _errorMessage = 'Permission required (purchase.export.csv).';
+        });
+        return;
+      }
     }
 
     setState(() {
@@ -174,6 +190,11 @@ class _PurchaseExportDialogState extends State<PurchaseExportDialog> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    final canPdf = widget.user == null ||
+        PurchaseAccessPolicy.canExportPdf(widget.user!);
+    final canCsv = widget.user == null ||
+        PurchaseAccessPolicy.canExportCsv(widget.user!);
+
     return AlertDialog(
       key: const Key('purchase_export_dialog'),
       title: Row(
@@ -200,9 +221,11 @@ class _PurchaseExportDialogState extends State<PurchaseExportDialog> {
               value: PurchaseExportFormat.pdf,
               groupValue: _format,
               title: const Text('PDF Document (.pdf)'),
-              subtitle: const Text('Formatted multi-page register report'),
+              subtitle: Text(canPdf
+                  ? 'Formatted multi-page register report'
+                  : 'Permission required (purchase.export.pdf)'),
               secondary: const Icon(Icons.picture_as_pdf_outlined),
-              onChanged: _isExporting
+              onChanged: (_isExporting || !canPdf)
                   ? null
                   : (v) => setState(() => _format = v!),
             ),
@@ -212,9 +235,11 @@ class _PurchaseExportDialogState extends State<PurchaseExportDialog> {
               value: PurchaseExportFormat.csv,
               groupValue: _format,
               title: const Text('CSV Document (.csv)'),
-              subtitle: const Text('Plain text comma-separated values'),
+              subtitle: Text(canCsv
+                  ? 'Plain text comma-separated values'
+                  : 'Permission required (purchase.export.csv)'),
               secondary: const Icon(Icons.text_snippet_outlined),
-              onChanged: _isExporting
+              onChanged: (_isExporting || !canCsv)
                   ? null
                   : (v) => setState(() => _format = v!),
             ),

@@ -290,7 +290,7 @@ class _PurchaseDetailsView extends StatelessWidget {
                               context,
                               title: 'Logistics & Commercial Terms',
                               icon: Icons.local_shipping_outlined,
-                              action: PurchaseAccessPolicy.canExport(user)
+                              action: PurchaseAccessPolicy.canDownloadBill(user)
                                   ? OutlinedButton.icon(
                                       key: const Key('purchase_download_bill_button'),
                                       icon: const Icon(Icons.picture_as_pdf_outlined, size: 16),
@@ -645,7 +645,7 @@ class _PurchaseDetailsView extends StatelessWidget {
             }
           },
           itemBuilder: (ctx) => [
-            if (PurchaseAccessPolicy.canExport(user))
+            if (PurchaseAccessPolicy.canDownloadBill(user))
               const PopupMenuItem(
                 key: Key('purchase_menu_download_bill'),
                 value: 'download_bill',

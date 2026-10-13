@@ -5,9 +5,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../helpers/mock_auth_test_fixtures.dart';
 
+import 'package:enterprise_crm/features/user_management/data/mock/mock_account_store.dart';
+import 'package:enterprise_crm/features/user_management/data/repositories/mock_user_management_repository.dart';
+import 'package:enterprise_crm/features/user_management/domain/repositories/user_management_repository.dart';
+
 Widget _buildHeaderTestApp({
   required CurrentUser user,
   VoidCallback? onLogout,
+  UserManagementRepository? userManagementRepository,
   ThemeMode themeMode = ThemeMode.light,
   double? width,
 }) {
@@ -18,7 +23,11 @@ Widget _buildHeaderTestApp({
     home: Scaffold(
       body: SizedBox(
         width: width,
-        child: CrmAppHeader(user: user, onLogout: onLogout ?? () {}),
+        child: CrmAppHeader(
+          user: user,
+          onLogout: onLogout ?? () {},
+          userManagementRepository: userManagementRepository,
+        ),
       ),
     ),
   );
@@ -179,5 +188,60 @@ void main() {
       expect(find.byKey(const Key('home_account_avatar')), findsOneWidget);
       expect(find.byKey(const Key('crm_header_logout_button')), findsOneWidget);
     });
+
+    testWidgets(
+      'password can be updated successfully from AccountProfileDialog without User not found error',
+      (tester) async {
+        final store = MockAccountStore.seeded();
+        final userRepo = MockUserManagementRepository(accountStore: store);
+
+        await tester.pumpWidget(
+          _buildHeaderTestApp(
+            user: MockAuthTestFixtures.admin,
+            userManagementRepository: userRepo,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Tap avatar to open dialog
+        await tester.tap(find.byKey(const Key('home_account_avatar')));
+        await tester.pumpAndSettle();
+
+        // Tap Reset Password to show fields
+        await tester.ensureVisible(
+          find.byKey(const Key('account_reset_password_button')),
+        );
+        await tester.tap(find.byKey(const Key('account_reset_password_button')));
+        await tester.pumpAndSettle();
+
+        // Enter new password and confirmation
+        await tester.enterText(
+          find.byKey(const Key('account_new_password_field')),
+          'newSecret123',
+        );
+        await tester.enterText(
+          find.byKey(const Key('account_confirm_password_field')),
+          'newSecret123',
+        );
+        await tester.pumpAndSettle();
+
+        // Tap Update Password
+        await tester.ensureVisible(
+          find.byKey(const Key('account_save_password_button')),
+        );
+        await tester.tap(find.byKey(const Key('account_save_password_button')));
+        await tester.pumpAndSettle();
+
+        // Verify success notification and no error
+        expect(find.text('Password changed successfully.'), findsOneWidget);
+        expect(find.text('User not found.'), findsNothing);
+
+        // Verify new credential works in store
+        expect(
+          store.authenticate(userId: 'admin', password: 'newSecret123'),
+          isNotNull,
+        );
+      },
+    );
   });
 }

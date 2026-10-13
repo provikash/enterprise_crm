@@ -29,6 +29,12 @@ abstract final class CrmPermissions {
 
   // Purchase
   static const String purchaseView = 'purchase.view';
+  static const String purchaseCreate = 'purchase.create';
+  static const String purchaseApprove = 'purchase.approve';
+  static const String purchaseReceiveStock = 'purchase.receive_stock';
+  static const String purchaseExportCsv = 'purchase.export.csv';
+  static const String purchaseExportPdf = 'purchase.export.pdf';
+  static const String purchaseDownloadBill = 'purchase.bill.download';
 
   // Vendor Management
   static const String vendorView = 'vendor.view';
@@ -59,6 +65,12 @@ abstract final class CrmPermissions {
     inventoryExportCsv: CrmModule.inventory,
     inventoryExportXlsx: CrmModule.inventory,
     purchaseView: CrmModule.purchase,
+    purchaseCreate: CrmModule.purchase,
+    purchaseApprove: CrmModule.purchase,
+    purchaseReceiveStock: CrmModule.purchase,
+    purchaseExportCsv: CrmModule.purchase,
+    purchaseExportPdf: CrmModule.purchase,
+    purchaseDownloadBill: CrmModule.purchase,
     vendorView: CrmModule.vendorManagement,
     dispatchView: CrmModule.dispatch,
     dispatchCreate: CrmModule.dispatch,

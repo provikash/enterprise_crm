@@ -98,7 +98,37 @@ abstract final class MockPermissionCatalog {
     MockPermissionDefinition(
       id: CrmPermissions.purchaseView,
       module: CrmModule.purchase,
-      displayName: 'View Purchases',
+      displayName: 'View Purchase Orders',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.purchaseCreate,
+      module: CrmModule.purchase,
+      displayName: 'Create Purchase Orders',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.purchaseApprove,
+      module: CrmModule.purchase,
+      displayName: 'Approve Purchase Orders',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.purchaseReceiveStock,
+      module: CrmModule.purchase,
+      displayName: 'Receive Stock / Goods',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.purchaseExportCsv,
+      module: CrmModule.purchase,
+      displayName: 'Export Purchase (CSV)',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.purchaseExportPdf,
+      module: CrmModule.purchase,
+      displayName: 'Export Purchase Register (PDF)',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.purchaseDownloadBill,
+      module: CrmModule.purchase,
+      displayName: 'Download Purchase Bill (PDF)',
     ),
     // Vendor Management
     MockPermissionDefinition(

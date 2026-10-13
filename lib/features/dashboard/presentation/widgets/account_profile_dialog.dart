@@ -88,7 +88,8 @@ class _AccountProfileDialogState extends State<AccountProfileDialog> {
     try {
       final repo = widget.userManagementRepository;
       if (repo != null) {
-        final managedUser = await repo.getUserById(widget.user.id);
+        final managedUser = await repo.getUserById(widget.user.id) ??
+            await repo.findUserByUserId(widget.user.id);
         if (managedUser != null) {
           await repo.updateUser(
             UpdateManagedUserInput(
@@ -158,7 +159,10 @@ class _AccountProfileDialogState extends State<AccountProfileDialog> {
     try {
       final repo = widget.userManagementRepository;
       if (repo != null) {
-        await repo.resetPassword(id: widget.user.id, newPassword: newPass);
+        final managedUser = await repo.getUserById(widget.user.id) ??
+            await repo.findUserByUserId(widget.user.id);
+        final targetId = managedUser?.id ?? widget.user.id;
+        await repo.resetPassword(id: targetId, newPassword: newPass);
       }
 
       if (mounted) {
