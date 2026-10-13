@@ -14,6 +14,7 @@ import '../widgets/purchase_mobile_card.dart';
 import '../widgets/purchase_pagination_controls.dart';
 import '../widgets/purchase_summary_cards.dart';
 import 'create_purchase_order_screen.dart';
+import 'purchase_details_screen.dart';
 
 /// Main workspace screen for Purchase Order procurement and supplier management.
 ///
@@ -107,12 +108,21 @@ class _PurchaseWorkspaceViewState extends State<_PurchaseWorkspaceView> {
     if (widget.onViewPurchaseOrder != null) {
       widget.onViewPurchaseOrder!(record);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Viewing ${record.poNumber} (${record.vendorName})'),
-          duration: const Duration(seconds: 2),
+      Navigator.of(context)
+          .push(
+        MaterialPageRoute(
+          builder: (_) => PurchaseDetailsScreen(
+            purchaseOrderId: record.id,
+            user: widget.user,
+            repository: widget.repository,
+          ),
         ),
-      );
+      )
+          .then((_) {
+        if (context.mounted) {
+          context.read<PurchaseListCubit>().refresh();
+        }
+      });
     }
   }
 
