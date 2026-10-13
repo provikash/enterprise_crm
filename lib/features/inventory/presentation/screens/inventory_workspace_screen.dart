@@ -282,22 +282,12 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
       ),
       body: BlocBuilder<InventoryCubit, InventoryState>(
         builder: (context, state) {
-          return Column(
-            children: [
-              // Pending Deletions Banner if any
-              if (_pendingDeletions.isNotEmpty)
-                _buildPendingDeletionsBanner(context),
-
-              // Search and Sort Control Bar
-              _buildControlBar(context, state),
-              const Divider(height: 1),
-
-              // Main Content Area
-              Expanded(child: _buildContent(context, state)),
-
-              // Pagination Controls Footer
-              if (state is InventoryLoaded)
-                InventoryPaginationControls(
+          final pendingBanner = _pendingDeletions.isNotEmpty
+              ? _buildPendingDeletionsBanner(context)
+              : null;
+          final controlBar = _buildControlBar(context, state);
+          final pagination = state is InventoryLoaded
+              ? InventoryPaginationControls(
                   currentPage: state.page.currentPage,
                   pageSize: state.page.pageSize,
                   totalItems: state.page.totalItems,
@@ -305,8 +295,41 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
                   onPrevious: () =>
                       context.read<InventoryCubit>().previousPage(),
                   onNext: () => context.read<InventoryCubit>().nextPage(),
-                ),
-            ],
+                )
+              : null;
+
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final isHeightConstrained = constraints.maxHeight < 560;
+
+              if (isHeightConstrained) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ?pendingBanner,
+                      controlBar,
+                      const Divider(height: 1),
+                      _buildContent(context, state, isInsideScrollable: true),
+                      ?pagination,
+                    ],
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  ?pendingBanner,
+                  controlBar,
+                  const Divider(height: 1),
+                  Expanded(
+                    child: _buildContent(context, state, isInsideScrollable: false),
+                  ),
+                  ?pagination,
+                ],
+              );
+            },
           );
         },
       ),
@@ -567,7 +590,11 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
     );
   }
 
-  Widget _buildContent(BuildContext context, InventoryState state) {
+  Widget _buildContent(
+    BuildContext context,
+    InventoryState state, {
+    bool isInsideScrollable = false,
+  }) {
     if (state is InventoryLoading || state is InventoryInitial) {
       return const Center(
         child: CircularProgressIndicator(
@@ -648,10 +675,18 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
           final isCompact = constraints.maxWidth < 600;
 
           if (isCompact) {
-            return _buildMobileCardList(context, state.items);
+            return _buildMobileCardList(
+              context,
+              state.items,
+              isInsideScrollable: isInsideScrollable,
+            );
           }
 
-          return _buildDesktopDataTable(context, state);
+          return _buildDesktopDataTable(
+            context,
+            state,
+            isInsideScrollable: isInsideScrollable,
+          );
         },
       );
     }
@@ -661,13 +696,16 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
 
   Widget _buildMobileCardList(
     BuildContext context,
-    List<InventoryItemSummary> items,
-  ) {
+    List<InventoryItemSummary> items, {
+    bool isInsideScrollable = false,
+  }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return ListView.separated(
       key: const Key('inventory_items_list'),
+      shrinkWrap: isInsideScrollable,
+      physics: isInsideScrollable ? const NeverScrollableScrollPhysics() : null,
       padding: const EdgeInsets.all(16.0),
       itemCount: items.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
@@ -778,8 +816,9 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
 
   Widget _buildDesktopDataTable(
     BuildContext context,
-    InventoryLoaded state,
-  ) {
+    InventoryLoaded state, {
+    bool isInsideScrollable = false,
+  }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final items = state.items;
@@ -1129,7 +1168,9 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
                 ),
               );
 
-        if (constraints.maxHeight.isFinite) {
+        if (constraints.maxHeight.isFinite &&
+            constraints.maxHeight > 140 &&
+            !isInsideScrollable) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [

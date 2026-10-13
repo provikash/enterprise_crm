@@ -706,49 +706,76 @@ class _LeadListViewState extends State<_LeadListView> {
           builder: (context, state) {
             final currentQuery = _getQueryFromState(state);
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildSearchAndFilterBar(
+            Widget buildBodyContent(bool isInsideScrollable) {
+              return switch (state) {
+                LeadListInitial() => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                LeadListLoading() => const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text('Loading leads...'),
+                    ],
+                  ),
+                ),
+                LeadListEmpty(:final query) => _buildEmptyState(
+                  context,
+                  theme,
+                  query,
+                ),
+                LeadListFailure(:final message) => _buildFailureState(
+                  context,
+                  theme,
+                  message,
+                ),
+                LeadListLoaded() => _buildLoadedList(
                   context,
                   theme,
                   colorScheme,
-                  currentQuery,
+                  state,
+                  isInsideScrollable: isInsideScrollable,
                 ),
-                Expanded(
-                  child: switch (state) {
-                    LeadListInitial() => const Center(
-                      child: CircularProgressIndicator(),
+              };
+            }
+
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final isHeightConstrained = constraints.maxHeight < 560;
+
+                if (isHeightConstrained) {
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildSearchAndFilterBar(
+                          context,
+                          theme,
+                          colorScheme,
+                          currentQuery,
+                        ),
+                        buildBodyContent(true),
+                      ],
                     ),
-                    LeadListLoading() => const Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 16),
-                          Text('Loading leads...'),
-                        ],
-                      ),
-                    ),
-                    LeadListEmpty(:final query) => _buildEmptyState(
-                      context,
-                      theme,
-                      query,
-                    ),
-                    LeadListFailure(:final message) => _buildFailureState(
-                      context,
-                      theme,
-                      message,
-                    ),
-                    LeadListLoaded() => _buildLoadedList(
+                  );
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildSearchAndFilterBar(
                       context,
                       theme,
                       colorScheme,
-                      state,
+                      currentQuery,
                     ),
-                  },
-                ),
-              ],
+                    Expanded(child: buildBodyContent(false)),
+                  ],
+                );
+              },
             );
           },
         ),
@@ -1305,8 +1332,9 @@ class _LeadListViewState extends State<_LeadListView> {
     BuildContext context,
     ThemeData theme,
     ColorScheme colorScheme,
-    LeadListLoaded state,
-  ) {
+    LeadListLoaded state, {
+    bool isInsideScrollable = false,
+  }) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 600;
@@ -1314,6 +1342,10 @@ class _LeadListViewState extends State<_LeadListView> {
 
         final contentWidget = isMobile
             ? ListView.separated(
+                shrinkWrap: isInsideScrollable,
+                physics: isInsideScrollable
+                    ? const NeverScrollableScrollPhysics()
+                    : null,
                 padding: const EdgeInsets.all(16),
                 itemCount: state.leads.length,
                 separatorBuilder: (_, index) => const SizedBox(height: 12),
@@ -1338,9 +1370,10 @@ class _LeadListViewState extends State<_LeadListView> {
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: Column(
+                    mainAxisSize: isInsideScrollable ? MainAxisSize.min : MainAxisSize.max,
                     children: [
-                      Expanded(
-                        child: SizedBox(
+                      if (isInsideScrollable)
+                        SizedBox(
                           width: double.infinity,
                           child: LeadDataTable(
                             leads: state.leads,
@@ -1353,29 +1386,58 @@ class _LeadListViewState extends State<_LeadListView> {
                             horizontalScrollController:
                                 !isAndroidApk ? _horizontalScrollController : null,
                           ),
+                        )
+                      else
+                        Expanded(
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: LeadDataTable(
+                              leads: state.leads,
+                              onViewLead: widget.onViewLead,
+                              isSelectionMode: _isSelectionMode,
+                              selectedLeadIds: _selectedLeadIds,
+                              onToggleSelect: _toggleLeadSelection,
+                              onSelectAll: (_) => _toggleSelectAll(state.leads),
+                              allEligibleSelected: _isAllEligibleSelected(state.leads),
+                              horizontalScrollController:
+                                  !isAndroidApk ? _horizontalScrollController : null,
+                            ),
+                          ),
                         ),
-                      ),
                       if (!isAndroidApk) _buildHorizontalScrollNavigation(context),
                     ],
                   ),
                 ),
               );
 
+        final pagination = LeadPaginationControls(
+          currentPage: state.currentPage,
+          pageSize: state.pageSize,
+          totalItems: state.totalItems,
+          hasNext: state.hasNext,
+          onPrevious: state.currentPage > 1
+              ? () => _onPreviousPage(state.currentPage)
+              : null,
+          onNext: state.hasNext
+              ? () => _onNextPage(state.currentPage)
+              : null,
+        );
+
+        if (isInsideScrollable) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              contentWidget,
+              pagination,
+            ],
+          );
+        }
+
         return Column(
           children: [
             Expanded(child: contentWidget),
-            LeadPaginationControls(
-              currentPage: state.currentPage,
-              pageSize: state.pageSize,
-              totalItems: state.totalItems,
-              hasNext: state.hasNext,
-              onPrevious: state.currentPage > 1
-                  ? () => _onPreviousPage(state.currentPage)
-                  : null,
-              onNext: state.hasNext
-                  ? () => _onNextPage(state.currentPage)
-                  : null,
-            ),
+            pagination,
           ],
         );
       },

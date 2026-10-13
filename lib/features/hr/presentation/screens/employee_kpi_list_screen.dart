@@ -226,21 +226,51 @@ class _EmployeeKpiListViewState extends State<_EmployeeKpiListView> {
           : null,
       body: BlocBuilder<EmployeeKpiListCubit, EmployeeKpiListState>(
         builder: (context, state) {
-          return Column(
-            children: [
-              // Search & Filter Header
-              _buildFilterSection(context, state, isDesktop),
+          final filterSection = _buildFilterSection(context, state, isDesktop);
+          final activeFiltersRow = _buildActiveFiltersRow(context, state);
 
-              // Active Filters Chip Row
-              _buildActiveFiltersRow(context, state),
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final isHeightConstrained = constraints.maxHeight < 560;
 
-              const Divider(height: 1),
+              if (isHeightConstrained) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      filterSection,
+                      activeFiltersRow,
+                      const Divider(height: 1),
+                      _buildBody(
+                        context,
+                        state,
+                        isDesktop,
+                        colorScheme,
+                        isInsideScrollable: true,
+                      ),
+                    ],
+                  ),
+                );
+              }
 
-              // Main Content Area
-              Expanded(
-                child: _buildBody(context, state, isDesktop, colorScheme),
-              ),
-            ],
+              return Column(
+                children: [
+                  filterSection,
+                  activeFiltersRow,
+                  const Divider(height: 1),
+                  Expanded(
+                    child: _buildBody(
+                      context,
+                      state,
+                      isDesktop,
+                      colorScheme,
+                      isInsideScrollable: false,
+                    ),
+                  ),
+                ],
+              );
+            },
           );
         },
       ),
@@ -517,8 +547,9 @@ class _EmployeeKpiListViewState extends State<_EmployeeKpiListView> {
     BuildContext context,
     EmployeeKpiListState state,
     bool isDesktop,
-    ColorScheme colorScheme,
-  ) {
+    ColorScheme colorScheme, {
+    bool isInsideScrollable = false,
+  }) {
     switch (state.status) {
       case EmployeeKpiListStatus.initial:
       case EmployeeKpiListStatus.loading:
@@ -619,9 +650,19 @@ class _EmployeeKpiListViewState extends State<_EmployeeKpiListView> {
         }
 
         if (isDesktop) {
-          return _buildDesktopTable(context, state.filteredKpis, colorScheme);
+          return _buildDesktopTable(
+            context,
+            state.filteredKpis,
+            colorScheme,
+            isInsideScrollable: isInsideScrollable,
+          );
         } else {
-          return _buildMobileCardList(context, state.filteredKpis, colorScheme);
+          return _buildMobileCardList(
+            context,
+            state.filteredKpis,
+            colorScheme,
+            isInsideScrollable: isInsideScrollable,
+          );
         }
     }
   }
@@ -629,12 +670,15 @@ class _EmployeeKpiListViewState extends State<_EmployeeKpiListView> {
   Widget _buildMobileCardList(
     BuildContext context,
     List<EmployeeKpi> kpis,
-    ColorScheme colorScheme,
-  ) {
+    ColorScheme colorScheme, {
+    bool isInsideScrollable = false,
+  }) {
     final theme = Theme.of(context);
 
     return ListView.separated(
       key: const Key('kpi_mobile_list_view'),
+      shrinkWrap: isInsideScrollable,
+      physics: isInsideScrollable ? const NeverScrollableScrollPhysics() : null,
       padding: const EdgeInsets.all(16),
       itemCount: kpis.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
@@ -774,70 +818,80 @@ class _EmployeeKpiListViewState extends State<_EmployeeKpiListView> {
   Widget _buildDesktopTable(
     BuildContext context,
     List<EmployeeKpi> kpis,
-    ColorScheme colorScheme,
-  ) {
+    ColorScheme colorScheme, {
+    bool isInsideScrollable = false,
+  }) {
     return LayoutBuilder(
       builder: (context, constraints) {
+        final horizontalTable = SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minWidth: constraints.maxWidth - 32),
+            child: DataTable(
+              showCheckboxColumn: false,
+              headingRowColor: WidgetStateProperty.all(
+                colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
+              ),
+              columns: const [
+                DataColumn(label: Text('Metric')),
+                DataColumn(label: Text('Employee')),
+                DataColumn(label: Text('Period')),
+                DataColumn(label: Text('Target'), numeric: true),
+                DataColumn(label: Text('Actual'), numeric: true),
+                DataColumn(label: Text('Score'), numeric: true),
+                DataColumn(label: Text('Remarks')),
+              ],
+              rows: kpis.map((kpi) {
+                final empName = _resolveEmployeeName(kpi.employeeId);
+
+                return DataRow(
+                  key: ValueKey('kpi_row_${kpi.id}'),
+                  onSelectChanged: (_) => _navigateToDetails(kpi.id),
+                  cells: [
+                    DataCell(
+                      Text(
+                        kpi.metricName,
+                        key: Key('kpi_row_${kpi.id}'),
+                        style: const TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                      onTap: () => _navigateToDetails(kpi.id),
+                    ),
+                    DataCell(Text(empName)),
+                    DataCell(Text(kpi.formattedPeriod)),
+                    DataCell(Text('${kpi.targetValue}')),
+                    DataCell(Text('${kpi.actualValue}')),
+                    DataCell(Text(kpi.score != null ? '${kpi.score}' : '—')),
+                    DataCell(
+                      Text(
+                        kpi.remarks ?? '—',
+                        style: TextStyle(
+                          fontStyle: kpi.remarks != null
+                              ? FontStyle.italic
+                              : FontStyle.normal,
+                          color: kpi.remarks == null
+                              ? colorScheme.onSurfaceVariant
+                              : null,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        );
+
+        if (isInsideScrollable) {
+          return Padding(
+            padding: const EdgeInsets.all(16),
+            child: horizontalTable,
+          );
+        }
+
         return SingleChildScrollView(
           key: const Key('kpi_desktop_table_view'),
           padding: const EdgeInsets.all(16),
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: ConstrainedBox(
-              constraints: BoxConstraints(minWidth: constraints.maxWidth - 32),
-              child: DataTable(
-                showCheckboxColumn: false,
-                headingRowColor: WidgetStateProperty.all(
-                  colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-                ),
-                columns: const [
-                  DataColumn(label: Text('Metric')),
-                  DataColumn(label: Text('Employee')),
-                  DataColumn(label: Text('Period')),
-                  DataColumn(label: Text('Target'), numeric: true),
-                  DataColumn(label: Text('Actual'), numeric: true),
-                  DataColumn(label: Text('Score'), numeric: true),
-                  DataColumn(label: Text('Remarks')),
-                ],
-                rows: kpis.map((kpi) {
-                  final empName = _resolveEmployeeName(kpi.employeeId);
-
-                  return DataRow(
-                    key: ValueKey('kpi_row_${kpi.id}'),
-                    onSelectChanged: (_) => _navigateToDetails(kpi.id),
-                    cells: [
-                      DataCell(
-                        Text(
-                          kpi.metricName,
-                          key: Key('kpi_row_${kpi.id}'),
-                          style: const TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        onTap: () => _navigateToDetails(kpi.id),
-                      ),
-                      DataCell(Text(empName)),
-                      DataCell(Text(kpi.formattedPeriod)),
-                      DataCell(Text('${kpi.targetValue}')),
-                      DataCell(Text('${kpi.actualValue}')),
-                      DataCell(Text(kpi.score != null ? '${kpi.score}' : '—')),
-                      DataCell(
-                        Text(
-                          kpi.remarks ?? '—',
-                          style: TextStyle(
-                            fontStyle: kpi.remarks != null
-                                ? FontStyle.italic
-                                : FontStyle.normal,
-                            color: kpi.remarks == null
-                                ? colorScheme.onSurfaceVariant
-                                : null,
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
+          child: horizontalTable,
         );
       },
     );

@@ -165,11 +165,34 @@ class _EmployeeDirectoryViewState extends State<_EmployeeDirectoryView> {
           : null,
       body: BlocBuilder<EmployeeDirectoryCubit, EmployeeDirectoryState>(
         builder: (context, state) {
-          return Column(
-            children: [
-              _buildFilterHeader(context, state),
-              Expanded(child: _buildBody(context, state)),
-            ],
+          final filterHeader = _buildFilterHeader(context, state);
+
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final isHeightConstrained = constraints.maxHeight < 560;
+
+              if (isHeightConstrained) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      filterHeader,
+                      _buildBody(context, state, isInsideScrollable: true),
+                    ],
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  filterHeader,
+                  Expanded(
+                    child: _buildBody(context, state, isInsideScrollable: false),
+                  ),
+                ],
+              );
+            },
           );
         },
       ),
@@ -344,7 +367,11 @@ class _EmployeeDirectoryViewState extends State<_EmployeeDirectoryView> {
     );
   }
 
-  Widget _buildBody(BuildContext context, EmployeeDirectoryState state) {
+  Widget _buildBody(
+    BuildContext context,
+    EmployeeDirectoryState state, {
+    bool isInsideScrollable = false,
+  }) {
     if (state.isLoading) {
       return const Center(
         child: CircularProgressIndicator(
@@ -419,15 +446,29 @@ class _EmployeeDirectoryViewState extends State<_EmployeeDirectoryView> {
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 600;
         return isDesktop
-            ? _buildDesktopTable(context, state.filteredEmployees)
-            : _buildMobileCards(context, state.filteredEmployees);
+            ? _buildDesktopTable(
+                context,
+                state.filteredEmployees,
+                isInsideScrollable: isInsideScrollable,
+              )
+            : _buildMobileCards(
+                context,
+                state.filteredEmployees,
+                isInsideScrollable: isInsideScrollable,
+              );
       },
     );
   }
 
-  Widget _buildMobileCards(BuildContext context, List<Employee> employees) {
+  Widget _buildMobileCards(
+    BuildContext context,
+    List<Employee> employees, {
+    bool isInsideScrollable = false,
+  }) {
     return ListView.separated(
       key: const Key('employee_mobile_list'),
+      shrinkWrap: isInsideScrollable,
+      physics: isInsideScrollable ? const NeverScrollableScrollPhysics() : null,
       padding: const EdgeInsets.all(16.0),
       itemCount: employees.length,
       separatorBuilder: (_, index) => const SizedBox(height: 12),
@@ -442,12 +483,17 @@ class _EmployeeDirectoryViewState extends State<_EmployeeDirectoryView> {
     );
   }
 
-  Widget _buildDesktopTable(BuildContext context, List<Employee> employees) {
+  Widget _buildDesktopTable(
+    BuildContext context,
+    List<Employee> employees, {
+    bool isInsideScrollable = false,
+  }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return SingleChildScrollView(
       key: const Key('employee_desktop_table_scroll'),
+      physics: isInsideScrollable ? const NeverScrollableScrollPhysics() : null,
       padding: const EdgeInsets.all(16.0),
       child: Card(
         elevation: 0,
