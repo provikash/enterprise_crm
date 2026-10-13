@@ -1157,6 +1157,7 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
                 child: innerTable,
               )
             : Scrollbar(
+                key: const Key('inventory_horizontal_scroll_bar'),
                 controller: _horizontalScrollController,
                 thumbVisibility: true,
                 trackVisibility: true,
@@ -1171,23 +1172,10 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
         if (constraints.maxHeight.isFinite &&
             constraints.maxHeight > 140 &&
             !isInsideScrollable) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: tableWidget),
-              if (!isAndroidApk) _buildHorizontalScrollNavigation(context),
-            ],
-          );
+          return SizedBox.expand(child: tableWidget);
         }
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            tableWidget,
-            if (!isAndroidApk) _buildHorizontalScrollNavigation(context),
-          ],
-        );
+        return tableWidget;
       },
     );
   }
@@ -1270,56 +1258,4 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
       ),
     );
   }
-
-  Widget _buildHorizontalScrollNavigation(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    return AnimatedBuilder(
-      animation: _horizontalScrollController,
-      builder: (context, _) {
-        final hasDimensions = _horizontalScrollController.hasClients &&
-            _horizontalScrollController.position.hasContentDimensions;
-        final maxScroll = hasDimensions
-            ? _horizontalScrollController.position.maxScrollExtent
-            : 0.0;
-        final current = hasDimensions
-            ? _horizontalScrollController.offset.clamp(0.0, maxScroll > 0 ? maxScroll : 0.0)
-            : 0.0;
-        final canScroll = maxScroll > 0;
-
-        return Container(
-          key: const Key('inventory_horizontal_scroll_bar'),
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainer,
-            border: Border(
-              top: BorderSide(color: colorScheme.outlineVariant),
-            ),
-          ),
-          child: SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 6,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-              activeTrackColor: colorScheme.primary,
-              inactiveTrackColor: colorScheme.outlineVariant.withValues(alpha: 0.4),
-              thumbColor: colorScheme.primary,
-            ),
-            child: Slider(
-              key: const Key('inventory_horizontal_scroll_slider'),
-              value: canScroll ? current.clamp(0.0, maxScroll) : 0.0,
-              min: 0.0,
-              max: canScroll ? maxScroll : 1.0,
-              onChanged: canScroll
-                  ? (value) {
-                      _horizontalScrollController.jumpTo(value);
-                    }
-                  : null,
-            ),
-          ),
-        );
-      },
-    );
-  }
-
 }

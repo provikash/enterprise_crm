@@ -40,7 +40,7 @@ void main() {
 
         expect(find.byType(LeadDataTable), findsOneWidget);
         expect(find.byKey(const Key('lead_horizontal_scroll_bar')), findsOneWidget);
-        expect(find.byKey(const Key('lead_horizontal_scroll_slider')), findsOneWidget);
+        expect(find.byKey(const Key('lead_horizontal_scroll_slider')), findsNothing);
         expect(find.byKey(const Key('lead_scroll_start_button')), findsNothing);
         expect(find.byKey(const Key('lead_scroll_left_button')), findsNothing);
         expect(find.byKey(const Key('lead_scroll_right_button')), findsNothing);

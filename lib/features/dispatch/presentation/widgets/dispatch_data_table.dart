@@ -42,58 +42,6 @@ class _DispatchDataTableState extends State<DispatchDataTable> {
     super.dispose();
   }
 
-  Widget _buildHorizontalScrollNavigation(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final controller = _effectiveHController;
-
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (context, _) {
-        final hasDimensions = controller.hasClients &&
-            controller.position.hasContentDimensions;
-        final maxScroll = hasDimensions
-            ? controller.position.maxScrollExtent
-            : 0.0;
-        final current = hasDimensions
-            ? controller.offset.clamp(0.0, maxScroll > 0 ? maxScroll : 0.0)
-            : 0.0;
-        final canScroll = maxScroll > 0;
-
-        return Container(
-          key: const Key('dispatch_horizontal_scroll_bar'),
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainer,
-            border: Border(
-              top: BorderSide(color: colorScheme.outlineVariant),
-            ),
-          ),
-          child: SliderTheme(
-            data: SliderTheme.of(context).copyWith(
-              trackHeight: 6,
-              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
-              overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-              activeTrackColor: colorScheme.primary,
-              inactiveTrackColor: colorScheme.outlineVariant.withValues(alpha: 0.4),
-              thumbColor: colorScheme.primary,
-            ),
-            child: Slider(
-              key: const Key('dispatch_horizontal_scroll_slider'),
-              value: canScroll ? current.clamp(0.0, maxScroll) : 0.0,
-              min: 0.0,
-              max: canScroll ? maxScroll : 1.0,
-              onChanged: canScroll
-                  ? (value) {
-                      controller.jumpTo(value);
-                    }
-                  : null,
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -247,6 +195,7 @@ class _DispatchDataTableState extends State<DispatchDataTable> {
             child: innerVertical,
           )
         : Scrollbar(
+            key: const Key('dispatch_horizontal_scroll_bar'),
             controller: hController,
             thumbVisibility: true,
             trackVisibility: true,
@@ -261,23 +210,10 @@ class _DispatchDataTableState extends State<DispatchDataTable> {
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxHeight.isFinite && constraints.maxHeight > 140) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: tableWidget),
-              if (!isAndroidApk) _buildHorizontalScrollNavigation(context),
-            ],
-          );
+          return SizedBox.expand(child: tableWidget);
         }
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            tableWidget,
-            if (!isAndroidApk) _buildHorizontalScrollNavigation(context),
-          ],
-        );
+        return tableWidget;
       },
     );
   }

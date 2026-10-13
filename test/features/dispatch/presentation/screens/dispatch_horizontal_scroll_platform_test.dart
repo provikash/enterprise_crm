@@ -41,7 +41,7 @@ void main() {
         expect(find.byType(DispatchDataTable), findsOneWidget);
         expect(find.byKey(const Key('dispatch_records_table')), findsOneWidget);
         expect(find.byKey(const Key('dispatch_horizontal_scroll_bar')), findsOneWidget);
-        expect(find.byKey(const Key('dispatch_horizontal_scroll_slider')), findsOneWidget);
+        expect(find.byKey(const Key('dispatch_horizontal_scroll_slider')), findsNothing);
         expect(find.byKey(const Key('dispatch_scroll_start_button')), findsNothing);
         expect(find.byKey(const Key('dispatch_scroll_left_button')), findsNothing);
         expect(find.byKey(const Key('dispatch_scroll_right_button')), findsNothing);
