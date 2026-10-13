@@ -34,10 +34,10 @@ class DispatchPaginationControls extends StatelessWidget {
     final canGoNext = currentPage < totalPages && onNext != null;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final isNarrow = constraints.maxWidth < 480;
+          final isNarrow = constraints.maxWidth < 640;
 
           final rangeText = Text(
             '$start–$end of $totalItems dispatches',
@@ -61,6 +61,10 @@ class DispatchPaginationControls extends StatelessWidget {
             key: const Key('dispatch_pagination_prev_button'),
             icon: const Icon(Icons.chevron_left, size: 18),
             label: const Text('Previous'),
+            style: OutlinedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            ),
             onPressed: canGoPrevious ? onPrevious : null,
           );
 
@@ -68,12 +72,17 @@ class DispatchPaginationControls extends StatelessWidget {
             key: const Key('dispatch_pagination_next_button'),
             icon: const Icon(Icons.chevron_right, size: 18),
             label: const Text('Next'),
+            style: OutlinedButton.styleFrom(
+              visualDensity: VisualDensity.compact,
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            ),
             onPressed: canGoNext ? onNext : null,
           );
 
           if (isNarrow) {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Wrap(
                   alignment: WrapAlignment.spaceBetween,
@@ -82,9 +91,8 @@ class DispatchPaginationControls extends StatelessWidget {
                   runSpacing: 4,
                   children: [rangeText, pageText],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Expanded(child: prevButton),
                     const SizedBox(width: 8),

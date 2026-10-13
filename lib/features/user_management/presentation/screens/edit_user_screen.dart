@@ -143,7 +143,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
         key: const Key('edit_user_unauthorized_screen'),
         appBar: AppBar(title: const Text('Access Denied')),
         body: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -184,7 +184,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
         key: const Key('edit_user_admin_protected_screen'),
         appBar: AppBar(title: const Text('Edit Restricted')),
         body: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -469,8 +469,10 @@ class _EditUserScreenState extends State<EditUserScreen> {
                     const SizedBox(height: 32),
 
                     // Actions Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                    Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 16,
+                      runSpacing: 12,
                       children: [
                         OutlinedButton(
                           key: const Key('edit_user_cancel_button'),
@@ -479,7 +481,6 @@ class _EditUserScreenState extends State<EditUserScreen> {
                               : () => Navigator.of(context).pop(),
                           child: const Text('Cancel'),
                         ),
-                        const SizedBox(width: 16),
                         ElevatedButton.icon(
                           key: const Key('edit_user_submit_button'),
                           onPressed: _isSubmitting ? null : _handleSave,

@@ -161,7 +161,8 @@ class MockDispatchRepository implements DispatchRepository {
   Future<DispatchSummary> getSummary() async {
     final total = _dispatches.length;
     final pending = _dispatches.where((d) => d.status == DispatchStatus.pending || d.status == DispatchStatus.packed).length;
-    final inTransit = _dispatches.where((d) => d.status == DispatchStatus.inTransit || d.status == DispatchStatus.outForDelivery).length;
+    final inTransit = _dispatches.where((d) => d.status == DispatchStatus.inTransit).length;
+    final outForDelivery = _dispatches.where((d) => d.status == DispatchStatus.outForDelivery).length;
     final delivered = _dispatches.where((d) => d.status == DispatchStatus.delivered).length;
 
     final now = DateTime.now();
@@ -175,6 +176,7 @@ class MockDispatchRepository implements DispatchRepository {
       totalDispatches: total,
       pendingCount: pending,
       inTransitCount: inTransit,
+      outForDeliveryCount: outForDelivery,
       deliveredCount: delivered,
       todayDispatchesCount: today,
     );

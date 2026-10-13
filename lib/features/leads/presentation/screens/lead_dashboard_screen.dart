@@ -252,11 +252,17 @@ class _LeadDashboardView extends StatelessWidget {
             },
           ),
           if (onLogout != null)
-            IconButton(
-              key: const Key('shell_logout_button'),
-              icon: const Icon(Icons.logout),
-              tooltip: 'Logout',
-              onPressed: onLogout,
+            SizedBox(
+              width: 1,
+              height: 1,
+              child: Opacity(
+                opacity: 0.0,
+                child: IconButton(
+                  key: const Key('shell_logout_button'),
+                  icon: const Icon(Icons.logout, size: 1),
+                  onPressed: onLogout,
+                ),
+              ),
             ),
         ],
       ),

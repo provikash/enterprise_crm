@@ -282,22 +282,12 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
       ),
       body: BlocBuilder<InventoryCubit, InventoryState>(
         builder: (context, state) {
-          return Column(
-            children: [
-              // Pending Deletions Banner if any
-              if (_pendingDeletions.isNotEmpty)
-                _buildPendingDeletionsBanner(context),
-
-              // Search and Sort Control Bar
-              _buildControlBar(context, state),
-              const Divider(height: 1),
-
-              // Main Content Area
-              Expanded(child: _buildContent(context, state)),
-
-              // Pagination Controls Footer
-              if (state is InventoryLoaded)
-                InventoryPaginationControls(
+          final pendingBanner = _pendingDeletions.isNotEmpty
+              ? _buildPendingDeletionsBanner(context)
+              : null;
+          final controlBar = _buildControlBar(context, state);
+          final pagination = state is InventoryLoaded
+              ? InventoryPaginationControls(
                   currentPage: state.page.currentPage,
                   pageSize: state.page.pageSize,
                   totalItems: state.page.totalItems,
@@ -305,8 +295,41 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
                   onPrevious: () =>
                       context.read<InventoryCubit>().previousPage(),
                   onNext: () => context.read<InventoryCubit>().nextPage(),
-                ),
-            ],
+                )
+              : null;
+
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final isHeightConstrained = constraints.maxHeight < 560;
+
+              if (isHeightConstrained) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      ?pendingBanner,
+                      controlBar,
+                      const Divider(height: 1),
+                      _buildContent(context, state, isInsideScrollable: true),
+                      ?pagination,
+                    ],
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  ?pendingBanner,
+                  controlBar,
+                  const Divider(height: 1),
+                  Expanded(
+                    child: _buildContent(context, state, isInsideScrollable: false),
+                  ),
+                  ?pagination,
+                ],
+              );
+            },
           );
         },
       ),
@@ -567,7 +590,11 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
     );
   }
 
-  Widget _buildContent(BuildContext context, InventoryState state) {
+  Widget _buildContent(
+    BuildContext context,
+    InventoryState state, {
+    bool isInsideScrollable = false,
+  }) {
     if (state is InventoryLoading || state is InventoryInitial) {
       return const Center(
         child: CircularProgressIndicator(
@@ -648,10 +675,18 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
           final isCompact = constraints.maxWidth < 600;
 
           if (isCompact) {
-            return _buildMobileCardList(context, state.items);
+            return _buildMobileCardList(
+              context,
+              state.items,
+              isInsideScrollable: isInsideScrollable,
+            );
           }
 
-          return _buildDesktopDataTable(context, state);
+          return _buildDesktopDataTable(
+            context,
+            state,
+            isInsideScrollable: isInsideScrollable,
+          );
         },
       );
     }
@@ -661,13 +696,16 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
 
   Widget _buildMobileCardList(
     BuildContext context,
-    List<InventoryItemSummary> items,
-  ) {
+    List<InventoryItemSummary> items, {
+    bool isInsideScrollable = false,
+  }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
     return ListView.separated(
       key: const Key('inventory_items_list'),
+      shrinkWrap: isInsideScrollable,
+      physics: isInsideScrollable ? const NeverScrollableScrollPhysics() : null,
       padding: const EdgeInsets.all(16.0),
       itemCount: items.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
@@ -778,8 +816,9 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
 
   Widget _buildDesktopDataTable(
     BuildContext context,
-    InventoryLoaded state,
-  ) {
+    InventoryLoaded state, {
+    bool isInsideScrollable = false,
+  }) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final items = state.items;
@@ -1118,6 +1157,7 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
                 child: innerTable,
               )
             : Scrollbar(
+                key: const Key('inventory_horizontal_scroll_bar'),
                 controller: _horizontalScrollController,
                 thumbVisibility: true,
                 trackVisibility: true,
@@ -1129,24 +1169,13 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
                 ),
               );
 
-        if (constraints.maxHeight.isFinite) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: tableWidget),
-              if (!isAndroidApk) _buildHorizontalScrollNavigation(context),
-            ],
-          );
+        if (constraints.maxHeight.isFinite &&
+            constraints.maxHeight > 140 &&
+            !isInsideScrollable) {
+          return SizedBox.expand(child: tableWidget);
         }
 
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            tableWidget,
-            if (!isAndroidApk) _buildHorizontalScrollNavigation(context),
-          ],
-        );
+        return tableWidget;
       },
     );
   }
@@ -1229,130 +1258,4 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
       ),
     );
   }
-
-  void _scrollTableHorizontallyBy(double delta) {
-    if (!_horizontalScrollController.hasClients ||
-        !_horizontalScrollController.position.hasContentDimensions) {
-      return;
-    }
-    final maxExtent = _horizontalScrollController.position.maxScrollExtent;
-    final target = (_horizontalScrollController.offset + delta).clamp(0.0, maxExtent);
-    _horizontalScrollController.animateTo(
-      target,
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOutCubic,
-    );
-  }
-
-  void _scrollTableHorizontallyTo(double target) {
-    if (!_horizontalScrollController.hasClients ||
-        !_horizontalScrollController.position.hasContentDimensions) {
-      return;
-    }
-    final maxExtent = _horizontalScrollController.position.maxScrollExtent;
-    _horizontalScrollController.animateTo(
-      target.clamp(0.0, maxExtent),
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOutCubic,
-    );
-  }
-
-  Widget _buildHorizontalScrollNavigation(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return AnimatedBuilder(
-      animation: _horizontalScrollController,
-      builder: (context, _) {
-        final hasDimensions = _horizontalScrollController.hasClients &&
-            _horizontalScrollController.position.hasContentDimensions;
-        final maxScroll = hasDimensions
-            ? _horizontalScrollController.position.maxScrollExtent
-            : 0.0;
-        final current = hasDimensions
-            ? _horizontalScrollController.offset.clamp(0.0, maxScroll > 0 ? maxScroll : 0.0)
-            : 0.0;
-        final canScroll = maxScroll > 0;
-
-        return Container(
-          key: const Key('inventory_horizontal_scroll_bar'),
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainer,
-            border: Border(
-              top: BorderSide(color: colorScheme.outlineVariant),
-            ),
-          ),
-          child: Row(
-            children: [
-              IconButton.filledTonal(
-                key: const Key('inventory_scroll_start_button'),
-                tooltip: 'Scroll to Start',
-                icon: const Icon(Icons.first_page, size: 20),
-                onPressed: canScroll && current > 0 ? () => _scrollTableHorizontallyTo(0.0) : null,
-              ),
-              const SizedBox(width: 4),
-              IconButton.filledTonal(
-                key: const Key('inventory_scroll_left_button'),
-                tooltip: 'Scroll Left',
-                icon: const Icon(Icons.chevron_left, size: 22),
-                onPressed: canScroll && current > 0 ? () => _scrollTableHorizontallyBy(-350.0) : null,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        trackHeight: 6,
-                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
-                        activeTrackColor: const Color(0xFF1A365D),
-                        thumbColor: const Color(0xFF1A365D),
-                      ),
-                      child: Slider(
-                        key: const Key('inventory_horizontal_scroll_slider'),
-                        value: canScroll ? current.clamp(0.0, maxScroll) : 0.0,
-                        min: 0.0,
-                        max: canScroll ? maxScroll : 1.0,
-                        onChanged: canScroll
-                            ? (value) {
-                                _horizontalScrollController.jumpTo(value);
-                              }
-                            : null,
-                      ),
-                    ),
-                    Text(
-                      '◀ Scroll Horizontally (Left ↔ Right) to View All Columns ▶',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              IconButton.filledTonal(
-                key: const Key('inventory_scroll_right_button'),
-                tooltip: 'Scroll Right',
-                icon: const Icon(Icons.chevron_right, size: 22),
-                onPressed: canScroll && current < maxScroll ? () => _scrollTableHorizontallyBy(350.0) : null,
-              ),
-              const SizedBox(width: 4),
-              IconButton.filledTonal(
-                key: const Key('inventory_scroll_end_button'),
-                tooltip: 'Scroll to End',
-                icon: const Icon(Icons.last_page, size: 20),
-                onPressed: canScroll && current < maxScroll ? () => _scrollTableHorizontallyTo(maxScroll) : null,
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
 }

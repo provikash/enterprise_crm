@@ -189,6 +189,7 @@ class LeadDataTable extends StatelessWidget {
 
     if (horizontalScrollController != null) {
       return Scrollbar(
+        key: const Key('lead_horizontal_scroll_bar'),
         controller: horizontalScrollController,
         thumbVisibility: true,
         trackVisibility: true,

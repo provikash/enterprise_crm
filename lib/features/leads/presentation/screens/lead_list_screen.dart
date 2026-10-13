@@ -706,49 +706,76 @@ class _LeadListViewState extends State<_LeadListView> {
           builder: (context, state) {
             final currentQuery = _getQueryFromState(state);
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildSearchAndFilterBar(
+            Widget buildBodyContent(bool isInsideScrollable) {
+              return switch (state) {
+                LeadListInitial() => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+                LeadListLoading() => const Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      CircularProgressIndicator(),
+                      SizedBox(height: 16),
+                      Text('Loading leads...'),
+                    ],
+                  ),
+                ),
+                LeadListEmpty(:final query) => _buildEmptyState(
+                  context,
+                  theme,
+                  query,
+                ),
+                LeadListFailure(:final message) => _buildFailureState(
+                  context,
+                  theme,
+                  message,
+                ),
+                LeadListLoaded() => _buildLoadedList(
                   context,
                   theme,
                   colorScheme,
-                  currentQuery,
+                  state,
+                  isInsideScrollable: isInsideScrollable,
                 ),
-                Expanded(
-                  child: switch (state) {
-                    LeadListInitial() => const Center(
-                      child: CircularProgressIndicator(),
+              };
+            }
+
+            return LayoutBuilder(
+              builder: (context, constraints) {
+                final isHeightConstrained = constraints.maxHeight < 560;
+
+                if (isHeightConstrained) {
+                  return SingleChildScrollView(
+                    scrollDirection: Axis.vertical,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _buildSearchAndFilterBar(
+                          context,
+                          theme,
+                          colorScheme,
+                          currentQuery,
+                        ),
+                        buildBodyContent(true),
+                      ],
                     ),
-                    LeadListLoading() => const Center(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 16),
-                          Text('Loading leads...'),
-                        ],
-                      ),
-                    ),
-                    LeadListEmpty(:final query) => _buildEmptyState(
-                      context,
-                      theme,
-                      query,
-                    ),
-                    LeadListFailure(:final message) => _buildFailureState(
-                      context,
-                      theme,
-                      message,
-                    ),
-                    LeadListLoaded() => _buildLoadedList(
+                  );
+                }
+
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _buildSearchAndFilterBar(
                       context,
                       theme,
                       colorScheme,
-                      state,
+                      currentQuery,
                     ),
-                  },
-                ),
-              ],
+                    Expanded(child: buildBodyContent(false)),
+                  ],
+                );
+              },
             );
           },
         ),
@@ -1250,137 +1277,14 @@ class _LeadListViewState extends State<_LeadListView> {
     );
   }
 
-  void _scrollTableHorizontallyBy(double delta) {
-    if (!_horizontalScrollController.hasClients ||
-        !_horizontalScrollController.position.hasContentDimensions) {
-      return;
-    }
-    final maxExtent = _horizontalScrollController.position.maxScrollExtent;
-    final target = (_horizontalScrollController.offset + delta).clamp(0.0, maxExtent);
-    _horizontalScrollController.animateTo(
-      target,
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOutCubic,
-    );
-  }
-
-  void _scrollTableHorizontallyTo(double target) {
-    if (!_horizontalScrollController.hasClients ||
-        !_horizontalScrollController.position.hasContentDimensions) {
-      return;
-    }
-    final maxExtent = _horizontalScrollController.position.maxScrollExtent;
-    _horizontalScrollController.animateTo(
-      target.clamp(0.0, maxExtent),
-      duration: const Duration(milliseconds: 350),
-      curve: Curves.easeOutCubic,
-    );
-  }
-
-  Widget _buildHorizontalScrollNavigation(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return AnimatedBuilder(
-      animation: _horizontalScrollController,
-      builder: (context, _) {
-        final hasDimensions = _horizontalScrollController.hasClients &&
-            _horizontalScrollController.position.hasContentDimensions;
-        final maxScroll = hasDimensions
-            ? _horizontalScrollController.position.maxScrollExtent
-            : 0.0;
-        final current = hasDimensions
-            ? _horizontalScrollController.offset.clamp(0.0, maxScroll > 0 ? maxScroll : 0.0)
-            : 0.0;
-        final canScroll = maxScroll > 0;
-
-        return Container(
-          key: const Key('lead_horizontal_scroll_bar'),
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainer,
-            border: Border(
-              top: BorderSide(color: colorScheme.outlineVariant),
-            ),
-          ),
-          child: Row(
-            children: [
-              IconButton.filledTonal(
-                key: const Key('lead_scroll_start_button'),
-                tooltip: 'Scroll to Start',
-                icon: const Icon(Icons.first_page, size: 20),
-                onPressed: canScroll && current > 0 ? () => _scrollTableHorizontallyTo(0.0) : null,
-              ),
-              const SizedBox(width: 4),
-              IconButton.filledTonal(
-                key: const Key('lead_scroll_left_button'),
-                tooltip: 'Scroll Left',
-                icon: const Icon(Icons.chevron_left, size: 22),
-                onPressed: canScroll && current > 0 ? () => _scrollTableHorizontallyBy(-350.0) : null,
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        trackHeight: 6,
-                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
-                        activeTrackColor: const Color(0xFF1A365D),
-                        thumbColor: const Color(0xFF1A365D),
-                      ),
-                      child: Slider(
-                        key: const Key('lead_horizontal_scroll_slider'),
-                        value: canScroll ? current.clamp(0.0, maxScroll) : 0.0,
-                        min: 0.0,
-                        max: canScroll ? maxScroll : 1.0,
-                        onChanged: canScroll
-                            ? (value) {
-                                _horizontalScrollController.jumpTo(value);
-                              }
-                            : null,
-                      ),
-                    ),
-                    Text(
-                      '◀ Scroll Horizontally (Left ↔ Right) to View All Columns ▶',
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: colorScheme.onSurfaceVariant,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.3,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              IconButton.filledTonal(
-                key: const Key('lead_scroll_right_button'),
-                tooltip: 'Scroll Right',
-                icon: const Icon(Icons.chevron_right, size: 22),
-                onPressed: canScroll && current < maxScroll ? () => _scrollTableHorizontallyBy(350.0) : null,
-              ),
-              const SizedBox(width: 4),
-              IconButton.filledTonal(
-                key: const Key('lead_scroll_end_button'),
-                tooltip: 'Scroll to End',
-                icon: const Icon(Icons.last_page, size: 20),
-                onPressed: canScroll && current < maxScroll ? () => _scrollTableHorizontallyTo(maxScroll) : null,
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
   Widget _buildLoadedList(
     BuildContext context,
     ThemeData theme,
     ColorScheme colorScheme,
-    LeadListLoaded state,
-  ) {
+    LeadListLoaded state, {
+    bool isInsideScrollable = false,
+  }) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final isMobile = constraints.maxWidth < 600;
@@ -1388,6 +1292,10 @@ class _LeadListViewState extends State<_LeadListView> {
 
         final contentWidget = isMobile
             ? ListView.separated(
+                shrinkWrap: isInsideScrollable,
+                physics: isInsideScrollable
+                    ? const NeverScrollableScrollPhysics()
+                    : null,
                 padding: const EdgeInsets.all(16),
                 itemCount: state.leads.length,
                 separatorBuilder: (_, index) => const SizedBox(height: 12),
@@ -1412,9 +1320,10 @@ class _LeadListViewState extends State<_LeadListView> {
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: Column(
+                    mainAxisSize: isInsideScrollable ? MainAxisSize.min : MainAxisSize.max,
                     children: [
-                      Expanded(
-                        child: SizedBox(
+                      if (isInsideScrollable)
+                        SizedBox(
                           width: double.infinity,
                           child: LeadDataTable(
                             leads: state.leads,
@@ -1427,29 +1336,57 @@ class _LeadListViewState extends State<_LeadListView> {
                             horizontalScrollController:
                                 !isAndroidApk ? _horizontalScrollController : null,
                           ),
+                        )
+                      else
+                        Expanded(
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: LeadDataTable(
+                              leads: state.leads,
+                              onViewLead: widget.onViewLead,
+                              isSelectionMode: _isSelectionMode,
+                              selectedLeadIds: _selectedLeadIds,
+                              onToggleSelect: _toggleLeadSelection,
+                              onSelectAll: (_) => _toggleSelectAll(state.leads),
+                              allEligibleSelected: _isAllEligibleSelected(state.leads),
+                              horizontalScrollController:
+                                  !isAndroidApk ? _horizontalScrollController : null,
+                            ),
+                          ),
                         ),
-                      ),
-                      if (!isAndroidApk) _buildHorizontalScrollNavigation(context),
                     ],
                   ),
                 ),
               );
 
+        final pagination = LeadPaginationControls(
+          currentPage: state.currentPage,
+          pageSize: state.pageSize,
+          totalItems: state.totalItems,
+          hasNext: state.hasNext,
+          onPrevious: state.currentPage > 1
+              ? () => _onPreviousPage(state.currentPage)
+              : null,
+          onNext: state.hasNext
+              ? () => _onNextPage(state.currentPage)
+              : null,
+        );
+
+        if (isInsideScrollable) {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              contentWidget,
+              pagination,
+            ],
+          );
+        }
+
         return Column(
           children: [
             Expanded(child: contentWidget),
-            LeadPaginationControls(
-              currentPage: state.currentPage,
-              pageSize: state.pageSize,
-              totalItems: state.totalItems,
-              hasNext: state.hasNext,
-              onPrevious: state.currentPage > 1
-                  ? () => _onPreviousPage(state.currentPage)
-                  : null,
-              onNext: state.hasNext
-                  ? () => _onNextPage(state.currentPage)
-                  : null,
-            ),
+            pagination,
           ],
         );
       },

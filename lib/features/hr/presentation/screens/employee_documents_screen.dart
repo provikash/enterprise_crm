@@ -134,11 +134,34 @@ class _EmployeeDocumentsViewState extends State<_EmployeeDocumentsView> {
           : null,
       body: BlocBuilder<EmployeeDocumentsCubit, EmployeeDocumentsState>(
         builder: (context, state) {
-          return Column(
-            children: [
-              _buildFilterHeader(context, state),
-              Expanded(child: _buildBody(context, state)),
-            ],
+          final filterHeader = _buildFilterHeader(context, state);
+
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final isHeightConstrained = constraints.maxHeight < 560;
+
+              if (isHeightConstrained) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      filterHeader,
+                      _buildBody(context, state, isInsideScrollable: true),
+                    ],
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  filterHeader,
+                  Expanded(
+                    child: _buildBody(context, state, isInsideScrollable: false),
+                  ),
+                ],
+              );
+            },
           );
         },
       ),
@@ -241,7 +264,11 @@ class _EmployeeDocumentsViewState extends State<_EmployeeDocumentsView> {
     );
   }
 
-  Widget _buildBody(BuildContext context, EmployeeDocumentsState state) {
+  Widget _buildBody(
+    BuildContext context,
+    EmployeeDocumentsState state, {
+    bool isInsideScrollable = false,
+  }) {
     if (state.isLoading) {
       return const Center(
         child: CircularProgressIndicator(
@@ -316,18 +343,29 @@ class _EmployeeDocumentsViewState extends State<_EmployeeDocumentsView> {
       builder: (context, constraints) {
         final isDesktop = constraints.maxWidth >= 600;
         return isDesktop
-            ? _buildDesktopTable(context, state.filteredDocuments)
-            : _buildMobileCards(context, state.filteredDocuments);
+            ? _buildDesktopTable(
+                context,
+                state.filteredDocuments,
+                isInsideScrollable: isInsideScrollable,
+              )
+            : _buildMobileCards(
+                context,
+                state.filteredDocuments,
+                isInsideScrollable: isInsideScrollable,
+              );
       },
     );
   }
 
   Widget _buildMobileCards(
     BuildContext context,
-    List<EmployeeDocument> documents,
-  ) {
+    List<EmployeeDocument> documents, {
+    bool isInsideScrollable = false,
+  }) {
     return ListView.separated(
       key: const Key('employee_documents_mobile_list'),
+      shrinkWrap: isInsideScrollable,
+      physics: isInsideScrollable ? const NeverScrollableScrollPhysics() : null,
       padding: const EdgeInsets.all(16.0),
       itemCount: documents.length,
       separatorBuilder: (_, index) => const SizedBox(height: 12),
@@ -344,20 +382,18 @@ class _EmployeeDocumentsViewState extends State<_EmployeeDocumentsView> {
 
   Widget _buildDesktopTable(
     BuildContext context,
-    List<EmployeeDocument> documents,
-  ) {
-    return SingleChildScrollView(
-      key: const Key('employee_documents_desktop_table_scroll'),
-      padding: const EdgeInsets.all(16.0),
-      child: Card(
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
-        ),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
+    List<EmployeeDocument> documents, {
+    bool isInsideScrollable = false,
+  }) {
+    final tableCard = Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: DataTable(
             columns: const [
               DataColumn(label: Text('Document Title')),
               DataColumn(label: Text('Type')),
@@ -447,7 +483,19 @@ class _EmployeeDocumentsViewState extends State<_EmployeeDocumentsView> {
             ],
           ),
         ),
-      ),
+      );
+
+    if (isInsideScrollable) {
+      return Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: tableCard,
+      );
+    }
+
+    return SingleChildScrollView(
+      key: const Key('employee_documents_desktop_table_scroll'),
+      padding: const EdgeInsets.all(16.0),
+      child: tableCard,
     );
   }
 }

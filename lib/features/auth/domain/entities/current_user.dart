@@ -40,6 +40,22 @@ class CurrentUser {
           displayName == other.displayName &&
           accountType == other.accountType;
 
+  CurrentUser copyWith({
+    String? id,
+    String? displayName,
+    AccountType? accountType,
+    Set<CrmModule>? modules,
+    Set<String>? permissions,
+  }) {
+    return CurrentUser(
+      id: id ?? this.id,
+      displayName: displayName ?? this.displayName,
+      accountType: accountType ?? this.accountType,
+      modules: modules ?? this.modules,
+      permissions: permissions ?? this.permissions,
+    );
+  }
+
   @override
   int get hashCode => Object.hash(id, displayName, accountType);
 }

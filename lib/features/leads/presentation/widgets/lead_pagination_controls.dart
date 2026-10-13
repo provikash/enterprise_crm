@@ -104,12 +104,12 @@ class LeadPaginationControls extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(child: rangeText),
-                      const SizedBox(width: 8),
-                      pageText,
-                    ],
+                  Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 8,
+                    runSpacing: 4,
+                    children: [rangeText, pageText],
                   ),
                   const SizedBox(height: 8),
                   if (constraints.maxWidth < 600)
