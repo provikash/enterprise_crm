@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/config/app_config.dart';
 import '../../../auth/domain/entities/crm_module.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/domain/entities/current_user.dart';
+import '../../../hr/domain/repositories/attendance_repository.dart';
+import '../../../hr/domain/repositories/employee_document_repository.dart';
+import '../../../hr/domain/repositories/employee_kpi_repository.dart';
+import '../../../hr/domain/repositories/employee_repository.dart';
+import '../../../hr/presentation/screens/hr_home_screen.dart';
+import '../../../inventory/domain/repositories/inventory_repository.dart';
+import '../../../inventory/data/repositories/mock_inventory_repository.dart';
+import '../../../inventory/presentation/screens/inventory_workspace_screen.dart';
 import '../../../user_management/domain/repositories/user_management_repository.dart';
 import '../../../user_management/presentation/screens/users_and_access_screen.dart';
 import '../widgets/crm_app_header.dart';
@@ -11,22 +23,85 @@ import 'module_placeholder_screen.dart';
 /// Global Admin Dashboard providing access to all 8 CRM business modules
 /// and the Administration section.
 class AdminDashboardScreen extends StatelessWidget {
+  final AppConfig appConfig;
   final CurrentUser user;
   final VoidCallback onLogout;
   final VoidCallback onOpenLeadManagement;
+  final InventoryRepository? inventoryRepository;
   final UserManagementRepository? userManagementRepository;
+  final EmployeeRepository? employeeRepository;
+  final EmployeeDocumentRepository? employeeDocumentRepository;
+  final AttendanceRepository? attendanceRepository;
+  final EmployeeKpiRepository? employeeKpiRepository;
 
   const AdminDashboardScreen({
     super.key,
+    this.appConfig = AppConfig.development,
     required this.user,
     required this.onLogout,
     required this.onOpenLeadManagement,
+    this.inventoryRepository,
     this.userManagementRepository,
+    this.employeeRepository,
+    this.employeeDocumentRepository,
+    this.attendanceRepository,
+    this.employeeKpiRepository,
   });
 
   void _openModule(BuildContext context, CrmModule module) {
     if (module == CrmModule.leadManagement) {
       onOpenLeadManagement();
+    } else if (module == CrmModule.hrPayroll) {
+      final employees = employeeRepository;
+      final documents = employeeDocumentRepository;
+      final attendance = attendanceRepository;
+      final kpis = employeeKpiRepository;
+      if (employees == null ||
+          documents == null ||
+          attendance == null ||
+          kpis == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('HR repositories are not configured.')),
+        );
+        return;
+      }
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => HrHomeScreen(
+            user: user,
+            appConfig: appConfig,
+            repository: employees,
+            documentRepository: documents,
+            attendanceRepository: attendance,
+            kpiRepository: kpis,
+          ),
+        ),
+      );
+    } else if (module == CrmModule.inventory) {
+      AuthCubit? authCubit;
+      try {
+        authCubit = context.read<AuthCubit?>();
+      } catch (_) {}
+
+      CurrentUser? currentInventoryUser() {
+        if (authCubit == null || authCubit.isClosed) {
+          return null;
+        }
+        final state = authCubit.state;
+        return state is AuthAuthenticated ? state.user : null;
+      }
+
+      Widget screen = InventoryWorkspaceScreen(
+        user: user,
+        repository: inventoryRepository ?? MockInventoryRepository(),
+        currentUserProvider: currentInventoryUser,
+      );
+
+      if (authCubit != null) {
+        screen = BlocProvider<AuthCubit>.value(value: authCubit, child: screen);
+      }
+
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
     } else {
       Navigator.of(context).push(
         MaterialPageRoute(

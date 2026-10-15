@@ -1,4 +1,5 @@
 import 'package:enterprise_crm/features/auth/domain/entities/crm_module.dart';
+import 'package:enterprise_crm/features/auth/domain/policies/crm_permissions.dart';
 import 'package:enterprise_crm/features/user_management/data/mock/mock_permission_catalog.dart';
 import 'package:enterprise_crm/features/user_management/domain/repositories/user_management_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -18,6 +19,14 @@ void main() {
         expect(MockPermissionCatalog.isValidPermission('payroll.view'), isTrue);
         expect(
           MockPermissionCatalog.isValidPermission('inventory.view'),
+          isTrue,
+        );
+        expect(
+          MockPermissionCatalog.isValidPermission('inventory.export.csv'),
+          isTrue,
+        );
+        expect(
+          MockPermissionCatalog.isValidPermission('inventory.export.xlsx'),
           isTrue,
         );
         expect(
@@ -145,5 +154,40 @@ void main() {
         ),
       );
     });
+    test('inventory export permissions map to inventory module', () {
+      expect(
+        MockPermissionCatalog.getModuleForPermission('inventory.export.csv'),
+        CrmModule.inventory,
+      );
+      expect(
+        MockPermissionCatalog.getModuleForPermission('inventory.export.xlsx'),
+        CrmModule.inventory,
+      );
+      final inventoryPerms = MockPermissionCatalog.getPermissionsForModule(
+        CrmModule.inventory,
+      );
+      expect(inventoryPerms.contains('inventory.export.csv'), isTrue);
+      expect(inventoryPerms.contains('inventory.export.xlsx'), isTrue);
+      expect(inventoryPerms.contains('inventory.import.csv'), isTrue);
+      expect(inventoryPerms.contains('inventory.import.xlsx'), isTrue);
+    });
+
+    test(
+      'exposes every enterprise HR and payroll permission in user forms',
+      () {
+        final defined = MockPermissionCatalog.definitions
+            .where((definition) => definition.module == CrmModule.hrPayroll)
+            .map((definition) => definition.id)
+            .toSet();
+
+        expect(
+          defined,
+          containsAll(CrmPermissions.permissionsFor(CrmModule.hrPayroll)),
+        );
+        expect(defined, contains(CrmPermissions.hrDocumentsManage));
+        expect(defined, contains(CrmPermissions.payrollRunApprove));
+        expect(defined, contains(CrmPermissions.payrollPaymentRelease));
+      },
+    );
   });
 }

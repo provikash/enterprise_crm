@@ -1,0 +1,10 @@
+{
+  "data": {
+    "jobId": "job-1",
+    "status": "running",
+    "completed": 340,
+    "total": 1200,
+    "message": "Calculating payroll"
+  },
+  "requestId": "request-1"
+}

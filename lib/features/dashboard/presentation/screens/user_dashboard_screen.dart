@@ -1,11 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/config/app_config.dart';
 import '../../../auth/domain/entities/crm_module.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/domain/repositories/user_lead_link_repository.dart';
 import '../../../calling/domain/repositories/lead_call_activity_repository.dart';
 import '../../../calling/domain/repositories/lead_follow_up_repository.dart';
 import '../../../calling/presentation/screens/user_calling_workspace_screen.dart';
+import '../../../hr/domain/repositories/attendance_repository.dart';
+import '../../../hr/domain/repositories/employee_document_repository.dart';
+import '../../../hr/domain/repositories/employee_kpi_repository.dart';
+import '../../../hr/domain/repositories/employee_repository.dart';
+import '../../../hr/presentation/screens/hr_home_screen.dart';
+import '../../../inventory/domain/repositories/inventory_repository.dart';
+import '../../../inventory/data/repositories/mock_inventory_repository.dart';
+import '../../../inventory/presentation/screens/inventory_workspace_screen.dart';
 import '../../../leads/domain/repositories/lead_repository.dart';
 import '../widgets/crm_app_header.dart';
 import '../widgets/crm_module_card.dart';
@@ -16,21 +28,33 @@ import 'user_lead_placeholder_screen.dart';
 ///
 /// Administrative sections (e.g. Users & Access) are strictly excluded.
 class UserDashboardScreen extends StatelessWidget {
+  final AppConfig appConfig;
   final CurrentUser user;
   final VoidCallback onLogout;
   final UserLeadLinkRepository userLeadLinkRepository;
   final LeadRepository leadRepository;
   final LeadCallActivityRepository callActivityRepository;
   final LeadFollowUpRepository leadFollowUpRepository;
+  final EmployeeRepository? employeeRepository;
+  final EmployeeDocumentRepository? employeeDocumentRepository;
+  final AttendanceRepository? attendanceRepository;
+  final EmployeeKpiRepository? employeeKpiRepository;
+  final InventoryRepository? inventoryRepository;
 
   const UserDashboardScreen({
     super.key,
+    this.appConfig = AppConfig.development,
     required this.user,
     required this.onLogout,
     required this.userLeadLinkRepository,
     required this.leadRepository,
     required this.callActivityRepository,
     required this.leadFollowUpRepository,
+    this.employeeRepository,
+    this.employeeDocumentRepository,
+    this.attendanceRepository,
+    this.employeeKpiRepository,
+    this.inventoryRepository,
   });
 
   void _openModule(BuildContext context, CrmModule module) {
@@ -58,6 +82,57 @@ class UserDashboardScreen extends StatelessWidget {
           ),
         ),
       );
+    } else if (module == CrmModule.hrPayroll) {
+      final employees = employeeRepository;
+      final documents = employeeDocumentRepository;
+      final attendance = attendanceRepository;
+      final kpis = employeeKpiRepository;
+      if (employees == null ||
+          documents == null ||
+          attendance == null ||
+          kpis == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('HR repositories are not configured.')),
+        );
+        return;
+      }
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => HrHomeScreen(
+            user: user,
+            appConfig: appConfig,
+            repository: employees,
+            documentRepository: documents,
+            attendanceRepository: attendance,
+            kpiRepository: kpis,
+          ),
+        ),
+      );
+    } else if (module == CrmModule.inventory) {
+      AuthCubit? authCubit;
+      try {
+        authCubit = context.read<AuthCubit?>();
+      } catch (_) {}
+
+      CurrentUser? currentInventoryUser() {
+        if (authCubit == null || authCubit.isClosed) {
+          return null;
+        }
+        final state = authCubit.state;
+        return state is AuthAuthenticated ? state.user : null;
+      }
+
+      Widget screen = InventoryWorkspaceScreen(
+        user: user,
+        repository: inventoryRepository ?? MockInventoryRepository(),
+        currentUserProvider: currentInventoryUser,
+      );
+
+      if (authCubit != null) {
+        screen = BlocProvider<AuthCubit>.value(value: authCubit, child: screen);
+      }
+
+      Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
     } else {
       Navigator.of(context).push(
         MaterialPageRoute(
@@ -67,6 +142,7 @@ class UserDashboardScreen extends StatelessWidget {
     }
   }
 
+  @override
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

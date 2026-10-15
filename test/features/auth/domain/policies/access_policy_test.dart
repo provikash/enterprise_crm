@@ -34,6 +34,26 @@ void main() {
         CrmModule.inventory,
       );
       expect(
+        CrmPermissions.moduleFor(CrmPermissions.inventoryCreate),
+        CrmModule.inventory,
+      );
+      expect(
+        CrmPermissions.moduleFor(CrmPermissions.inventoryEdit),
+        CrmModule.inventory,
+      );
+      expect(
+        CrmPermissions.moduleFor(CrmPermissions.inventoryDelete),
+        CrmModule.inventory,
+      );
+      expect(
+        CrmPermissions.moduleFor(CrmPermissions.inventoryImportCsv),
+        CrmModule.inventory,
+      );
+      expect(
+        CrmPermissions.moduleFor(CrmPermissions.inventoryImportXlsx),
+        CrmModule.inventory,
+      );
+      expect(
         CrmPermissions.moduleFor(CrmPermissions.purchaseView),
         CrmModule.purchase,
       );
@@ -45,6 +65,7 @@ void main() {
 
     test('isKnown validates known catalog and rejects arbitrary strings', () {
       expect(CrmPermissions.isKnown(CrmPermissions.leadViewAssigned), isTrue);
+      expect(CrmPermissions.isKnown(CrmPermissions.inventoryCreate), isTrue);
       expect(CrmPermissions.isKnown('lead.delete'), isFalse);
       expect(CrmPermissions.isKnown('*'), isFalse);
       expect(CrmPermissions.isKnown(''), isFalse);
@@ -58,6 +79,17 @@ void main() {
       expect(CrmPermissions.permissionsFor(CrmModule.calling), {
         CrmPermissions.callingUse,
       });
+      expect(CrmPermissions.permissionsFor(CrmModule.inventory), {
+        CrmPermissions.inventoryView,
+        CrmPermissions.inventoryCreate,
+        CrmPermissions.inventoryEdit,
+        CrmPermissions.inventoryDelete,
+        CrmPermissions.inventoryStockManage,
+        CrmPermissions.inventoryImportCsv,
+        CrmPermissions.inventoryImportXlsx,
+        CrmPermissions.inventoryExportCsv,
+        CrmPermissions.inventoryExportXlsx,
+      });
       expect(CrmPermissions.permissionsFor(CrmModule.dispatch), isEmpty);
       expect(
         CrmPermissions.permissionsFor(CrmModule.approvalsNotifications),
@@ -65,8 +97,25 @@ void main() {
       );
     });
 
-    test('allKnown contains exactly 8 permissions', () {
-      expect(CrmPermissions.allKnown.length, 8);
+    test('allKnown contains every registered permission', () {
+      expect(CrmPermissions.allKnown.length, 33);
+      expect(
+        CrmPermissions.permissionsFor(CrmModule.hrPayroll),
+        containsAll({
+          CrmPermissions.payrollConfigManage,
+          CrmPermissions.payrollSalaryView,
+          CrmPermissions.payrollSalaryEdit,
+          CrmPermissions.payrollRunView,
+          CrmPermissions.payrollRunCreate,
+          CrmPermissions.payrollRunApprove,
+          CrmPermissions.payrollRunLock,
+          CrmPermissions.payrollPaymentRelease,
+          CrmPermissions.payrollPayslipViewAll,
+          CrmPermissions.payrollTaxVerify,
+          CrmPermissions.payrollComplianceView,
+          CrmPermissions.payrollReportsView,
+        }),
+      );
     });
 
     test('CrmPermissionPresentation returns human-readable labels', () {

@@ -1,0 +1,7 @@
+{
+  "code": "VALIDATION_FAILED",
+  "message": "Please correct the highlighted fields.",
+  "fieldErrors": {
+    "amountPaise": ["Amount must be greater than zero."]
+  }
+}
