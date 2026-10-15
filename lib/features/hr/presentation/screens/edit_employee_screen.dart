@@ -5,6 +5,7 @@ import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../domain/entities/employee.dart';
 import '../../domain/entities/employment_status.dart';
 import '../../domain/inputs/update_employee_input.dart';
+import '../../domain/policies/hr_access_policy.dart';
 import '../../domain/repositories/employee_repository.dart';
 import '../../domain/validation/employee_validators.dart';
 
@@ -78,7 +79,7 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.user.isAdmin) {
+    if (!HrAccessPolicy.canManageEmployees(widget.user)) {
       return const AccessRestrictedScreen();
     }
 

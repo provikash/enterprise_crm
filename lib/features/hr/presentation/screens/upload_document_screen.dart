@@ -4,6 +4,7 @@ import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../domain/entities/employee.dart';
 import '../../domain/inputs/upload_document_input.dart';
+import '../../domain/policies/hr_access_policy.dart';
 import '../../domain/repositories/employee_document_repository.dart';
 import '../services/employee_document_file_picker.dart';
 
@@ -209,7 +210,7 @@ class _UploadDocumentScreenState extends State<UploadDocumentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.user.isAdmin) {
+    if (!HrAccessPolicy.canManageDocuments(widget.user)) {
       return const AccessRestrictedScreen();
     }
 

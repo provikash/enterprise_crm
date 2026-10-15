@@ -6,7 +6,6 @@ import '../../../auth/domain/entities/crm_module.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/domain/entities/current_user.dart';
-import '../../../hr/data/repositories/mock_employee_repository.dart';
 import '../../../hr/domain/repositories/attendance_repository.dart';
 import '../../../hr/domain/repositories/employee_document_repository.dart';
 import '../../../hr/domain/repositories/employee_kpi_repository.dart';
@@ -53,15 +52,28 @@ class AdminDashboardScreen extends StatelessWidget {
     if (module == CrmModule.leadManagement) {
       onOpenLeadManagement();
     } else if (module == CrmModule.hrPayroll) {
+      final employees = employeeRepository;
+      final documents = employeeDocumentRepository;
+      final attendance = attendanceRepository;
+      final kpis = employeeKpiRepository;
+      if (employees == null ||
+          documents == null ||
+          attendance == null ||
+          kpis == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('HR repositories are not configured.')),
+        );
+        return;
+      }
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => HrHomeScreen(
             user: user,
             appConfig: appConfig,
-            repository: employeeRepository ?? MockEmployeeRepository(),
-            documentRepository: employeeDocumentRepository,
-            attendanceRepository: attendanceRepository,
-            kpiRepository: employeeKpiRepository,
+            repository: employees,
+            documentRepository: documents,
+            attendanceRepository: attendance,
+            kpiRepository: kpis,
           ),
         ),
       );

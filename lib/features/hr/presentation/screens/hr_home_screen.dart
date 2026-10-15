@@ -5,8 +5,6 @@ import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../../payroll/presentation/screens/payroll_home_screen.dart';
 import '../../../payroll/shared/domain/payroll_access_policy.dart';
-import '../../data/repositories/mock_attendance_repository.dart';
-import '../../data/repositories/mock_employee_kpi_repository.dart';
 import '../../domain/policies/hr_access_policy.dart';
 import '../../domain/repositories/attendance_repository.dart';
 import '../../domain/repositories/employee_document_repository.dart';
@@ -19,6 +17,7 @@ import '../widgets/hr_section_card.dart';
 import 'attendance_home_screen.dart';
 import 'employee_directory_screen.dart';
 import 'employee_kpi_list_screen.dart';
+import 'hr_documents_dashboard_screen.dart';
 
 /// Central HR & Payroll Module Dashboard / Main Feature Grid screen.
 ///
@@ -28,18 +27,18 @@ class HrHomeScreen extends StatelessWidget {
   final AppConfig appConfig;
   final CurrentUser user;
   final EmployeeRepository repository;
-  final EmployeeDocumentRepository? documentRepository;
-  final AttendanceRepository? attendanceRepository;
-  final EmployeeKpiRepository? kpiRepository;
+  final EmployeeDocumentRepository documentRepository;
+  final AttendanceRepository attendanceRepository;
+  final EmployeeKpiRepository kpiRepository;
 
   const HrHomeScreen({
     super.key,
     this.appConfig = AppConfig.development,
     required this.user,
     required this.repository,
-    this.documentRepository,
-    this.attendanceRepository,
-    this.kpiRepository,
+    required this.documentRepository,
+    required this.attendanceRepository,
+    required this.kpiRepository,
   });
 
   @override
@@ -49,7 +48,7 @@ class HrHomeScreen extends StatelessWidget {
       return const AccessRestrictedScreen();
     }
 
-    if (!user.isAdmin && !HrAccessPolicy.canViewHrRecords(user)) {
+    if (!HrAccessPolicy.canEnter(user)) {
       return const AccessRestrictedScreen();
     }
 
@@ -111,84 +110,85 @@ class HrHomeScreen extends StatelessWidget {
       spacing: 16,
       runSpacing: 16,
       children: [
-        HrFeatureCard(
-          key: const Key('hr_feature_card_employees'),
-          title: 'Employees',
-          description: 'Employee directory, profiles, roles, and status',
-          icon: Icons.people_outline,
-          metric: 'Directory & Profiles',
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => EmployeeDirectoryScreen(
-                  user: user,
-                  repository: repository,
-                  documentRepository: documentRepository,
-                  attendanceRepository: attendanceRepository,
-                  kpiRepository: kpiRepository,
+        if (HrAccessPolicy.canViewHrRecords(user))
+          HrFeatureCard(
+            key: const Key('hr_feature_card_employees'),
+            title: 'Employees',
+            description: 'Employee directory, profiles, roles, and status',
+            icon: Icons.people_outline,
+            metric: 'Directory & Profiles',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => EmployeeDirectoryScreen(
+                    user: user,
+                    repository: repository,
+                    documentRepository: documentRepository,
+                    attendanceRepository: attendanceRepository,
+                    kpiRepository: kpiRepository,
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
-        HrFeatureCard(
-          key: const Key('hr_feature_card_attendance'),
-          title: 'Attendance',
-          description: 'Daily logs, check-in/out, calendar & history',
-          icon: Icons.calendar_month_outlined,
-          metric: 'Logs & Calendar',
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => AttendanceHomeScreen(
-                  user: user,
-                  repository:
-                      attendanceRepository ?? MockAttendanceRepository(),
-                  employeeRepository: repository,
+              );
+            },
+          ),
+        if (HrAccessPolicy.canViewHrRecords(user))
+          HrFeatureCard(
+            key: const Key('hr_feature_card_attendance'),
+            title: 'Attendance',
+            description: 'Daily logs, check-in/out, calendar & history',
+            icon: Icons.calendar_month_outlined,
+            metric: 'Logs & Calendar',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => AttendanceHomeScreen(
+                    user: user,
+                    repository: attendanceRepository,
+                    employeeRepository: repository,
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
-        HrFeatureCard(
-          key: const Key('hr_feature_card_kpi'),
-          title: 'Performance (KPI)',
-          description: 'Quarterly goals, target tracking, and evaluations',
-          icon: Icons.assessment_outlined,
-          metric: 'Goals & Appraisals',
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => EmployeeKpiListScreen(
-                  user: user,
-                  kpiRepository: kpiRepository ?? MockEmployeeKpiRepository(),
-                  employeeRepository: repository,
+              );
+            },
+          ),
+        if (HrAccessPolicy.canViewHrRecords(user) ||
+            HrAccessPolicy.canManagePerformance(user))
+          HrFeatureCard(
+            key: const Key('hr_feature_card_kpi'),
+            title: 'Performance (KPI)',
+            description: 'Quarterly goals, target tracking, and evaluations',
+            icon: Icons.assessment_outlined,
+            metric: 'Goals & Appraisals',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => EmployeeKpiListScreen(
+                    user: user,
+                    kpiRepository: kpiRepository,
+                    employeeRepository: repository,
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
-        HrFeatureCard(
-          key: const Key('hr_feature_card_documents'),
-          title: 'Documents',
-          description: 'Agreements, identity verification & compliance',
-          icon: Icons.folder_shared_outlined,
-          metric: 'Files & Compliance',
-          onTap: () {
-            // Opens Employee Directory where user can select employee to view documents
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => EmployeeDirectoryScreen(
-                  user: user,
-                  repository: repository,
-                  documentRepository: documentRepository,
-                  attendanceRepository: attendanceRepository,
-                  kpiRepository: kpiRepository,
+              );
+            },
+          ),
+        if (HrAccessPolicy.canViewDocuments(user))
+          HrFeatureCard(
+            key: const Key('hr_feature_card_documents'),
+            title: 'Documents',
+            description: 'Agreements, identity verification & compliance',
+            icon: Icons.folder_shared_outlined,
+            metric: 'Files & Compliance',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => HrDocumentsDashboardScreen(
+                    user: user,
+                    employeeRepository: repository,
+                    documentRepository: documentRepository,
+                  ),
                 ),
-              ),
-            );
-          },
-        ),
+              );
+            },
+          ),
         if (canViewPayroll)
           HrFeatureCard(
             key: const Key('hr_feature_card_payroll'),

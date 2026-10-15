@@ -183,5 +183,29 @@ void main() {
         expect(HrAccessPolicy.canManageAttendance(orphan), isFalse);
       });
     });
+
+    test(
+      'enterprise HR permissions independently gate sensitive operations',
+      () {
+        const specialist = CurrentUser(
+          id: 'hr-specialist',
+          displayName: 'HR Specialist',
+          accountType: AccountType.user,
+          modules: {CrmModule.hrPayroll},
+          permissions: {
+            CrmPermissions.hrDocumentsView,
+            CrmPermissions.hrDocumentsManage,
+            CrmPermissions.hrPerformanceManage,
+          },
+        );
+
+        expect(HrAccessPolicy.canEnter(specialist), isTrue);
+        expect(HrAccessPolicy.canViewDocuments(specialist), isTrue);
+        expect(HrAccessPolicy.canManageDocuments(specialist), isTrue);
+        expect(HrAccessPolicy.canManagePerformance(specialist), isTrue);
+        expect(HrAccessPolicy.canManageEmployees(specialist), isFalse);
+        expect(HrAccessPolicy.canViewPayroll(specialist), isFalse);
+      },
+    );
   });
 }

@@ -125,7 +125,7 @@ class _EmployeeDocumentDetailsScreenState
 
   @override
   Widget build(BuildContext context) {
-    if (!HrAccessPolicy.canViewHrRecords(widget.user)) {
+    if (!HrAccessPolicy.canViewDocuments(widget.user)) {
       return const AccessRestrictedScreen();
     }
 

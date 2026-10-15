@@ -1,3 +1,4 @@
+import 'package:enterprise_crm/app/bootstrap/mock_hr_payroll_dependencies.dart';
 import 'package:enterprise_crm/features/auth/data/repositories/mock_user_lead_link_repository.dart';
 import 'package:enterprise_crm/features/auth/domain/entities/account_type.dart';
 import 'package:enterprise_crm/features/auth/domain/entities/crm_module.dart';
@@ -29,6 +30,7 @@ Widget _buildUserDashboardTestApp({
   LeadCallActivityRepository? callActivityRepository,
   LeadFollowUpRepository? leadFollowUpRepository,
 }) {
+  final hrPayroll = createMockHrPayrollDependencies();
   return MaterialApp(
     theme: ThemeData(useMaterial3: true, brightness: Brightness.light),
     darkTheme: ThemeData(useMaterial3: true, brightness: Brightness.dark),
@@ -43,6 +45,10 @@ Widget _buildUserDashboardTestApp({
       leadFollowUpRepository:
           leadFollowUpRepository ?? MockLeadFollowUpRepository(),
       inventoryRepository: MockInventoryRepository(),
+      employeeRepository: hrPayroll.employees,
+      employeeDocumentRepository: hrPayroll.employeeDocuments,
+      attendanceRepository: hrPayroll.attendance,
+      employeeKpiRepository: hrPayroll.employeeKpis,
     ),
   );
 }

@@ -90,7 +90,7 @@ class _EmployeeDirectoryViewState extends State<_EmployeeDirectoryView> {
 
   @override
   Widget build(BuildContext context) {
-    final canAddEmployee = widget.user.isAdmin;
+    final canAddEmployee = HrAccessPolicy.canManageEmployees(widget.user);
 
     return Scaffold(
       key: const Key('employee_directory_scaffold'),

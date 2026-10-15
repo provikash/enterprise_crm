@@ -3,16 +3,20 @@ import 'package:enterprise_crm/features/auth/domain/entities/crm_module.dart';
 import 'package:enterprise_crm/features/auth/domain/entities/current_user.dart';
 import 'package:enterprise_crm/features/auth/domain/policies/crm_permissions.dart';
 import 'package:enterprise_crm/features/auth/presentation/screens/access_restricted_screen.dart';
+import 'package:enterprise_crm/app/bootstrap/hr_payroll_dependencies.dart';
+import 'package:enterprise_crm/app/bootstrap/mock_hr_payroll_dependencies.dart';
 import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_repository.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/attendance_home_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/employee_directory_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/employee_kpi_list_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/hr_home_screen.dart';
+import 'package:enterprise_crm/features/hr/presentation/screens/hr_documents_dashboard_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   late MockEmployeeRepository repository;
+  late HrPayrollDependencies dependencies;
 
   const adminUser = CurrentUser(
     id: 'usr_admin',
@@ -48,6 +52,7 @@ void main() {
 
   setUp(() {
     repository = MockEmployeeRepository();
+    dependencies = createMockHrPayrollDependencies();
   });
 
   Widget buildWidget({
@@ -57,7 +62,13 @@ void main() {
     return MaterialApp(
       home: MediaQuery(
         data: MediaQueryData(size: size),
-        child: HrHomeScreen(user: user, repository: repository),
+        child: HrHomeScreen(
+          user: user,
+          repository: repository,
+          documentRepository: dependencies.employeeDocuments,
+          attendanceRepository: dependencies.attendance,
+          kpiRepository: dependencies.employeeKpis,
+        ),
       ),
     );
   }
@@ -152,7 +163,7 @@ void main() {
       expect(find.byType(EmployeeKpiListScreen), findsOneWidget);
     });
 
-    testWidgets('tapping Documents navigates to EmployeeDirectoryScreen', (
+    testWidgets('tapping Documents opens document management dashboard', (
       tester,
     ) async {
       await tester.pumpWidget(buildWidget(user: adminUser));
@@ -161,7 +172,8 @@ void main() {
       await tester.tap(find.byKey(const Key('hr_feature_card_documents')));
       await tester.pumpAndSettle();
 
-      expect(find.byType(EmployeeDirectoryScreen), findsOneWidget);
+      expect(find.byType(HrDocumentsDashboardScreen), findsOneWidget);
+      expect(find.text('Workforce document control'), findsOneWidget);
     });
 
     testWidgets('renders cleanly without overflow across responsive widths', (
@@ -195,7 +207,13 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData.dark(useMaterial3: true),
-          home: HrHomeScreen(user: adminUser, repository: repository),
+          home: HrHomeScreen(
+            user: adminUser,
+            repository: repository,
+            documentRepository: dependencies.employeeDocuments,
+            attendanceRepository: dependencies.attendance,
+            kpiRepository: dependencies.employeeKpis,
+          ),
         ),
       );
       await tester.pumpAndSettle();

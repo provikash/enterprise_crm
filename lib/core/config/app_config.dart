@@ -14,7 +14,6 @@ enum PayrollFeature {
   accounting,
   reports,
   analytics,
-  widgetGallery,
 }
 
 class AppConfig {
@@ -37,7 +36,15 @@ class AppConfig {
     enabledPayrollFeatures: {
       PayrollFeature.foundations,
       PayrollFeature.configuration,
-      PayrollFeature.widgetGallery,
+      PayrollFeature.employeeCompensation,
+      PayrollFeature.inputs,
+      PayrollFeature.payRuns,
+      PayrollFeature.payslips,
+      PayrollFeature.payments,
+      PayrollFeature.tax,
+      PayrollFeature.compliance,
+      PayrollFeature.reports,
+      PayrollFeature.analytics,
     },
   );
 }

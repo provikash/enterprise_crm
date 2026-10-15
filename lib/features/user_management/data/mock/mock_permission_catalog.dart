@@ -44,9 +44,114 @@ abstract final class MockPermissionCatalog {
       displayName: 'View HR Records',
     ),
     MockPermissionDefinition(
+      id: CrmPermissions.hrEmployeeManage,
+      module: CrmModule.hrPayroll,
+      displayName: 'Create and Edit Employees',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.hrDocumentsView,
+      module: CrmModule.hrPayroll,
+      displayName: 'View Employee Documents',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.hrDocumentsManage,
+      module: CrmModule.hrPayroll,
+      displayName: 'Upload and Manage Employee Documents',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.hrPerformanceManage,
+      module: CrmModule.hrPayroll,
+      displayName: 'Manage Performance and KPI Records',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.attendanceManage,
+      module: CrmModule.hrPayroll,
+      displayName: 'Add and Edit Attendance',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.shiftManage,
+      module: CrmModule.hrPayroll,
+      displayName: 'Manage Shifts and Rosters',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.attendancePolicyManage,
+      module: CrmModule.hrPayroll,
+      displayName: 'Manage Attendance Policies',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.timesheetApprove,
+      module: CrmModule.hrPayroll,
+      displayName: 'Approve Timesheets',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.leaveManage,
+      module: CrmModule.hrPayroll,
+      displayName: 'Manage Leave and Holidays',
+    ),
+    MockPermissionDefinition(
       id: CrmPermissions.payrollView,
       module: CrmModule.hrPayroll,
       displayName: 'View Payroll',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.payrollConfigManage,
+      module: CrmModule.hrPayroll,
+      displayName: 'Manage Payroll Configuration',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.payrollSalaryView,
+      module: CrmModule.hrPayroll,
+      displayName: 'View Employee Salary',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.payrollSalaryEdit,
+      module: CrmModule.hrPayroll,
+      displayName: 'Edit Employee Salary',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.payrollRunView,
+      module: CrmModule.hrPayroll,
+      displayName: 'View Pay Runs',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.payrollRunCreate,
+      module: CrmModule.hrPayroll,
+      displayName: 'Create and Calculate Pay Runs',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.payrollRunApprove,
+      module: CrmModule.hrPayroll,
+      displayName: 'Approve Pay Runs',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.payrollRunLock,
+      module: CrmModule.hrPayroll,
+      displayName: 'Lock Pay Runs',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.payrollPaymentRelease,
+      module: CrmModule.hrPayroll,
+      displayName: 'Release Payroll Payments',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.payrollPayslipViewAll,
+      module: CrmModule.hrPayroll,
+      displayName: 'View All Employee Payslips',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.payrollTaxVerify,
+      module: CrmModule.hrPayroll,
+      displayName: 'Verify Employee Tax Proofs',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.payrollComplianceView,
+      module: CrmModule.hrPayroll,
+      displayName: 'View Payroll Compliance',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.payrollReportsView,
+      module: CrmModule.hrPayroll,
+      displayName: 'View Payroll Reports',
     ),
     // Inventory
     MockPermissionDefinition(

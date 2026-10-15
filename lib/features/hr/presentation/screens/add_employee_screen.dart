@@ -4,6 +4,7 @@ import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../domain/entities/employment_status.dart';
 import '../../domain/inputs/create_employee_input.dart';
+import '../../domain/policies/hr_access_policy.dart';
 import '../../domain/repositories/employee_repository.dart';
 import '../../domain/validation/employee_validators.dart';
 
@@ -58,7 +59,7 @@ class _AddEmployeeScreenState extends State<AddEmployeeScreen> {
   @override
   Widget build(BuildContext context) {
     // Route guard: Employee creation is strictly restricted to Administrators.
-    if (!widget.user.isAdmin) {
+    if (!HrAccessPolicy.canManageEmployees(widget.user)) {
       return const AccessRestrictedScreen();
     }
 

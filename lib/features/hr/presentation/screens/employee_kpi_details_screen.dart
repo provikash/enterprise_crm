@@ -147,7 +147,8 @@ class _EmployeeKpiDetailsViewState extends State<_EmployeeKpiDetailsView> {
             key: const Key('employee_kpi_details_app_bar'),
             title: const Text('KPI Details'),
             actions: [
-              if (widget.user.isAdmin && state.kpi != null)
+              if (HrAccessPolicy.canManagePerformance(widget.user) &&
+                  state.kpi != null)
                 IconButton(
                   key: const Key('kpi_details_edit_button'),
                   tooltip: 'Edit KPI',

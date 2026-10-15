@@ -1,3 +1,4 @@
+import 'package:enterprise_crm/app/bootstrap/mock_hr_payroll_dependencies.dart';
 import 'package:enterprise_crm/features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import 'package:enterprise_crm/features/dashboard/presentation/screens/module_placeholder_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/hr_home_screen.dart';
@@ -15,6 +16,7 @@ Widget _buildAdminDashboardTestApp({
   VoidCallback? onOpenLeadManagement,
   ThemeMode themeMode = ThemeMode.light,
 }) {
+  final hrPayroll = createMockHrPayrollDependencies();
   return MaterialApp(
     theme: ThemeData(useMaterial3: true, brightness: Brightness.light),
     darkTheme: ThemeData(useMaterial3: true, brightness: Brightness.dark),
@@ -24,6 +26,10 @@ Widget _buildAdminDashboardTestApp({
       onLogout: onLogout ?? () {},
       onOpenLeadManagement: onOpenLeadManagement ?? () {},
       inventoryRepository: MockInventoryRepository(),
+      employeeRepository: hrPayroll.employees,
+      employeeDocumentRepository: hrPayroll.employeeDocuments,
+      attendanceRepository: hrPayroll.attendance,
+      employeeKpiRepository: hrPayroll.employeeKpis,
       userManagementRepository: MockUserManagementRepository(
         accountStore: MockAccountStore.seeded(),
       ),

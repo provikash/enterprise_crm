@@ -3,9 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
-import '../../data/repositories/mock_attendance_repository.dart';
-import '../../data/repositories/mock_employee_document_repository.dart';
-import '../../data/repositories/mock_employee_kpi_repository.dart';
 import '../../domain/entities/employee.dart';
 import '../../domain/entities/employment_status.dart';
 import '../../domain/policies/hr_access_policy.dart';
@@ -93,7 +90,7 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
 
   @override
   Widget build(BuildContext context) {
-    final canEdit = widget.user.isAdmin;
+    final canEdit = HrAccessPolicy.canManageEmployees(widget.user);
 
     return PopScope(
       canPop: true,
@@ -348,7 +345,9 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
                                 employee: employee,
                                 repository:
                                     widget.documentRepository ??
-                                    MockEmployeeDocumentRepository(),
+                                    RepositoryProvider.of<
+                                      EmployeeDocumentRepository
+                                    >(context, listen: false),
                               ),
                             ),
                           );
@@ -398,7 +397,10 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
                                 employee: employee,
                                 repository:
                                     widget.attendanceRepository ??
-                                    MockAttendanceRepository(),
+                                    RepositoryProvider.of<AttendanceRepository>(
+                                      context,
+                                      listen: false,
+                                    ),
                               ),
                             ),
                           );
@@ -448,7 +450,9 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
                                 initialEmployeeId: employee.id,
                                 kpiRepository:
                                     widget.kpiRepository ??
-                                    MockEmployeeKpiRepository(),
+                                    RepositoryProvider.of<
+                                      EmployeeKpiRepository
+                                    >(context, listen: false),
                                 employeeRepository: widget.repository,
                               ),
                             ),
@@ -490,7 +494,10 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
                           subtitle: const Text(
                             'Salary disbursement & tax compliance',
                           ),
-                          trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+                          trailing: const Icon(
+                            Icons.arrow_forward_ios,
+                            size: 14,
+                          ),
                           onTap: () => _showPayrollOverview(context),
                         ),
                       ),
@@ -577,8 +584,14 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
                   ),
                   children: [
                     _buildDetailRow('Disbursement', 'Monthly Payroll Cycle'),
-                    _buildDetailRow('Compensation Framework', 'Grade-based Banding & CTC'),
-                    _buildDetailRow('Tax & Deductions', 'Standard Regulatory TDS'),
+                    _buildDetailRow(
+                      'Compensation Framework',
+                      'Grade-based Banding & CTC',
+                    ),
+                    _buildDetailRow(
+                      'Tax & Deductions',
+                      'Standard Regulatory TDS',
+                    ),
                   ],
                 ),
               ],
@@ -605,10 +618,7 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
   }
 
   Widget _buildDetailRow(String label, String value) {
-    return HrInfoRow(
-      label: label,
-      value: value,
-    );
+    return HrInfoRow(label: label, value: value);
   }
 
   void _showPayrollOverview(BuildContext context) {
@@ -703,10 +713,7 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
                       label: 'Salary Structure',
                       value: 'Base + Allowances',
                     ),
-                    HrInfoRow(
-                      label: 'Currency',
-                      value: 'INR (₹)',
-                    ),
+                    HrInfoRow(label: 'Currency', value: 'INR (₹)'),
                     HrInfoRow(
                       label: 'Compliance & Tax Filing',
                       value: 'Standard Deductions',

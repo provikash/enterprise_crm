@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/config/app_config.dart';
@@ -7,6 +6,7 @@ import '../../../auth/domain/policies/crm_permissions.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../shared/domain/payroll_access_policy.dart';
 import '../navigation/payroll_routes.dart';
+import '../widgets/payroll_shell.dart';
 
 class PayrollHomeScreen extends StatelessWidget {
   final CurrentUser user;
@@ -37,92 +37,58 @@ class PayrollHomeScreen extends StatelessWidget {
       _PayrollDestination(
         'Employee compensation',
         Icons.badge_outlined,
-        config.isPayrollEnabled(PayrollFeature.employeeCompensation),
+        config.isPayrollEnabled(PayrollFeature.employeeCompensation) &&
+            PayrollAccessPolicy.has(user, CrmPermissions.payrollSalaryView),
+        route: PayrollRoutes.compensation,
       ),
       _PayrollDestination(
         'Payroll inputs',
         Icons.input_outlined,
-        config.isPayrollEnabled(PayrollFeature.inputs),
+        config.isPayrollEnabled(PayrollFeature.inputs) &&
+            PayrollAccessPolicy.has(user, CrmPermissions.payrollRunCreate),
+        route: PayrollRoutes.inputs,
       ),
       _PayrollDestination(
         'Pay runs',
         Icons.playlist_add_check_outlined,
-        config.isPayrollEnabled(PayrollFeature.payRuns),
+        config.isPayrollEnabled(PayrollFeature.payRuns) &&
+            PayrollAccessPolicy.has(user, CrmPermissions.payrollRunView),
+        route: PayrollRoutes.runs,
+      ),
+      _PayrollDestination(
+        'Payslips',
+        Icons.receipt_long_outlined,
+        config.isPayrollEnabled(PayrollFeature.payslips) &&
+            PayrollAccessPolicy.has(user, CrmPermissions.payrollPayslipViewAll),
+        route: PayrollRoutes.payslips,
+      ),
+      _PayrollDestination(
+        'Payments',
+        Icons.account_balance_outlined,
+        config.isPayrollEnabled(PayrollFeature.payments) &&
+            PayrollAccessPolicy.has(user, CrmPermissions.payrollPaymentRelease),
+        route: PayrollRoutes.payments,
       ),
       _PayrollDestination(
         'Reports',
         Icons.assessment_outlined,
-        config.isPayrollEnabled(PayrollFeature.reports),
+        config.isPayrollEnabled(PayrollFeature.reports) &&
+            PayrollAccessPolicy.has(user, CrmPermissions.payrollReportsView),
+        route: PayrollRoutes.reports,
       ),
     ];
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 900;
-        final content = _Overview(destinations: destinations);
-        return Scaffold(
-          key: const Key('payroll_home_screen'),
-          appBar: AppBar(title: const Text('Payroll')),
-          drawer: wide
-              ? null
-              : Drawer(child: _Navigation(destinations: destinations)),
-          body: Row(
-            children: [
-              if (wide)
-                SizedBox(
-                  width: 260,
-                  child: Material(
-                    color: Theme.of(context).colorScheme.surfaceContainerLow,
-                    child: _Navigation(destinations: destinations),
-                  ),
-                ),
-              Expanded(child: content),
-            ],
-          ),
-          floatingActionButton:
-              kDebugMode &&
-                  config.isPayrollEnabled(PayrollFeature.widgetGallery)
-              ? FloatingActionButton.extended(
-                  tooltip: 'Open Payroll widget gallery',
-                  onPressed: () =>
-                      Navigator.of(context).pushNamed('/payroll/gallery'),
-                  icon: const Icon(Icons.widgets_outlined),
-                  label: const Text('Widget gallery'),
-                )
-              : null,
-        );
-      },
+    return PayrollShell(
+      user: user,
+      config: config,
+      selectedRoute: PayrollRoutes.home,
+      title: 'Payroll',
+      body: KeyedSubtree(
+        key: const Key('payroll_home_screen'),
+        child: _Overview(destinations: destinations),
+      ),
     );
   }
-}
-
-class _Navigation extends StatelessWidget {
-  final List<_PayrollDestination> destinations;
-  const _Navigation({required this.destinations});
-
-  @override
-  Widget build(BuildContext context) => SafeArea(
-    child: ListView(
-      padding: const EdgeInsets.all(12),
-      children: [
-        Text('Payroll', style: Theme.of(context).textTheme.titleLarge),
-        const SizedBox(height: 12),
-        for (final destination in destinations)
-          ListTile(
-            leading: Icon(destination.icon),
-            title: Text(destination.label),
-            enabled: destination.enabled,
-            selected: destination.label == 'Overview',
-            subtitle: destination.enabled
-                ? null
-                : const Text('Coming in a later phase'),
-            onTap: destination.enabled && destination.route != null
-                ? () => Navigator.of(context).pushNamed(destination.route!)
-                : null,
-          ),
-      ],
-    ),
-  );
 }
 
 class _Overview extends StatelessWidget {
@@ -158,8 +124,9 @@ class _Overview extends StatelessWidget {
                   ),
                   enabled: destination.enabled,
                   onTap: destination.enabled && destination.route != null
-                      ? () =>
-                            Navigator.of(context).pushNamed(destination.route!)
+                      ? () => Navigator.of(
+                          context,
+                        ).pushReplacementNamed(destination.route!)
                       : null,
                 ),
               ),

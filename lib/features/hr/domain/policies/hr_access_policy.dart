@@ -14,6 +14,13 @@ import '../../../auth/domain/policies/crm_permissions.dart';
 ///    - [canViewHrRecords] requires [CrmPermissions.hrView]
 ///    - [canViewPayroll] requires [CrmPermissions.payrollView]
 abstract final class HrAccessPolicy {
+  static bool canEnter(CurrentUser user) {
+    if (!canAccessModule(user)) return false;
+    return CrmPermissions.permissionsFor(
+      CrmModule.hrPayroll,
+    ).any((permission) => AccessPolicy.hasPermission(user, permission));
+  }
+
   /// Returns whether [user] is authorized to access the HR / Payroll module.
   ///
   /// Evaluates through [AccessPolicy.canAccessModule].
@@ -34,6 +41,20 @@ abstract final class HrAccessPolicy {
   static bool canViewPayroll(CurrentUser user) {
     return AccessPolicy.hasPermission(user, CrmPermissions.payrollView);
   }
+
+  static bool canManageEmployees(CurrentUser user) =>
+      AccessPolicy.hasPermission(user, CrmPermissions.hrEmployeeManage);
+
+  static bool canViewDocuments(CurrentUser user) =>
+      canViewHrRecords(user) ||
+      AccessPolicy.hasPermission(user, CrmPermissions.hrDocumentsView) ||
+      AccessPolicy.hasPermission(user, CrmPermissions.hrDocumentsManage);
+
+  static bool canManageDocuments(CurrentUser user) =>
+      AccessPolicy.hasPermission(user, CrmPermissions.hrDocumentsManage);
+
+  static bool canManagePerformance(CurrentUser user) =>
+      AccessPolicy.hasPermission(user, CrmPermissions.hrPerformanceManage);
 
   /// Administrators and HR users explicitly granted attendance mutation access.
   static bool canManageAttendance(CurrentUser user) {

@@ -151,6 +151,7 @@ void main() {
             home: EmployeeKpiListScreen(
               user: unauthorizedUser,
               kpiRepository: kpiRepository,
+              employeeRepository: employeeRepository,
             ),
           ),
         );

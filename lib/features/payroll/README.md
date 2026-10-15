@@ -2,10 +2,21 @@
 
 The Payroll feature is implemented incrementally behind typed feature flags.
 
-## Phase 1 screens
+## Available screens
 
 - `/payroll`: guarded Payroll workspace and responsive navigation.
-- `/payroll/gallery`: debug-only shared-widget gallery.
+- `/payroll/config/*`: salary components, structures, statutory versions and pay groups.
+- `/payroll/compensation`: employee salary assignments and payroll holds.
+- `/payroll/inputs`: bonuses, overtime, reimbursements and deductions.
+- `/payroll/runs`: calculate, review, approve and lock pay runs.
+- `/payroll/payslips`: generated gross-to-net statements for locked runs.
+- `/payroll/payments`: release and track salary payment batches.
+- `/payroll/reports`: payroll register and operational summaries.
+
+Operational screens currently use a shared in-memory repository. Data survives
+navigation during the running process but resets when the app restarts. The mock
+tax rule exists only to exercise gross-to-net workflow; production statutory and
+tax results must come from the authoritative backend.
 
 ## State
 
@@ -21,9 +32,14 @@ Administrators retain the existing recognized-permission bypass.
 
 ## Data sources
 
-`AppConfig.dataSourceMode` is the single selection point for mock or API repository
-wiring as each Payroll module is introduced. Presentation code depends only on
-domain interfaces; Phase 1 supplies both job-repository implementations.
+Presentation and routing code depend only on domain repository interfaces.
+`HrPayrollDependencies` is the single composition boundary for HR and Payroll.
+The demo entry point creates it through `createMockHrPayrollDependencies()`.
+
+During backend integration, create an API-backed `HrPayrollDependencies` using
+the same six interfaces and replace that one factory call in `main.dart`. Mock
+stores and repositories can then be removed without changing screens, Cubits,
+routes, or access policies.
 
 ## API
 

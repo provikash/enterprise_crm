@@ -56,6 +56,13 @@ void main() {
     await tester.tap(find.text('Create'));
     await tester.pumpAndSettle();
 
+    final componentList = find.descendant(
+      of: find.byKey(const Key('payroll_configuration_screen')),
+      matching: find.byType(ListView),
+    );
+    await tester.drag(componentList, const Offset(0, -500));
+    await tester.pumpAndSettle();
+
     expect(find.text('Performance Bonus'), findsOneWidget);
     expect(find.text('Salary component created.'), findsOneWidget);
   });

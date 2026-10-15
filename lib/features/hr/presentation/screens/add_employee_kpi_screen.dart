@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
-import '../../data/repositories/mock_employee_repository.dart';
 import '../../domain/entities/employee.dart';
+import '../../domain/policies/hr_access_policy.dart';
 import '../../domain/repositories/employee_kpi_repository.dart';
 import '../../domain/repositories/employee_repository.dart';
 import '../bloc/employee_kpi_form_cubit.dart';
@@ -29,20 +29,23 @@ class AddEmployeeKpiScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!user.isAdmin) {
+    if (!HrAccessPolicy.canManagePerformance(user)) {
       return const AccessRestrictedScreen();
     }
 
     final effectiveKpiRepo =
         kpiRepository ??
         RepositoryProvider.of<EmployeeKpiRepository>(context, listen: false);
+    final effectiveEmployeeRepo =
+        employeeRepository ??
+        RepositoryProvider.of<EmployeeRepository>(context, listen: false);
 
     if (formCubit != null) {
       return BlocProvider.value(
         value: formCubit!,
         child: _AddEmployeeKpiView(
           user: user,
-          employeeRepository: employeeRepository ?? MockEmployeeRepository(),
+          employeeRepository: effectiveEmployeeRepo,
           preselectedEmployeeId: preselectedEmployeeId,
         ),
       );
@@ -52,7 +55,7 @@ class AddEmployeeKpiScreen extends StatelessWidget {
       create: (_) => EmployeeKpiFormCubit(repository: effectiveKpiRepo),
       child: _AddEmployeeKpiView(
         user: user,
-        employeeRepository: employeeRepository ?? MockEmployeeRepository(),
+        employeeRepository: effectiveEmployeeRepo,
         preselectedEmployeeId: preselectedEmployeeId,
       ),
     );

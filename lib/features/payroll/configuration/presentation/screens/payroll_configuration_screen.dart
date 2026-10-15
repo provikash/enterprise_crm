@@ -2,21 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
+import '../../../../../core/config/app_config.dart';
 import '../../../../auth/domain/entities/current_user.dart';
 import '../../../../auth/domain/policies/crm_permissions.dart';
 import '../../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../../shared/domain/payroll_access_policy.dart';
+import '../../../presentation/widgets/payroll_shell.dart';
 import '../../domain/payroll_configuration.dart';
 import '../bloc/payroll_configuration_cubit.dart';
 
 class PayrollConfigurationScreen extends StatelessWidget {
   final CurrentUser user;
   final int initialTab;
+  final AppConfig config;
 
   const PayrollConfigurationScreen({
     super.key,
     required this.user,
     this.initialTab = 0,
+    this.config = AppConfig.development,
   });
 
   @override
@@ -27,21 +31,23 @@ class PayrollConfigurationScreen extends StatelessWidget {
     return DefaultTabController(
       length: 4,
       initialIndex: initialTab.clamp(0, 3),
-      child: Scaffold(
-        key: const Key('payroll_configuration_screen'),
-        appBar: AppBar(
-          title: const Text('Payroll configuration'),
-          bottom: const TabBar(
-            isScrollable: true,
-            tabs: [
-              Tab(text: 'Components'),
-              Tab(text: 'Structures'),
-              Tab(text: 'Statutory versions'),
-              Tab(text: 'Pay groups'),
-            ],
-          ),
+      child: PayrollShell(
+        user: user,
+        config: config,
+        selectedRoute: _configurationRoute(initialTab),
+        title: 'Payroll configuration',
+        appBarBottom: const TabBar(
+          isScrollable: true,
+          tabs: [
+            Tab(text: 'Components'),
+            Tab(text: 'Structures'),
+            Tab(text: 'Statutory versions'),
+            Tab(text: 'Pay groups'),
+          ],
         ),
-        body:
+        body: KeyedSubtree(
+          key: const Key('payroll_configuration_screen'),
+          child:
             BlocConsumer<PayrollConfigurationCubit, PayrollConfigurationState>(
               listener: (context, state) {
                 if (state is PayrollConfigurationReady &&
@@ -69,10 +75,18 @@ class PayrollConfigurationScreen extends StatelessWidget {
                   ),
               },
             ),
+        ),
       ),
     );
   }
 }
+
+String _configurationRoute(int tab) => switch (tab.clamp(0, 3)) {
+  1 => '/payroll/config/structures',
+  2 => '/payroll/config/statutory',
+  3 => '/payroll/config/pay-groups',
+  _ => '/payroll/config/components',
+};
 
 class _ComponentsTab extends StatelessWidget {
   final PayrollConfigurationSnapshot data;
