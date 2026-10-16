@@ -307,6 +307,9 @@ class DispatchPdfSerializer {
       buffer.writeln('0.3 0.3 0.3 rg');
       buffer.writeln('${margin + 8} $lY Td');
       buffer.writeln('(${_escape(pair[0])}) Tj');
+      buffer.writeln('ET');
+
+      buffer.writeln('BT');
       buffer.writeln('/F1 8 Tf');
       buffer.writeln('0 0 0 rg');
       buffer.writeln('${margin + 80} $lY Td');
@@ -335,7 +338,7 @@ class DispatchPdfSerializer {
       ['Transporter:', record.transporterName],
       ['Vehicle Number:', '${record.vehicleNumber} (${record.vehicleType})'],
       ['Driver Details:', '${record.driverName} | ${record.driverPhone}'],
-      ['Builty / LR No:', record.builtyNumber],
+      ['Builty / LR No:', record.builtyNumber.isEmpty ? 'N/A' : record.builtyNumber],
     ];
 
     var rY = curY - 28.0;
@@ -345,6 +348,9 @@ class DispatchPdfSerializer {
       buffer.writeln('0.3 0.3 0.3 rg');
       buffer.writeln('${rightX + 8} $rY Td');
       buffer.writeln('(${_escape(pair[0])}) Tj');
+      buffer.writeln('ET');
+
+      buffer.writeln('BT');
       buffer.writeln('/F1 8 Tf');
       buffer.writeln('0 0 0 rg');
       buffer.writeln('${rightX + 80} $rY Td');
@@ -375,14 +381,23 @@ class DispatchPdfSerializer {
     buffer.writeln('0.3 0.3 0.3 rg');
     buffer.writeln('${margin + 8} ${curY - 28} Td');
     buffer.writeln('(${_escape('Customer / Client:')}) Tj');
+    buffer.writeln('ET');
+
+    buffer.writeln('BT');
     buffer.writeln('/F1 8 Tf');
     buffer.writeln('0 0 0 rg');
     buffer.writeln('${margin + 90} ${curY - 28} Td');
     buffer.writeln('(${_escape(_safe('${record.customerName}  (Phone: ${record.customerPhone})'))}) Tj');
+    buffer.writeln('ET');
+
+    buffer.writeln('BT');
     buffer.writeln('/F2 8 Tf');
     buffer.writeln('0.3 0.3 0.3 rg');
     buffer.writeln('${margin + 8} ${curY - 42} Td');
     buffer.writeln('(${_escape('Delivery Address:')}) Tj');
+    buffer.writeln('ET');
+
+    buffer.writeln('BT');
     buffer.writeln('/F1 8 Tf');
     buffer.writeln('0 0 0 rg');
     buffer.writeln('${margin + 90} ${curY - 42} Td');
@@ -481,7 +496,11 @@ class DispatchPdfSerializer {
     buffer.writeln('0 0 0 rg');
     buffer.writeln('${margin + 8} ${curY - 15} Td');
     buffer.writeln('(${_escape('Total Packages: ${items.length}    |    Total Items Qty: ${record.totalItemsQuantity.toStringAsFixed(1)}')}) Tj');
+    buffer.writeln('ET');
+
+    buffer.writeln('BT');
     buffer.writeln('/F2 9 Tf');
+    buffer.writeln('0 0 0 rg');
     buffer.writeln('${pageWidth - margin - 180} ${curY - 15} Td');
     buffer.writeln('(${_escape('Invoice Amount: INR ${record.invoiceAmount.toStringAsFixed(2)}')}) Tj');
     buffer.writeln('ET');
@@ -495,6 +514,9 @@ class DispatchPdfSerializer {
       buffer.writeln('0.3 0.3 0.3 rg');
       buffer.writeln('$margin $curY Td');
       buffer.writeln('(${_escape('Dispatch Notes / Remarks:')}) Tj');
+      buffer.writeln('ET');
+
+      buffer.writeln('BT');
       buffer.writeln('/F1 8 Tf');
       buffer.writeln('0 0 0 rg');
       buffer.writeln('${margin + 120} $curY Td');
@@ -519,7 +541,11 @@ class DispatchPdfSerializer {
     buffer.writeln('0.2 0.2 0.2 rg');
     buffer.writeln('${margin + 8} ${sigY + sigBoxH - 14} Td');
     buffer.writeln('(${_escape('FOR ENTERPRISE LOGISTICS / WAREHOUSE')}) Tj');
+    buffer.writeln('ET');
+
+    buffer.writeln('BT');
     buffer.writeln('/F1 7 Tf');
+    buffer.writeln('0.2 0.2 0.2 rg');
     buffer.writeln('${margin + 8} ${sigY + 12} Td');
     buffer.writeln('(${_escape('Authorized Signatory & Stamp')}) Tj');
     buffer.writeln('ET');
@@ -536,7 +562,11 @@ class DispatchPdfSerializer {
     buffer.writeln('0.2 0.2 0.2 rg');
     buffer.writeln('${rSigX + 8} ${sigY + sigBoxH - 14} Td');
     buffer.writeln('(${_escape('RECEIVER / CONSIGNEE ACKNOWLEDGEMENT')}) Tj');
+    buffer.writeln('ET');
+
+    buffer.writeln('BT');
     buffer.writeln('/F1 7 Tf');
+    buffer.writeln('0.2 0.2 0.2 rg');
     buffer.writeln('${rSigX + 8} ${sigY + 12} Td');
     buffer.writeln('(${_escape('Received in Good Condition: Signature, Seal & Date')}) Tj');
     buffer.writeln('ET');
