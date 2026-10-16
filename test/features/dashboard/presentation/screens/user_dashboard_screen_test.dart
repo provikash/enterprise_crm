@@ -1,4 +1,9 @@
+import 'package:enterprise_crm/app/bootstrap/mock_hr_payroll_dependencies.dart';
 import 'package:enterprise_crm/features/auth/data/repositories/mock_user_lead_link_repository.dart';
+import 'package:enterprise_crm/features/auth/domain/entities/account_type.dart';
+import 'package:enterprise_crm/features/auth/domain/entities/crm_module.dart';
+import 'package:enterprise_crm/features/auth/domain/entities/current_user.dart';
+import 'package:enterprise_crm/features/auth/domain/policies/crm_permissions.dart';
 import 'package:enterprise_crm/features/auth/domain/repositories/user_lead_link_repository.dart';
 import 'package:enterprise_crm/features/calling/data/repositories/mock_lead_call_activity_repository.dart';
 import 'package:enterprise_crm/features/calling/data/repositories/mock_lead_follow_up_repository.dart';
@@ -7,6 +12,7 @@ import 'package:enterprise_crm/features/calling/domain/repositories/lead_follow_
 import 'package:enterprise_crm/features/calling/presentation/screens/user_calling_workspace_screen.dart';
 import 'package:enterprise_crm/features/dashboard/presentation/screens/user_dashboard_screen.dart';
 import 'package:enterprise_crm/features/dashboard/presentation/screens/user_lead_placeholder_screen.dart';
+import 'package:enterprise_crm/features/hr/presentation/screens/hr_home_screen.dart';
 import 'package:enterprise_crm/features/inventory/data/repositories/mock_inventory_repository.dart';
 import 'package:enterprise_crm/features/leads/data/repositories/mock_lead_repository.dart';
 import 'package:enterprise_crm/features/leads/domain/repositories/lead_repository.dart';
@@ -16,6 +22,7 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../../../helpers/mock_auth_test_fixtures.dart';
 
 Widget _buildUserDashboardTestApp({
+  CurrentUser user = MockAuthTestFixtures.standardUser,
   VoidCallback? onLogout,
   ThemeMode themeMode = ThemeMode.light,
   UserLeadLinkRepository? linkRepository,
@@ -23,12 +30,13 @@ Widget _buildUserDashboardTestApp({
   LeadCallActivityRepository? callActivityRepository,
   LeadFollowUpRepository? leadFollowUpRepository,
 }) {
+  final hrPayroll = createMockHrPayrollDependencies();
   return MaterialApp(
     theme: ThemeData(useMaterial3: true, brightness: Brightness.light),
     darkTheme: ThemeData(useMaterial3: true, brightness: Brightness.dark),
     themeMode: themeMode,
     home: UserDashboardScreen(
-      user: MockAuthTestFixtures.standardUser,
+      user: user,
       onLogout: onLogout ?? () {},
       userLeadLinkRepository: linkRepository ?? MockUserLeadLinkRepository(),
       leadRepository: leadRepository ?? MockLeadRepository(),
@@ -37,12 +45,24 @@ Widget _buildUserDashboardTestApp({
       leadFollowUpRepository:
           leadFollowUpRepository ?? MockLeadFollowUpRepository(),
       inventoryRepository: MockInventoryRepository(),
+      employeeRepository: hrPayroll.employees,
+      employeeDocumentRepository: hrPayroll.employeeDocuments,
+      attendanceRepository: hrPayroll.attendance,
+      employeeKpiRepository: hrPayroll.employeeKpis,
     ),
   );
 }
 
 void main() {
   group('UserDashboardScreen Tests', () {
+    const hrUser = CurrentUser(
+      id: 'usr_hr_dashboard',
+      displayName: 'HR User',
+      accountType: AccountType.user,
+      modules: {CrmModule.hrPayroll},
+      permissions: {CrmPermissions.hrView},
+    );
+
     testWidgets('renders only assigned modules for standard user', (
       tester,
     ) async {
@@ -99,6 +119,20 @@ void main() {
         expect(find.byType(UserDashboardScreen), findsOneWidget);
       },
     );
+
+    testWidgets('tapping assigned HR / Payroll opens the HR dashboard', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_buildUserDashboardTestApp(user: hrUser));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('module_card_hrPayroll')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(HrHomeScreen), findsOneWidget);
+      expect(find.byKey(const Key('hr_home_scaffold')), findsOneWidget);
+      expect(find.text('HR & Payroll Management'), findsOneWidget);
+    });
 
     testWidgets('tapping Calling opens UserCallingWorkspaceScreen', (
       tester,

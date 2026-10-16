@@ -13,6 +13,7 @@ import 'package:enterprise_crm/features/hr/presentation/screens/add_employee_scr
 import 'package:enterprise_crm/features/hr/presentation/screens/edit_employee_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/employee_details_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/employee_directory_screen.dart';
+import 'package:enterprise_crm/features/hr/presentation/screens/hr_home_screen.dart';
 import 'package:enterprise_crm/features/leads/data/repositories/mock_lead_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -65,36 +66,43 @@ void main() {
   }
 
   group('HR-2.6 Application Integration & Navigation', () {
-    testWidgets(
-      'Admin Dashboard navigates to Employee Directory on HR/Payroll tap',
-      (tester) async {
-        tester.view.physicalSize = const Size(1200, 900);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(() {
-          tester.view.resetPhysicalSize();
-          tester.view.resetDevicePixelRatio();
-        });
+    testWidgets('Admin Dashboard opens HR home and then Employee Directory', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() {
+        tester.view.resetPhysicalSize();
+        tester.view.resetDevicePixelRatio();
+      });
 
-        await tester.pumpWidget(buildAdminApp());
-        await tester.pumpAndSettle();
+      await tester.pumpWidget(buildAdminApp());
+      await tester.pumpAndSettle();
 
-        final hrCard = find.byKey(const Key('module_card_hrPayroll'));
-        expect(hrCard, findsOneWidget);
+      final hrCard = find.byKey(const Key('module_card_hrPayroll'));
+      expect(hrCard, findsOneWidget);
 
-        await tester.tap(hrCard);
-        await tester.pumpAndSettle();
+      await tester.tap(hrCard);
+      await tester.pumpAndSettle();
 
-        expect(find.byType(EmployeeDirectoryScreen), findsOneWidget);
-        expect(find.text('Employee Directory'), findsOneWidget);
-        expect(find.text('Alice Johnson'), findsOneWidget);
+      expect(find.byType(HrHomeScreen), findsOneWidget);
+      await tester.tap(find.byKey(const Key('hr_feature_card_employees')));
+      await tester.pumpAndSettle();
 
-        // Back to dashboard
-        await tester.tap(find.byType(BackButton));
-        await tester.pumpAndSettle();
+      expect(find.byType(EmployeeDirectoryScreen), findsOneWidget);
+      expect(find.text('Employee Directory'), findsOneWidget);
+      expect(find.text('Alice Johnson'), findsOneWidget);
 
-        expect(find.byType(AdminDashboardScreen), findsOneWidget);
-      },
-    );
+      // Back to HR home, then to the main dashboard.
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(HrHomeScreen), findsOneWidget);
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AdminDashboardScreen), findsOneWidget);
+    });
 
     testWidgets(
       'Full Admin flow: Directory -> Add Employee -> Directory displays new employee',
@@ -111,6 +119,8 @@ void main() {
 
         // Open Directory
         await tester.tap(find.byKey(const Key('module_card_hrPayroll')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('hr_feature_card_employees')));
         await tester.pumpAndSettle();
 
         // Tap Add Employee FAB
@@ -142,6 +152,14 @@ void main() {
           find.byKey(const Key('add_employee_email_field')),
           'diana.prince@enterprise.com',
         );
+        await tester.enterText(
+          find.byKey(const Key('add_employee_phone_field')),
+          '+1 555-0999',
+        );
+        await tester.enterText(
+          find.byKey(const Key('add_employee_document_field')),
+          'ID-DIANA-999',
+        );
 
         final submitBtn = find.byKey(const Key('add_employee_submit_button'));
         await tester.ensureVisible(submitBtn);
@@ -169,6 +187,8 @@ void main() {
 
         // Open Directory
         await tester.tap(find.byKey(const Key('module_card_hrPayroll')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.byKey(const Key('hr_feature_card_employees')));
         await tester.pumpAndSettle();
 
         // Tap first employee row
@@ -210,7 +230,7 @@ void main() {
     );
 
     testWidgets(
-      'User Dashboard with HR module navigates to read-only Employee Directory',
+      'User Dashboard with HR module opens read-only Employee Directory from HR home',
       (tester) async {
         tester.view.physicalSize = const Size(1200, 900);
         tester.view.devicePixelRatio = 1.0;
@@ -234,6 +254,10 @@ void main() {
         expect(hrCard, findsOneWidget);
 
         await tester.tap(hrCard);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(HrHomeScreen), findsOneWidget);
+        await tester.tap(find.byKey(const Key('hr_feature_card_employees')));
         await tester.pumpAndSettle();
 
         expect(find.byType(EmployeeDirectoryScreen), findsOneWidget);
@@ -339,7 +363,7 @@ void main() {
       await tester.tap(find.byKey(const Key('module_card_hrPayroll')));
       await tester.pumpAndSettle();
 
-      expect(find.byType(EmployeeDirectoryScreen), findsOneWidget);
+      expect(find.byType(HrHomeScreen), findsOneWidget);
       expect(tester.takeException(), isNull);
     });
   });

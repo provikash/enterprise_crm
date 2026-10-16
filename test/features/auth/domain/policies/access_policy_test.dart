@@ -139,8 +139,25 @@ void main() {
       );
     });
 
-    test('allKnown contains exactly 29 permissions', () {
-      expect(CrmPermissions.allKnown.length, 29);
+    test('allKnown contains every registered permission', () {
+      expect(CrmPermissions.allKnown.length, 50);
+      expect(
+        CrmPermissions.permissionsFor(CrmModule.hrPayroll),
+        containsAll({
+          CrmPermissions.payrollConfigManage,
+          CrmPermissions.payrollSalaryView,
+          CrmPermissions.payrollSalaryEdit,
+          CrmPermissions.payrollRunView,
+          CrmPermissions.payrollRunCreate,
+          CrmPermissions.payrollRunApprove,
+          CrmPermissions.payrollRunLock,
+          CrmPermissions.payrollPaymentRelease,
+          CrmPermissions.payrollPayslipViewAll,
+          CrmPermissions.payrollTaxVerify,
+          CrmPermissions.payrollComplianceView,
+          CrmPermissions.payrollReportsView,
+        }),
+      );
     });
 
     test('CrmPermissionPresentation returns human-readable labels', () {

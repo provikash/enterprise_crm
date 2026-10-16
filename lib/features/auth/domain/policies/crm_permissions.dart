@@ -14,7 +14,28 @@ abstract final class CrmPermissions {
 
   // HR / Payroll
   static const String hrView = 'hr.view';
+  static const String hrEmployeeManage = 'hr.employee.manage';
+  static const String hrDocumentsView = 'hr.documents.view';
+  static const String hrDocumentsManage = 'hr.documents.manage';
+  static const String hrPerformanceManage = 'hr.performance.manage';
+  static const String attendanceManage = 'attendance.manage';
+  static const String shiftManage = 'shift.manage';
+  static const String attendancePolicyManage = 'attendance_policy.manage';
+  static const String timesheetApprove = 'timesheet.approve';
+  static const String leaveManage = 'leave.manage';
   static const String payrollView = 'payroll.view';
+  static const String payrollConfigManage = 'payroll.config.manage';
+  static const String payrollSalaryView = 'payroll.salary.view';
+  static const String payrollSalaryEdit = 'payroll.salary.edit';
+  static const String payrollRunView = 'payroll.run.view';
+  static const String payrollRunCreate = 'payroll.run.create';
+  static const String payrollRunApprove = 'payroll.run.approve';
+  static const String payrollRunLock = 'payroll.run.lock';
+  static const String payrollPaymentRelease = 'payroll.payment.release';
+  static const String payrollPayslipViewAll = 'payroll.payslip.view_all';
+  static const String payrollTaxVerify = 'payroll.tax.verify';
+  static const String payrollComplianceView = 'payroll.compliance.view';
+  static const String payrollReportsView = 'payroll.reports.view';
 
   // Inventory
   static const String inventoryView = 'inventory.view';
@@ -54,7 +75,28 @@ abstract final class CrmPermissions {
     leadUpdate: CrmModule.leadManagement,
     callingUse: CrmModule.calling,
     hrView: CrmModule.hrPayroll,
+    hrEmployeeManage: CrmModule.hrPayroll,
+    hrDocumentsView: CrmModule.hrPayroll,
+    hrDocumentsManage: CrmModule.hrPayroll,
+    hrPerformanceManage: CrmModule.hrPayroll,
+    attendanceManage: CrmModule.hrPayroll,
+    shiftManage: CrmModule.hrPayroll,
+    attendancePolicyManage: CrmModule.hrPayroll,
+    timesheetApprove: CrmModule.hrPayroll,
+    leaveManage: CrmModule.hrPayroll,
     payrollView: CrmModule.hrPayroll,
+    payrollConfigManage: CrmModule.hrPayroll,
+    payrollSalaryView: CrmModule.hrPayroll,
+    payrollSalaryEdit: CrmModule.hrPayroll,
+    payrollRunView: CrmModule.hrPayroll,
+    payrollRunCreate: CrmModule.hrPayroll,
+    payrollRunApprove: CrmModule.hrPayroll,
+    payrollRunLock: CrmModule.hrPayroll,
+    payrollPaymentRelease: CrmModule.hrPayroll,
+    payrollPayslipViewAll: CrmModule.hrPayroll,
+    payrollTaxVerify: CrmModule.hrPayroll,
+    payrollComplianceView: CrmModule.hrPayroll,
+    payrollReportsView: CrmModule.hrPayroll,
     inventoryView: CrmModule.inventory,
     inventoryCreate: CrmModule.inventory,
     inventoryEdit: CrmModule.inventory,

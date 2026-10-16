@@ -3,7 +3,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
-import '../../data/repositories/mock_employee_repository.dart';
 import '../../domain/entities/employee.dart';
 import '../../domain/entities/employee_kpi.dart';
 import '../../domain/policies/hr_access_policy.dart';
@@ -28,14 +27,14 @@ import 'employee_kpi_details_screen.dart';
 class EmployeeKpiListScreen extends StatelessWidget {
   final CurrentUser user;
   final EmployeeKpiRepository kpiRepository;
-  final EmployeeRepository? employeeRepository;
+  final EmployeeRepository employeeRepository;
   final String? initialEmployeeId;
 
   const EmployeeKpiListScreen({
     super.key,
     required this.user,
     required this.kpiRepository,
-    this.employeeRepository,
+    required this.employeeRepository,
     this.initialEmployeeId,
   });
 
@@ -54,7 +53,7 @@ class EmployeeKpiListScreen extends StatelessWidget {
       child: _EmployeeKpiListView(
         user: user,
         kpiRepository: kpiRepository,
-        employeeRepository: employeeRepository ?? MockEmployeeRepository(),
+        employeeRepository: employeeRepository,
       ),
     );
   }
@@ -201,7 +200,7 @@ class _EmployeeKpiListViewState extends State<_EmployeeKpiListView> {
       appBar: AppBar(
         title: const Text('KPI Management'),
         actions: [
-          if (widget.user.isAdmin)
+          if (HrAccessPolicy.canManagePerformance(widget.user))
             IconButton(
               key: const Key('kpi_add_button'),
               tooltip: 'Add KPI',
@@ -216,7 +215,7 @@ class _EmployeeKpiListViewState extends State<_EmployeeKpiListView> {
           ),
         ],
       ),
-      floatingActionButton: widget.user.isAdmin
+      floatingActionButton: HrAccessPolicy.canManagePerformance(widget.user)
           ? FloatingActionButton(
               key: const Key('kpi_add_fab'),
               tooltip: 'Add KPI',

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'app/crm_app.dart';
+import 'app/bootstrap/mock_hr_payroll_dependencies.dart';
 import 'features/auth/data/repositories/mock_auth_repository.dart';
 import 'features/auth/data/repositories/mock_user_lead_link_repository.dart';
 import 'features/calling/data/repositories/mock_lead_call_activity_repository.dart';
@@ -21,6 +22,7 @@ void main() {
   final leadCallActivityRepository = MockLeadCallActivityRepository();
   final leadFollowUpRepository = MockLeadFollowUpRepository();
   final inventoryRepository = MockInventoryRepository();
+  final hrPayrollDependencies = createMockHrPayrollDependencies();
 
   runApp(
     CrmApp(
@@ -31,6 +33,7 @@ void main() {
       leadCallActivityRepository: leadCallActivityRepository,
       leadFollowUpRepository: leadFollowUpRepository,
       inventoryRepository: inventoryRepository,
+      hrPayrollDependencies: hrPayrollDependencies,
     ),
   );
 }

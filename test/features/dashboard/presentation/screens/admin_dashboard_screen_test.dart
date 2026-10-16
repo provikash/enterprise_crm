@@ -1,5 +1,7 @@
+import 'package:enterprise_crm/app/bootstrap/mock_hr_payroll_dependencies.dart';
 import 'package:enterprise_crm/features/calling/presentation/screens/user_calling_workspace_screen.dart';
 import 'package:enterprise_crm/features/dashboard/presentation/screens/admin_dashboard_screen.dart';
+import 'package:enterprise_crm/features/hr/presentation/screens/hr_home_screen.dart';
 import 'package:enterprise_crm/features/inventory/data/repositories/mock_inventory_repository.dart';
 import 'package:enterprise_crm/features/user_management/data/mock/mock_account_store.dart';
 import 'package:enterprise_crm/features/user_management/data/repositories/mock_user_management_repository.dart';
@@ -14,6 +16,7 @@ Widget _buildAdminDashboardTestApp({
   VoidCallback? onOpenLeadManagement,
   ThemeMode themeMode = ThemeMode.light,
 }) {
+  final hrPayroll = createMockHrPayrollDependencies();
   return MaterialApp(
     theme: ThemeData(useMaterial3: true, brightness: Brightness.light),
     darkTheme: ThemeData(useMaterial3: true, brightness: Brightness.dark),
@@ -23,6 +26,10 @@ Widget _buildAdminDashboardTestApp({
       onLogout: onLogout ?? () {},
       onOpenLeadManagement: onOpenLeadManagement ?? () {},
       inventoryRepository: MockInventoryRepository(),
+      employeeRepository: hrPayroll.employees,
+      employeeDocumentRepository: hrPayroll.employeeDocuments,
+      attendanceRepository: hrPayroll.attendance,
+      employeeKpiRepository: hrPayroll.employeeKpis,
       userManagementRepository: MockUserManagementRepository(
         accountStore: MockAccountStore.seeded(),
       ),
@@ -83,6 +90,20 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(opened, isTrue);
+    });
+
+    testWidgets('tapping HR / Payroll opens the HR dashboard', (tester) async {
+      await tester.pumpWidget(_buildAdminDashboardTestApp());
+      await tester.pumpAndSettle();
+
+      final hrPayrollCard = find.byKey(const Key('module_card_hrPayroll'));
+      await tester.ensureVisible(hrPayrollCard);
+      await tester.tap(hrPayrollCard);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(HrHomeScreen), findsOneWidget);
+      expect(find.byKey(const Key('hr_home_scaffold')), findsOneWidget);
+      expect(find.text('HR & Payroll Management'), findsOneWidget);
     });
 
     testWidgets('tapping Calling opens UserCallingWorkspaceScreen', (

@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'bootstrap/hr_payroll_dependencies.dart';
+import '../core/config/app_config.dart';
 import '../features/auth/domain/repositories/auth_repository.dart';
 import '../features/auth/domain/repositories/user_lead_link_repository.dart';
 import '../features/auth/presentation/bloc/auth_cubit.dart';
 import '../features/auth/presentation/bloc/auth_state.dart';
+import '../features/auth/presentation/screens/access_restricted_screen.dart';
 import '../features/auth/presentation/screens/login_screen.dart';
 import '../features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import '../features/dashboard/presentation/screens/user_dashboard_screen.dart';
@@ -28,10 +31,6 @@ import '../features/dispatch/data/repositories/mock_dispatch_repository.dart';
 import '../features/dispatch/domain/repositories/dispatch_repository.dart';
 import '../features/purchase/data/repositories/mock_purchase_repository.dart';
 import '../features/purchase/domain/repositories/purchase_repository.dart';
-import '../features/hr/data/repositories/mock_attendance_repository.dart';
-import '../features/hr/data/repositories/mock_employee_document_repository.dart';
-import '../features/hr/data/repositories/mock_employee_kpi_repository.dart';
-import '../features/hr/data/repositories/mock_employee_repository.dart';
 import '../features/hr/domain/repositories/attendance_repository.dart';
 import '../features/hr/domain/repositories/employee_document_repository.dart';
 import '../features/hr/domain/repositories/employee_kpi_repository.dart';
@@ -39,9 +38,13 @@ import '../features/hr/domain/repositories/employee_repository.dart';
 import '../features/inventory/domain/repositories/inventory_repository.dart';
 import '../features/leads/presentation/services/lead_import_file_picker.dart';
 import '../features/leads/presentation/widgets/lead_export_dialog.dart';
+import '../features/payroll/presentation/navigation/payroll_routes.dart';
+import '../features/payroll/configuration/domain/payroll_configuration_repository.dart';
+import '../features/payroll/operations/domain/payroll_operations_repository.dart';
 
 /// Top-level application widget for the Enterprise CRM.
 class CrmApp extends StatefulWidget {
+  final AppConfig appConfig;
   final LeadRepository leadRepository;
   final LeadImportFilePicker? filePicker;
   final LeadExportFileSaver? exportFileSaver;
@@ -54,12 +57,15 @@ class CrmApp extends StatefulWidget {
   final EmployeeDocumentRepository? employeeDocumentRepository;
   final AttendanceRepository? attendanceRepository;
   final EmployeeKpiRepository? employeeKpiRepository;
-  final InventoryRepository? inventoryRepository;
   final DispatchRepository? dispatchRepository;
   final PurchaseRepository? purchaseRepository;
+  final PayrollOperationsRepository? payrollOperationsRepository;
+  final PayrollConfigurationRepository? payrollConfigurationRepository;
+  final HrPayrollDependencies? hrPayrollDependencies;
 
   const CrmApp({
     super.key,
+    this.appConfig = AppConfig.development,
     required this.leadRepository,
     this.filePicker,
     this.exportFileSaver,
@@ -75,6 +81,9 @@ class CrmApp extends StatefulWidget {
     this.inventoryRepository,
     this.dispatchRepository,
     this.purchaseRepository,
+    this.payrollOperationsRepository,
+    this.payrollConfigurationRepository,
+    this.hrPayrollDependencies,
   }) : assert(
          authRepository == null || userManagementRepository != null,
          'userManagementRepository must be provided when authRepository is enabled',
@@ -104,24 +113,30 @@ class CrmApp extends StatefulWidget {
 
 class _CrmAppState extends State<CrmApp> {
   AuthCubit? _authCubit;
-  late final EmployeeRepository _employeeRepository;
-  late final EmployeeDocumentRepository _employeeDocumentRepository;
-  late final AttendanceRepository _attendanceRepository;
-  late final EmployeeKpiRepository _employeeKpiRepository;
   late final DispatchRepository _dispatchRepository;
   late final PurchaseRepository _purchaseRepository;
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
+  EmployeeRepository? get _employeeRepository =>
+      widget.employeeRepository ?? widget.hrPayrollDependencies?.employees;
+  EmployeeDocumentRepository? get _employeeDocumentRepository =>
+      widget.employeeDocumentRepository ??
+      widget.hrPayrollDependencies?.employeeDocuments;
+  AttendanceRepository? get _attendanceRepository =>
+      widget.attendanceRepository ?? widget.hrPayrollDependencies?.attendance;
+  EmployeeKpiRepository? get _employeeKpiRepository =>
+      widget.employeeKpiRepository ??
+      widget.hrPayrollDependencies?.employeeKpis;
+  PayrollConfigurationRepository? get _payrollConfigurationRepository =>
+      widget.payrollConfigurationRepository ??
+      widget.hrPayrollDependencies?.payrollConfiguration;
+  PayrollOperationsRepository? get _payrollOperationsRepository =>
+      widget.payrollOperationsRepository ??
+      widget.hrPayrollDependencies?.payrollOperations;
+
   @override
   void initState() {
     super.initState();
-    _employeeRepository = widget.employeeRepository ?? MockEmployeeRepository();
-    _employeeDocumentRepository =
-        widget.employeeDocumentRepository ?? MockEmployeeDocumentRepository();
-    _attendanceRepository =
-        widget.attendanceRepository ?? MockAttendanceRepository();
-    _employeeKpiRepository =
-        widget.employeeKpiRepository ?? MockEmployeeKpiRepository();
     _dispatchRepository = widget.dispatchRepository ?? MockDispatchRepository();
     _purchaseRepository = widget.purchaseRepository ?? MockPurchaseRepository();
     if (widget.authRepository != null) {
@@ -165,6 +180,7 @@ class _CrmAppState extends State<CrmApp> {
                 if (user.isAdmin) {
                   return AdminDashboardScreen(
                     user: user,
+                    appConfig: widget.appConfig,
                     onLogout: () => _authCubit!.logout(),
                     inventoryRepository: widget.inventoryRepository!,
                     dispatchRepository: _dispatchRepository,
@@ -194,6 +210,7 @@ class _CrmAppState extends State<CrmApp> {
                 } else {
                   return UserDashboardScreen(
                     user: user,
+                    appConfig: widget.appConfig,
                     onLogout: () => _authCubit!.logout(),
                     userLeadLinkRepository: widget.userLeadLinkRepository!,
                     leadRepository: widget.leadRepository,
@@ -245,6 +262,28 @@ class _CrmAppState extends State<CrmApp> {
       ),
       themeMode: ThemeMode.system,
       home: content,
+      onGenerateRoute: (settings) {
+        if (settings.name?.startsWith('/payroll') != true) return null;
+        final authState = _authCubit?.state;
+        final currentUser = authState is AuthAuthenticated
+            ? authState.user
+            : null;
+        final configurationRepository = _payrollConfigurationRepository;
+        final operationsRepository = _payrollOperationsRepository;
+        if (configurationRepository == null || operationsRepository == null) {
+          return MaterialPageRoute<void>(
+            settings: settings,
+            builder: (_) => const AccessRestrictedScreen(),
+          );
+        }
+        return PayrollRoutes.onGenerateRoute(
+          settings,
+          user: currentUser,
+          config: widget.appConfig,
+          configurationRepository: configurationRepository,
+          operationsRepository: operationsRepository,
+        );
+      },
     );
 
     if (widget.authRepository != null) {
@@ -275,21 +314,27 @@ class _CrmAppState extends State<CrmApp> {
       );
     }
 
-    if (widget.authRepository != null) {
+    if (_employeeRepository != null) {
       app = RepositoryProvider<EmployeeRepository>.value(
-        value: _employeeRepository,
+        value: _employeeRepository!,
         child: app,
       );
+    }
+    if (_employeeDocumentRepository != null) {
       app = RepositoryProvider<EmployeeDocumentRepository>.value(
-        value: _employeeDocumentRepository,
+        value: _employeeDocumentRepository!,
         child: app,
       );
+    }
+    if (_attendanceRepository != null) {
       app = RepositoryProvider<AttendanceRepository>.value(
-        value: _attendanceRepository,
+        value: _attendanceRepository!,
         child: app,
       );
+    }
+    if (_employeeKpiRepository != null) {
       app = RepositoryProvider<EmployeeKpiRepository>.value(
-        value: _employeeKpiRepository,
+        value: _employeeKpiRepository!,
         child: app,
       );
     }

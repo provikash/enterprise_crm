@@ -31,6 +31,14 @@ void main() {
       permissions: {CrmPermissions.hrView},
     );
 
+    const attendanceManager = CurrentUser(
+      id: 'usr_attendance_manager',
+      displayName: 'Attendance Manager',
+      accountType: AccountType.user,
+      modules: {CrmModule.hrPayroll},
+      permissions: {CrmPermissions.hrView, CrmPermissions.attendanceManage},
+    );
+
     const payrollOnlyUser = CurrentUser(
       id: 'usr_payroll_only',
       displayName: 'Payroll Specialist',
@@ -153,5 +161,51 @@ void main() {
         },
       );
     });
+
+    group('canManageAttendance', () {
+      test('allows administrators and explicitly permitted HR users', () {
+        expect(HrAccessPolicy.canManageAttendance(adminUser), isTrue);
+        expect(HrAccessPolicy.canManageAttendance(attendanceManager), isTrue);
+      });
+
+      test('denies HR viewers without mutation permission', () {
+        expect(HrAccessPolicy.canManageAttendance(hrOnlyUser), isFalse);
+      });
+
+      test('permission cannot bypass HR module assignment', () {
+        const orphan = CurrentUser(
+          id: 'orphan',
+          displayName: 'Orphan',
+          accountType: AccountType.user,
+          modules: {CrmModule.leadManagement},
+          permissions: {CrmPermissions.attendanceManage},
+        );
+        expect(HrAccessPolicy.canManageAttendance(orphan), isFalse);
+      });
+    });
+
+    test(
+      'enterprise HR permissions independently gate sensitive operations',
+      () {
+        const specialist = CurrentUser(
+          id: 'hr-specialist',
+          displayName: 'HR Specialist',
+          accountType: AccountType.user,
+          modules: {CrmModule.hrPayroll},
+          permissions: {
+            CrmPermissions.hrDocumentsView,
+            CrmPermissions.hrDocumentsManage,
+            CrmPermissions.hrPerformanceManage,
+          },
+        );
+
+        expect(HrAccessPolicy.canEnter(specialist), isTrue);
+        expect(HrAccessPolicy.canViewDocuments(specialist), isTrue);
+        expect(HrAccessPolicy.canManageDocuments(specialist), isTrue);
+        expect(HrAccessPolicy.canManagePerformance(specialist), isTrue);
+        expect(HrAccessPolicy.canManageEmployees(specialist), isFalse);
+        expect(HrAccessPolicy.canViewPayroll(specialist), isFalse);
+      },
+    );
   });
 }

@@ -6,6 +6,7 @@ class CreateEmployeeInput {
   final String fullName;
   final String? email;
   final String? phone;
+  final String? documentNumber;
   final String? department;
   final String? designation;
   final EmploymentStatus employmentStatus;
@@ -17,6 +18,7 @@ class CreateEmployeeInput {
     required this.fullName,
     this.email,
     this.phone,
+    this.documentNumber,
     this.department,
     this.designation,
     this.employmentStatus = EmploymentStatus.active,

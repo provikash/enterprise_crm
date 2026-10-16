@@ -1,4 +1,8 @@
 import '../../domain/entities/attendance_record.dart';
+import '../../domain/entities/attendance_daily.dart';
+import '../../domain/entities/attendance_log.dart';
+import '../../domain/inputs/manual_attendance_input.dart';
+import '../../domain/repositories/attendance_repository.dart';
 
 /// In-memory thread-safe mock store for employee attendance records.
 ///
@@ -8,6 +12,7 @@ import '../../domain/entities/attendance_record.dart';
 /// - Normalized calendar dates (UTC midnight).
 class MockAttendanceStore {
   final Map<String, AttendanceRecord> _records = {};
+  final List<AttendanceLog> _logs = [];
   int _idCounter = 100;
 
   MockAttendanceStore({bool seedInitialData = true}) {
@@ -255,6 +260,102 @@ class MockAttendanceStore {
 
     _records[effectiveId] = saved;
     return _cloneRecord(saved);
+  }
+
+  List<AttendanceLog> getAttendanceLogs({String? employeeId, DateTime? date}) {
+    var result = _logs.where((log) {
+      if (employeeId != null && log.employeeId != employeeId) return false;
+      if (date != null &&
+          (log.timestamp.year != date.year ||
+              log.timestamp.month != date.month ||
+              log.timestamp.day != date.day)) {
+        return false;
+      }
+      return true;
+    }).toList();
+    result.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    return List.unmodifiable(result);
+  }
+
+  AttendanceRecord recordManualAttendance(ManualAttendanceInput input) {
+    final reason = input.reason.trim();
+    if (reason.isEmpty) {
+      throw const AttendanceException(
+        'A reason is required for manual attendance.',
+        code: 'manual_reason_required',
+      );
+    }
+    if (input.checkIn != null &&
+        input.checkOut != null &&
+        !input.checkOut!.isAfter(input.checkIn!)) {
+      throw const AttendanceException(
+        'Check-out must be later than check-in.',
+        code: 'invalid_punch_order',
+      );
+    }
+
+    final normalizedDate = DateTime.utc(
+      input.date.year,
+      input.date.month,
+      input.date.day,
+    );
+    final existing = getAttendanceRecords(
+      employeeId: input.employeeId,
+      startDate: normalizedDate,
+      endDate: normalizedDate,
+    );
+    if (existing.any((record) => record.id.startsWith('locked_'))) {
+      throw const AttendanceException(
+        'Attendance is locked for this payroll period.',
+        code: 'period_locked',
+      );
+    }
+
+    void appendLog(DateTime timestamp, AttendancePunchType type) {
+      _logs.add(
+        AttendanceLog(
+          id: 'log_${++_idCounter}',
+          employeeId: input.employeeId,
+          timestamp: timestamp,
+          type: type,
+          source: AttendanceSource.manual,
+          isValid: true,
+          remarks: reason,
+          recordedBy: input.recordedBy,
+        ),
+      );
+    }
+
+    if (input.checkIn != null) {
+      appendLog(input.checkIn!, AttendancePunchType.checkIn);
+    }
+    if (input.checkOut != null) {
+      appendLog(input.checkOut!, AttendancePunchType.checkOut);
+    }
+
+    final status = switch (input.status) {
+      AttendanceDailyStatus.present => 'Present',
+      AttendanceDailyStatus.absent => 'Absent',
+      AttendanceDailyStatus.halfDay => 'Half-day',
+      AttendanceDailyStatus.leave => 'On Leave',
+      AttendanceDailyStatus.holiday => 'Holiday',
+      AttendanceDailyStatus.weekOff => 'Week Off',
+      AttendanceDailyStatus.onDuty => 'On Duty',
+    };
+    final previous = existing.firstOrNull;
+    return recordAttendance(
+      AttendanceRecord(
+        id: previous?.id ?? '',
+        employeeId: input.employeeId,
+        date: normalizedDate,
+        attendanceStatus: status,
+        checkIn: input.checkIn,
+        checkOut: input.checkOut,
+        remarks: 'Manual: $reason',
+        recordedBy: input.recordedBy,
+        createdAt: previous?.createdAt,
+      ),
+    );
   }
 
   AttendanceRecord _cloneRecord(AttendanceRecord r) {

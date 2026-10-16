@@ -11,10 +11,11 @@ import 'package:enterprise_crm/features/dashboard/presentation/screens/user_dash
 import 'package:enterprise_crm/features/hr/data/repositories/mock_attendance_repository.dart';
 import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_document_repository.dart';
 import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_repository.dart';
+import 'package:enterprise_crm/features/hr/presentation/screens/attendance_home_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/attendance_list_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/employee_attendance_history_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/employee_details_screen.dart';
-import 'package:enterprise_crm/features/hr/presentation/screens/employee_directory_screen.dart';
+import 'package:enterprise_crm/features/hr/presentation/screens/hr_home_screen.dart';
 import 'package:enterprise_crm/features/leads/data/repositories/mock_lead_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -87,42 +88,36 @@ void main() {
   }
 
   group('HR-4 Attendance Navigation Flow Tests', () {
-    testWidgets(
-      'Admin Dashboard -> HR / Payroll -> Attendance icon opens AttendanceListScreen',
-      (tester) async {
-        tester.view.physicalSize = const Size(1200, 900);
-        tester.view.devicePixelRatio = 1.0;
-        addTearDown(() => tester.view.resetPhysicalSize());
+    testWidgets('Admin Dashboard -> HR home -> Attendance home -> records', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(1200, 900);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(() => tester.view.resetPhysicalSize());
 
-        await tester.pumpWidget(buildAdminApp());
-        await tester.pumpAndSettle();
+      await tester.pumpWidget(buildAdminApp());
+      await tester.pumpAndSettle();
 
-        // Open HR / Payroll module from Admin Dashboard
-        final hrModuleCard = find.text('HR / Payroll');
-        expect(hrModuleCard, findsOneWidget);
-        await tester.tap(hrModuleCard);
-        await tester.pumpAndSettle();
+      // Open HR / Payroll module from Admin Dashboard
+      final hrModuleCard = find.text('HR / Payroll');
+      expect(hrModuleCard, findsOneWidget);
+      await tester.tap(hrModuleCard);
+      await tester.pumpAndSettle();
 
-        // We are now in EmployeeDirectoryScreen
-        expect(find.byType(EmployeeDirectoryScreen), findsOneWidget);
+      expect(find.byType(HrHomeScreen), findsOneWidget);
+      await tester.tap(find.byKey(const Key('hr_feature_card_attendance')));
+      await tester.pumpAndSettle();
 
-        // Tap the Attendance action in the AppBar
-        final attendanceButton = find.byKey(
-          const Key('employee_directory_attendance_button'),
-        );
-        expect(attendanceButton, findsOneWidget);
-        await tester.tap(attendanceButton);
-        await tester.pumpAndSettle();
+      expect(find.byType(AttendanceHomeScreen), findsOneWidget);
+      await tester.tap(
+        find.byKey(const Key('attendance_feature_daily_records')),
+      );
+      await tester.pumpAndSettle();
 
-        // Should be in AttendanceListScreen
-        expect(find.byType(AttendanceListScreen), findsOneWidget);
-        expect(find.text('Attendance Management'), findsOneWidget);
-        expect(
-          find.byKey(const Key('attendance_search_field')),
-          findsOneWidget,
-        );
-      },
-    );
+      expect(find.byType(AttendanceListScreen), findsOneWidget);
+      expect(find.text('Attendance Management'), findsOneWidget);
+      expect(find.byKey(const Key('attendance_search_field')), findsOneWidget);
+    });
 
     testWidgets(
       'Employee Directory -> Employee Details -> Attendance History tile opens EmployeeAttendanceHistoryScreen',
@@ -136,6 +131,9 @@ void main() {
 
         // Open HR / Payroll
         await tester.tap(find.text('HR / Payroll'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const Key('hr_feature_card_employees')));
         await tester.pumpAndSettle();
 
         // Tap first employee row/card (emp_1)
@@ -180,6 +178,9 @@ void main() {
 
         // Open HR / Payroll
         await tester.tap(find.text('HR / Payroll'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.byKey(const Key('hr_feature_card_employees')));
         await tester.pumpAndSettle();
 
         // Navigate to Bob Miller (emp_2)
@@ -227,12 +228,14 @@ void main() {
       await tester.tap(hrModuleCard);
       await tester.pumpAndSettle();
 
-      // In directory, tap attendance button
-      final attendanceButton = find.byKey(
-        const Key('employee_directory_attendance_button'),
+      expect(find.byType(HrHomeScreen), findsOneWidget);
+      await tester.tap(find.byKey(const Key('hr_feature_card_attendance')));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(AttendanceHomeScreen), findsOneWidget);
+      await tester.tap(
+        find.byKey(const Key('attendance_feature_daily_records')),
       );
-      expect(attendanceButton, findsOneWidget);
-      await tester.tap(attendanceButton);
       await tester.pumpAndSettle();
 
       // User sees attendance records

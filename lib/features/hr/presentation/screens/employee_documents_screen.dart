@@ -33,7 +33,7 @@ class EmployeeDocumentsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!HrAccessPolicy.canViewHrRecords(user)) {
+    if (!HrAccessPolicy.canViewDocuments(user)) {
       return const AccessRestrictedScreen();
     }
 
@@ -109,7 +109,7 @@ class _EmployeeDocumentsViewState extends State<_EmployeeDocumentsView> {
 
   @override
   Widget build(BuildContext context) {
-    final canUpload = widget.user.isAdmin;
+    final canUpload = HrAccessPolicy.canManageDocuments(widget.user);
 
     return Scaffold(
       key: const Key('employee_documents_scaffold'),

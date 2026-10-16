@@ -11,8 +11,8 @@ import 'package:enterprise_crm/features/hr/data/repositories/mock_attendance_rep
 import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_document_repository.dart';
 import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_kpi_repository.dart';
 import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_repository.dart';
-import 'package:enterprise_crm/features/hr/presentation/screens/employee_directory_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/employee_kpi_list_screen.dart';
+import 'package:enterprise_crm/features/hr/presentation/screens/hr_home_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/add_employee_kpi_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/edit_employee_kpi_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/employee_kpi_details_screen.dart';
@@ -102,11 +102,8 @@ void main() {
         await tester.tap(hrCard);
         await tester.pumpAndSettle();
 
-        // In EmployeeDirectoryScreen
-        expect(find.byType(EmployeeDirectoryScreen), findsOneWidget);
-
-        // Tap KPI action in AppBar
-        final kpiBtn = find.byKey(const Key('employee_directory_kpi_button'));
+        expect(find.byType(HrHomeScreen), findsOneWidget);
+        final kpiBtn = find.byKey(const Key('hr_feature_card_kpi'));
         expect(kpiBtn, findsOneWidget);
         await tester.tap(kpiBtn);
         await tester.pumpAndSettle();
@@ -134,8 +131,8 @@ void main() {
         await tester.tap(hrCard);
         await tester.pumpAndSettle();
 
-        // In Directory, tap KPI button
-        final kpiBtn = find.byKey(const Key('employee_directory_kpi_button'));
+        expect(find.byType(HrHomeScreen), findsOneWidget);
+        final kpiBtn = find.byKey(const Key('hr_feature_card_kpi'));
         expect(kpiBtn, findsOneWidget);
         await tester.tap(kpiBtn);
         await tester.pumpAndSettle();
@@ -154,6 +151,7 @@ void main() {
             home: EmployeeKpiListScreen(
               user: unauthorizedUser,
               kpiRepository: kpiRepository,
+              employeeRepository: employeeRepository,
             ),
           ),
         );

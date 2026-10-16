@@ -14,11 +14,11 @@ import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_docum
 import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_repository.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/employee.dart';
 import 'package:enterprise_crm/features/hr/domain/entities/employment_status.dart';
-import 'package:enterprise_crm/features/hr/presentation/screens/employee_details_screen.dart';
-import 'package:enterprise_crm/features/hr/presentation/screens/employee_directory_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/employee_document_details_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/employee_documents_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/upload_document_screen.dart';
+import 'package:enterprise_crm/features/hr/presentation/screens/hr_home_screen.dart';
+import 'package:enterprise_crm/features/hr/presentation/screens/hr_documents_dashboard_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/services/employee_document_file_picker.dart';
 import 'package:enterprise_crm/features/leads/data/repositories/mock_lead_repository.dart';
 import 'package:flutter/material.dart';
@@ -137,28 +137,23 @@ void main() {
         await tester.tap(hrCard);
         await tester.pumpAndSettle();
 
-        expect(find.byType(EmployeeDirectoryScreen), findsOneWidget);
-        expect(find.text('Alice Johnson'), findsOneWidget);
-
-        // 2. Tap Alice Johnson to navigate to EmployeeDetailsScreen
-        await tester.tap(find.text('Alice Johnson'));
+        expect(find.byType(HrHomeScreen), findsOneWidget);
+        await tester.tap(find.byKey(const Key('hr_feature_card_documents')));
         await tester.pumpAndSettle();
 
-        expect(find.byType(EmployeeDetailsScreen), findsOneWidget);
-        expect(find.text('EMP-001'), findsOneWidget);
+        expect(find.byType(HrDocumentsDashboardScreen), findsOneWidget);
+        await tester.drag(find.byType(ListView).last, const Offset(0, -600));
+        await tester.pumpAndSettle();
 
-        // 3. Scroll to and tap Employee Documents tile
-        final docsTile = find.byKey(const Key('employee_documents_tile'));
-        expect(docsTile, findsOneWidget);
-        await tester.ensureVisible(docsTile);
-        await tester.tap(docsTile);
+        // 2. Select Alice Johnson from the compliance dashboard.
+        await tester.tap(find.text('Alice Johnson'));
         await tester.pumpAndSettle();
 
         expect(find.byType(EmployeeDocumentsScreen), findsOneWidget);
         expect(find.text('Alice Johnson — Documents'), findsOneWidget);
         expect(find.text('Employment Agreement'), findsOneWidget);
 
-        // 4. Tap Add Document FAB
+        // 3. Tap Add Document FAB
         final addDocFab = find.byKey(
           const Key('employee_documents_add_button'),
         );
@@ -363,7 +358,11 @@ void main() {
         await tester.tap(hrCard);
         await tester.pumpAndSettle();
 
-        expect(find.byType(EmployeeDirectoryScreen), findsOneWidget);
+        expect(find.byType(HrHomeScreen), findsOneWidget);
+        await tester.tap(find.byKey(const Key('hr_feature_card_documents')));
+        await tester.pumpAndSettle();
+
+        expect(find.byType(HrDocumentsDashboardScreen), findsOneWidget);
       },
     );
 

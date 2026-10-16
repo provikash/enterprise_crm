@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/config/app_config.dart';
 import '../../../auth/domain/entities/crm_module.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
@@ -12,12 +13,11 @@ import '../../../calling/presentation/screens/user_calling_workspace_screen.dart
 import '../../../dispatch/data/repositories/mock_dispatch_repository.dart';
 import '../../../dispatch/domain/repositories/dispatch_repository.dart';
 import '../../../dispatch/presentation/screens/dispatch_workspace_screen.dart';
-import '../../../hr/data/repositories/mock_employee_repository.dart';
 import '../../../hr/domain/repositories/attendance_repository.dart';
 import '../../../hr/domain/repositories/employee_document_repository.dart';
 import '../../../hr/domain/repositories/employee_kpi_repository.dart';
 import '../../../hr/domain/repositories/employee_repository.dart';
-import '../../../hr/presentation/screens/employee_directory_screen.dart';
+import '../../../hr/presentation/screens/hr_home_screen.dart';
 import '../../../inventory/domain/repositories/inventory_repository.dart';
 import '../../../inventory/data/repositories/mock_inventory_repository.dart';
 import '../../../inventory/presentation/screens/inventory_workspace_screen.dart';
@@ -34,6 +34,7 @@ import 'user_lead_placeholder_screen.dart';
 ///
 /// Administrative sections (e.g. Users & Access) are strictly excluded.
 class UserDashboardScreen extends StatelessWidget {
+  final AppConfig appConfig;
   final CurrentUser user;
   final VoidCallback onLogout;
   final UserLeadLinkRepository userLeadLinkRepository;
@@ -50,6 +51,7 @@ class UserDashboardScreen extends StatelessWidget {
 
   const UserDashboardScreen({
     super.key,
+    this.appConfig = AppConfig.development,
     required this.user,
     required this.onLogout,
     required this.userLeadLinkRepository,
@@ -91,14 +93,28 @@ class UserDashboardScreen extends StatelessWidget {
         ),
       );
     } else if (module == CrmModule.hrPayroll) {
+      final employees = employeeRepository;
+      final documents = employeeDocumentRepository;
+      final attendance = attendanceRepository;
+      final kpis = employeeKpiRepository;
+      if (employees == null ||
+          documents == null ||
+          attendance == null ||
+          kpis == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('HR repositories are not configured.')),
+        );
+        return;
+      }
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => EmployeeDirectoryScreen(
+          builder: (_) => HrHomeScreen(
             user: user,
-            repository: employeeRepository ?? MockEmployeeRepository(),
-            documentRepository: employeeDocumentRepository,
-            attendanceRepository: attendanceRepository,
-            kpiRepository: employeeKpiRepository,
+            appConfig: appConfig,
+            repository: employees,
+            documentRepository: documents,
+            attendanceRepository: attendance,
+            kpiRepository: kpis,
           ),
         ),
       );
@@ -123,10 +139,7 @@ class UserDashboardScreen extends StatelessWidget {
       );
 
       if (authCubit != null) {
-        screen = BlocProvider<AuthCubit>.value(
-          value: authCubit,
-          child: screen,
-        );
+        screen = BlocProvider<AuthCubit>.value(value: authCubit, child: screen);
       }
 
       Navigator.of(context).push(

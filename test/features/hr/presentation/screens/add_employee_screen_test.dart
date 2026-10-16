@@ -114,6 +114,18 @@ void main() {
         find.byKey(const Key('add_employee_designation_field')),
         'Legal Counsel',
       );
+      await tester.enterText(
+        find.byKey(const Key('add_employee_email_field')),
+        'zachary.vance@enterprise.com',
+      );
+      await tester.enterText(
+        find.byKey(const Key('add_employee_phone_field')),
+        '+1 555-0177',
+      );
+      await tester.enterText(
+        find.byKey(const Key('add_employee_document_field')),
+        'ID-ZV-777',
+      );
 
       final submitBtn = find.byKey(const Key('add_employee_submit_button'));
       await tester.ensureVisible(submitBtn);

@@ -95,6 +95,28 @@ void main() {
       );
     });
 
+    testWidgets('app bar omits HR module shortcut icons', (tester) async {
+      await tester.pumpWidget(buildTestWidget(user: adminUser));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byKey(const Key('employee_directory_attendance_button')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('employee_directory_kpi_button')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('employee_directory_home_grid_button')),
+        findsNothing,
+      );
+      expect(
+        find.byKey(const Key('employee_directory_refresh_button')),
+        findsOneWidget,
+      );
+    });
+
     testWidgets('mobile layout renders cards (< 600px width)', (tester) async {
       tester.view.physicalSize = const Size(400, 800);
       tester.view.devicePixelRatio = 1.0;

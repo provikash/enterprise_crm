@@ -5,7 +5,9 @@ import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../domain/entities/employee.dart';
 import '../../domain/entities/employment_status.dart';
 import '../../domain/inputs/update_employee_input.dart';
+import '../../domain/policies/hr_access_policy.dart';
 import '../../domain/repositories/employee_repository.dart';
+import '../../domain/validation/employee_validators.dart';
 
 /// Form screen for editing an existing Employee record in the HR module.
 ///
@@ -33,6 +35,7 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
   late final TextEditingController _codeController;
   late final TextEditingController _emailController;
   late final TextEditingController _phoneController;
+  late final TextEditingController _documentNumberController;
   late final TextEditingController _departmentController;
   late final TextEditingController _designationController;
   late final TextEditingController _userIdController;
@@ -51,6 +54,9 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
     _codeController = TextEditingController(text: emp.employeeCode ?? '');
     _emailController = TextEditingController(text: emp.email ?? '');
     _phoneController = TextEditingController(text: emp.phone ?? '');
+    _documentNumberController = TextEditingController(
+      text: emp.documentNumber ?? '',
+    );
     _departmentController = TextEditingController(text: emp.department ?? '');
     _designationController = TextEditingController(text: emp.designation ?? '');
     _userIdController = TextEditingController(text: emp.userId ?? '');
@@ -64,6 +70,7 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
     _codeController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _documentNumberController.dispose();
     _departmentController.dispose();
     _designationController.dispose();
     _userIdController.dispose();
@@ -72,7 +79,7 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (!widget.user.isAdmin) {
+    if (!HrAccessPolicy.canManageEmployees(widget.user)) {
       return const AccessRestrictedScreen();
     }
 
@@ -180,9 +187,14 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
                               key: const Key('edit_employee_dept_field'),
                               controller: _departmentController,
                               decoration: const InputDecoration(
-                                labelText: 'Department',
+                                labelText: 'Department *',
                                 border: OutlineInputBorder(),
                               ),
+                              validator: (value) =>
+                                  EmployeeValidators.requiredText(
+                                    value,
+                                    'Department',
+                                  ),
                             ),
                           ),
                           const SizedBox(width: 12),
@@ -191,9 +203,14 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
                               key: const Key('edit_employee_designation_field'),
                               controller: _designationController,
                               decoration: const InputDecoration(
-                                labelText: 'Designation',
+                                labelText: 'Designation *',
                                 border: OutlineInputBorder(),
                               ),
+                              validator: (value) =>
+                                  EmployeeValidators.requiredText(
+                                    value,
+                                    'Designation',
+                                  ),
                             ),
                           ),
                         ],
@@ -264,18 +281,10 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
                         decoration: const InputDecoration(
-                          labelText: 'Email Address',
+                          labelText: 'Email Address *',
                           border: OutlineInputBorder(),
                         ),
-                        validator: (value) {
-                          final trimmed = value?.trim();
-                          if (trimmed != null &&
-                              trimmed.isNotEmpty &&
-                              !trimmed.contains('@')) {
-                            return 'Please enter a valid email address';
-                          }
-                          return null;
-                        },
+                        validator: EmployeeValidators.email,
                       ),
                       const SizedBox(height: 16),
 
@@ -284,8 +293,24 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
                         controller: _phoneController,
                         keyboardType: TextInputType.phone,
                         decoration: const InputDecoration(
-                          labelText: 'Phone Number',
+                          labelText: 'Phone Number *',
                           border: OutlineInputBorder(),
+                        ),
+                        validator: EmployeeValidators.phone,
+                      ),
+                      const SizedBox(height: 16),
+
+                      TextFormField(
+                        key: const Key('edit_employee_document_field'),
+                        controller: _documentNumberController,
+                        textCapitalization: TextCapitalization.characters,
+                        decoration: const InputDecoration(
+                          labelText: 'Identity Document Number *',
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) => EmployeeValidators.requiredText(
+                          value,
+                          'Identity document number',
                         ),
                       ),
                       const SizedBox(height: 16),
@@ -351,6 +376,9 @@ class _EditEmployeeScreenState extends State<EditEmployeeScreen> {
             : null,
         phone: _phoneController.text.trim().isNotEmpty
             ? _phoneController.text.trim()
+            : null,
+        documentNumber: _documentNumberController.text.trim().isNotEmpty
+            ? _documentNumberController.text.trim()
             : null,
         department: _departmentController.text.trim().isNotEmpty
             ? _departmentController.text.trim()
