@@ -1,39 +1,35 @@
 import 'package:flutter/material.dart';
 
+import 'app/bootstrap/crm_dependencies.dart';
+import 'app/bootstrap/mock_crm_dependencies.dart';
 import 'app/crm_app.dart';
-import 'app/bootstrap/mock_hr_payroll_dependencies.dart';
-import 'features/auth/data/repositories/mock_auth_repository.dart';
-import 'features/auth/data/repositories/mock_user_lead_link_repository.dart';
-import 'features/calling/data/repositories/mock_lead_call_activity_repository.dart';
-import 'features/calling/data/repositories/mock_lead_follow_up_repository.dart';
-import 'features/inventory/data/repositories/mock_inventory_repository.dart';
-import 'features/leads/data/repositories/mock_lead_repository.dart';
-import 'features/user_management/data/mock/mock_account_store.dart';
-import 'features/user_management/data/repositories/mock_user_management_repository.dart';
+import 'core/config/app_config.dart';
 
 void main() {
-  final leadRepository = MockLeadRepository();
-  final accountStore = MockAccountStore.seeded();
-  final authRepository = MockAuthRepository(accountStore: accountStore);
-  final userManagementRepository = MockUserManagementRepository(
-    accountStore: accountStore,
-  );
-  final userLeadLinkRepository = MockUserLeadLinkRepository();
-  final leadCallActivityRepository = MockLeadCallActivityRepository();
-  final leadFollowUpRepository = MockLeadFollowUpRepository();
-  final inventoryRepository = MockInventoryRepository();
-  final hrPayrollDependencies = createMockHrPayrollDependencies();
+  const config = AppConfig.development;
+
+  // Select dependency bundle based on configured DataSourceMode.
+  // In DataSourceMode.api, mock repositories are never instantiated.
+  final CrmDependencies dependencies = switch (config.dataSourceMode) {
+    DataSourceMode.mock => createMockCrmDependencies(),
+    DataSourceMode.api => throw UnimplementedError(
+        'Instructor Backend Notice: Configure createApiCrmDependencies with your API endpoints in lib/app/bootstrap/api_crm_dependencies.dart',
+      ),
+  };
 
   runApp(
     CrmApp(
-      leadRepository: leadRepository,
-      authRepository: authRepository,
-      userManagementRepository: userManagementRepository,
-      userLeadLinkRepository: userLeadLinkRepository,
-      leadCallActivityRepository: leadCallActivityRepository,
-      leadFollowUpRepository: leadFollowUpRepository,
-      inventoryRepository: inventoryRepository,
-      hrPayrollDependencies: hrPayrollDependencies,
+      appConfig: config,
+      leadRepository: dependencies.leadRepository,
+      authRepository: dependencies.authRepository,
+      userManagementRepository: dependencies.userManagementRepository,
+      userLeadLinkRepository: dependencies.userLeadLinkRepository,
+      leadCallActivityRepository: dependencies.leadCallActivityRepository,
+      leadFollowUpRepository: dependencies.leadFollowUpRepository,
+      inventoryRepository: dependencies.inventoryRepository,
+      dispatchRepository: dependencies.dispatchRepository,
+      purchaseRepository: dependencies.purchaseRepository,
+      hrPayrollDependencies: dependencies.hrPayrollDependencies,
     ),
   );
 }
