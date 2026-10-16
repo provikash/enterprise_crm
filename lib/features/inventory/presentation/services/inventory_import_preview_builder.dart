@@ -184,9 +184,7 @@ class InventoryImportPreviewBuilder {
               'Unit "$rawUnit" is not recognized in the configured catalog.';
         } else if (rawWarehouse.isNotEmpty &&
             !catalogs.isValidWarehouse(rawWarehouse)) {
-          status = InventoryImportRowStatus.invalid;
-          errorMessage =
-              'Warehouse "$rawWarehouse" is not recognized in the configured catalog.';
+          catalogs.registerWarehouse(rawWarehouse);
         }
       }
 
