@@ -63,16 +63,14 @@ abstract final class InventoryValidation {
     return trimmed;
   }
 
-  /// Validates Warehouse against [catalogs] (INV-007).
+  /// Validates Warehouse against [catalogs] (INV-007) and auto-registers custom warehouses.
   static String validateWarehouse(String warehouse, InventoryCatalogs catalogs) {
     final trimmed = warehouse.trim();
     if (trimmed.isEmpty) {
       throw const InventoryValidationException('Warehouse cannot be blank.');
     }
     if (!catalogs.isValidWarehouse(trimmed)) {
-      throw InventoryValidationException(
-        'Warehouse "$trimmed" is not recognized in the configured catalog.',
-      );
+      catalogs.registerWarehouse(trimmed);
     }
     return trimmed;
   }

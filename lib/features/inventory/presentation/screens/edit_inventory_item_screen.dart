@@ -168,6 +168,9 @@ class _EditInventoryItemViewState extends State<_EditInventoryItemView> {
       _unit = item.unit;
       _barcodeController.text = item.barcode ?? '';
       _warehouse = item.warehouse;
+      if (_warehouse.trim().isNotEmpty) {
+        _catalogs.registerWarehouse(_warehouse.trim());
+      }
       _binLocationController.text = item.binLocation ?? '';
       _reorderLevelController.text = item.reorderLevel?.toString() ?? '';
       _maxStockController.text = item.maxStock?.toString() ?? '';
@@ -206,6 +209,49 @@ class _EditInventoryItemViewState extends State<_EditInventoryItemView> {
     );
     if (picked != null) {
       onDateSelected(picked);
+    }
+  }
+
+
+  Future<void> _openAddWarehouseDialog(BuildContext context) async {
+    final controller = TextEditingController();
+    final newWarehouse = await showDialog<String>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Add Custom Warehouse'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Warehouse Name',
+            hintText: 'e.g. Pune Central WH',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(null),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            key: const Key('dialog_add_warehouse_confirm_button'),
+            onPressed: () {
+              final val = controller.text.trim();
+              if (val.isNotEmpty) {
+                Navigator.of(dialogCtx).pop(val);
+              }
+            },
+            child: const Text('Add Warehouse'),
+          ),
+        ],
+      ),
+    );
+
+    if (newWarehouse != null && newWarehouse.isNotEmpty && mounted) {
+      _catalogs.registerWarehouse(newWarehouse);
+      setState(() {
+        _warehouse = newWarehouse;
+      });
     }
   }
 
@@ -892,19 +938,41 @@ class _EditInventoryItemViewState extends State<_EditInventoryItemView> {
                                   child: DropdownButtonFormField<String>(
                                     isExpanded: true,
                                     key: const Key('inventory_form_warehouse'),
-                                    initialValue: _catalogs.isValidWarehouse(_warehouse)
+                                    value: _catalogs.isValidWarehouse(_warehouse)
                                         ? _warehouse
                                         : (_catalogs.warehouses.isNotEmpty ? _catalogs.warehouses.first : null),
-                                    decoration: const InputDecoration(
+                                    decoration: InputDecoration(
                                       labelText: 'Warehouse *',
-                                      prefixIcon: Icon(Icons.store_mall_directory_outlined),
-                                      border: OutlineInputBorder(),
+                                      prefixIcon: const Icon(Icons.store_mall_directory_outlined),
+                                      suffixIcon: IconButton(
+                                        key: const Key('btn_add_custom_warehouse_desktop'),
+                                        icon: const Icon(Icons.add_circle_outline),
+                                        tooltip: 'Add Custom Warehouse',
+                                        onPressed: isSubmitting ? null : () => _openAddWarehouseDialog(context),
+                                      ),
+                                      border: const OutlineInputBorder(),
                                     ),
-                                    items: _catalogs.warehouses.map((wh) {
-                                      return DropdownMenuItem(value: wh, child: Text(wh, overflow: TextOverflow.ellipsis));
-                                    }).toList(),
+                                    items: [
+                                      ..._catalogs.warehouses.map((wh) {
+                                        return DropdownMenuItem(value: wh, child: Text(wh, overflow: TextOverflow.ellipsis));
+                                      }),
+                                      const DropdownMenuItem(
+                                        value: '__add_custom_warehouse__',
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.add, size: 16),
+                                            SizedBox(width: 8),
+                                            Text('+ Add Custom Warehouse', style: TextStyle(fontWeight: FontWeight.w600)),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
                                     onChanged: isSubmitting ? null : (val) {
-                                      if (val != null) setState(() => _warehouse = val);
+                                      if (val == '__add_custom_warehouse__') {
+                                        _openAddWarehouseDialog(context);
+                                      } else if (val != null) {
+                                        setState(() => _warehouse = val);
+                                      }
                                     },
                                   ),
                                 ),
@@ -927,21 +995,43 @@ class _EditInventoryItemViewState extends State<_EditInventoryItemView> {
                             )
                           else ...[
                             DropdownButtonFormField<String>(
-                                    isExpanded: true,
+                              isExpanded: true,
                               key: const Key('inventory_form_warehouse'),
-                              initialValue: _catalogs.isValidWarehouse(_warehouse)
+                              value: _catalogs.isValidWarehouse(_warehouse)
                                   ? _warehouse
                                   : (_catalogs.warehouses.isNotEmpty ? _catalogs.warehouses.first : null),
-                              decoration: const InputDecoration(
+                              decoration: InputDecoration(
                                 labelText: 'Warehouse *',
-                                prefixIcon: Icon(Icons.store_mall_directory_outlined),
-                                border: OutlineInputBorder(),
+                                prefixIcon: const Icon(Icons.store_mall_directory_outlined),
+                                suffixIcon: IconButton(
+                                  key: const Key('btn_add_custom_warehouse_mobile'),
+                                  icon: const Icon(Icons.add_circle_outline),
+                                  tooltip: 'Add Custom Warehouse',
+                                  onPressed: isSubmitting ? null : () => _openAddWarehouseDialog(context),
+                                ),
+                                border: const OutlineInputBorder(),
                               ),
-                              items: _catalogs.warehouses.map((wh) {
-                                return DropdownMenuItem(value: wh, child: Text(wh, overflow: TextOverflow.ellipsis));
-                              }).toList(),
+                              items: [
+                                ..._catalogs.warehouses.map((wh) {
+                                  return DropdownMenuItem(value: wh, child: Text(wh, overflow: TextOverflow.ellipsis));
+                                }),
+                                const DropdownMenuItem(
+                                  value: '__add_custom_warehouse__',
+                                  child: Row(
+                                    children: [
+                                      Icon(Icons.add, size: 16),
+                                      SizedBox(width: 8),
+                                      Text('+ Add Custom Warehouse', style: TextStyle(fontWeight: FontWeight.w600)),
+                                    ],
+                                  ),
+                                ),
+                              ],
                               onChanged: isSubmitting ? null : (val) {
-                                if (val != null) setState(() => _warehouse = val);
+                                if (val == '__add_custom_warehouse__') {
+                                  _openAddWarehouseDialog(context);
+                                } else if (val != null) {
+                                  setState(() => _warehouse = val);
+                                }
                               },
                             ),
                             const SizedBox(height: 14),
