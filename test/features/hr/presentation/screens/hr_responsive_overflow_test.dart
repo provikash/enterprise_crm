@@ -101,6 +101,7 @@ void main() {
             home: EmployeeKpiListScreen(
               user: adminUser,
               kpiRepository: repo,
+              employeeRepository: MockEmployeeRepository(),
             ),
           ),
         );

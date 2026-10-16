@@ -9,6 +9,10 @@ import '../../../auth/domain/entities/current_user.dart';
 import '../../../dispatch/data/repositories/mock_dispatch_repository.dart';
 import '../../../dispatch/domain/repositories/dispatch_repository.dart';
 import '../../../dispatch/presentation/screens/dispatch_workspace_screen.dart';
+import '../../../hr/data/repositories/mock_attendance_repository.dart';
+import '../../../hr/data/repositories/mock_employee_document_repository.dart';
+import '../../../hr/data/repositories/mock_employee_kpi_repository.dart';
+import '../../../hr/data/repositories/mock_employee_repository.dart';
 import '../../../hr/domain/repositories/attendance_repository.dart';
 import '../../../hr/domain/repositories/employee_document_repository.dart';
 import '../../../hr/domain/repositories/employee_kpi_repository.dart';
@@ -79,19 +83,11 @@ class AdminDashboardScreen extends StatelessWidget {
     if (module == CrmModule.leadManagement) {
       onOpenLeadManagement();
     } else if (module == CrmModule.hrPayroll) {
-      final employees = employeeRepository;
-      final documents = employeeDocumentRepository;
-      final attendance = attendanceRepository;
-      final kpis = employeeKpiRepository;
-      if (employees == null ||
-          documents == null ||
-          attendance == null ||
-          kpis == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('HR repositories are not configured.')),
-        );
-        return;
-      }
+      final employees = employeeRepository ?? MockEmployeeRepository();
+      final documents =
+          employeeDocumentRepository ?? MockEmployeeDocumentRepository();
+      final attendance = attendanceRepository ?? MockAttendanceRepository();
+      final kpis = employeeKpiRepository ?? MockEmployeeKpiRepository();
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => HrHomeScreen(

@@ -57,6 +57,7 @@ class CrmApp extends StatefulWidget {
   final EmployeeDocumentRepository? employeeDocumentRepository;
   final AttendanceRepository? attendanceRepository;
   final EmployeeKpiRepository? employeeKpiRepository;
+  final InventoryRepository? inventoryRepository;
   final DispatchRepository? dispatchRepository;
   final PurchaseRepository? purchaseRepository;
   final PayrollOperationsRepository? payrollOperationsRepository;
