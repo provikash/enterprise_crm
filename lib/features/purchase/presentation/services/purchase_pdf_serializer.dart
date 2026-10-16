@@ -305,6 +305,9 @@ class PurchasePdfSerializer {
       buffer.writeln('0.3 0.3 0.3 rg');
       buffer.writeln('${margin + 8} $lY Td');
       buffer.writeln('(${_escape(pair[0])}) Tj');
+      buffer.writeln('ET');
+
+      buffer.writeln('BT');
       buffer.writeln('/F1 8 Tf');
       buffer.writeln('0 0 0 rg');
       buffer.writeln('${margin + 80} $lY Td');
@@ -343,6 +346,9 @@ class PurchasePdfSerializer {
       buffer.writeln('0.3 0.3 0.3 rg');
       buffer.writeln('${rightX + 8} $rY Td');
       buffer.writeln('(${_escape(pair[0])}) Tj');
+      buffer.writeln('ET');
+
+      buffer.writeln('BT');
       buffer.writeln('/F1 8 Tf');
       buffer.writeln('0 0 0 rg');
       buffer.writeln('${rightX + 80} $rY Td');
@@ -373,6 +379,9 @@ class PurchasePdfSerializer {
     buffer.writeln('0.3 0.3 0.3 rg');
     buffer.writeln('${margin + 8} ${curY - 28} Td');
     buffer.writeln('(${_escape('Ship To Address:')}) Tj');
+    buffer.writeln('ET');
+
+    buffer.writeln('BT');
     buffer.writeln('/F1 8 Tf');
     buffer.writeln('0 0 0 rg');
     buffer.writeln('${margin + 90} ${curY - 28} Td');
@@ -471,7 +480,11 @@ class PurchasePdfSerializer {
     buffer.writeln('0 0 0 rg');
     buffer.writeln('${margin + 8} ${curY - 15} Td');
     buffer.writeln('(${_escape('Total Line Items: ${items.length}  |  Subtotal: INR ${record.subtotalAmount.toStringAsFixed(2)}  |  GST (18%): INR ${record.taxAmount.toStringAsFixed(2)}')}) Tj');
+    buffer.writeln('ET');
+
+    buffer.writeln('BT');
     buffer.writeln('/F2 10 Tf');
+    buffer.writeln('0 0 0 rg');
     buffer.writeln('${margin + 8} ${curY - 30} Td');
     buffer.writeln('(${_escape('TOTAL PURCHASE ORDER VALUE: INR ${record.totalAmount.toStringAsFixed(2)}')}) Tj');
     buffer.writeln('ET');
@@ -485,6 +498,9 @@ class PurchasePdfSerializer {
       buffer.writeln('0.3 0.3 0.3 rg');
       buffer.writeln('$margin $curY Td');
       buffer.writeln('(${_escape('PO Terms & Instructions:')}) Tj');
+      buffer.writeln('ET');
+
+      buffer.writeln('BT');
       buffer.writeln('/F1 8 Tf');
       buffer.writeln('0 0 0 rg');
       buffer.writeln('${margin + 120} $curY Td');
@@ -509,7 +525,11 @@ class PurchasePdfSerializer {
     buffer.writeln('0.2 0.2 0.2 rg');
     buffer.writeln('${margin + 8} ${sigY + sigBoxH - 14} Td');
     buffer.writeln('(${_escape('FOR ENTERPRISE PROCUREMENT')}) Tj');
+    buffer.writeln('ET');
+
+    buffer.writeln('BT');
     buffer.writeln('/F1 7 Tf');
+    buffer.writeln('0.2 0.2 0.2 rg');
     buffer.writeln('${margin + 8} ${sigY + 12} Td');
     buffer.writeln('(${_escape('Authorized Purchase Officer Signature & Date')}) Tj');
     buffer.writeln('ET');
@@ -526,7 +546,11 @@ class PurchasePdfSerializer {
     buffer.writeln('0.2 0.2 0.2 rg');
     buffer.writeln('${rSigX + 8} ${sigY + sigBoxH - 14} Td');
     buffer.writeln('(${_escape('VENDOR ACCEPTANCE & ACKNOWLEDGEMENT')}) Tj');
+    buffer.writeln('ET');
+
+    buffer.writeln('BT');
     buffer.writeln('/F1 7 Tf');
+    buffer.writeln('0.2 0.2 0.2 rg');
     buffer.writeln('${rSigX + 8} ${sigY + 12} Td');
     buffer.writeln('(${_escape('Accepted by Vendor: Seal, Signature & Order Acceptance Date')}) Tj');
     buffer.writeln('ET');
