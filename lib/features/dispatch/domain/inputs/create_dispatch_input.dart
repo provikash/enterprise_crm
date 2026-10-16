@@ -31,7 +31,7 @@ class CreateDispatchInput {
     this.vehicleType = 'Truck',
     required this.driverName,
     required this.driverPhone,
-    required this.builtyNumber,
+    this.builtyNumber = '',
     this.builtyDate,
     this.notes = '',
     this.items = const [],
@@ -44,7 +44,6 @@ class CreateDispatchInput {
     if (invoiceNumber.trim().isEmpty) return 'Invoice number is required';
     if (vehicleNumber.trim().isEmpty) return 'Vehicle number is required';
     if (driverName.trim().isEmpty) return 'Driver name is required';
-    if (builtyNumber.trim().isEmpty) return 'Builty / LR number is required';
     if (items.isEmpty) return 'At least one dispatch item is required';
     return null;
   }

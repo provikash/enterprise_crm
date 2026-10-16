@@ -469,12 +469,10 @@ class _CreateDispatchViewState extends State<_CreateDispatchView> {
                                   key: const Key('dispatch_form_builty_number'),
                                   controller: _builtyNumberController,
                                   decoration: const InputDecoration(
-                                    labelText: 'Builty / LR # *',
+                                    labelText: 'Builty / LR # (optional)',
                                     hintText: 'e.g. BL-VRL-9921',
                                     border: OutlineInputBorder(),
                                   ),
-                                  validator: (v) =>
-                                      (v == null || v.trim().isEmpty) ? 'Builty number required' : null,
                                 ),
                               ] else ...[
                                 Row(
@@ -551,12 +549,10 @@ class _CreateDispatchViewState extends State<_CreateDispatchView> {
                                         key: const Key('dispatch_form_builty_number'),
                                         controller: _builtyNumberController,
                                         decoration: const InputDecoration(
-                                          labelText: 'Builty / LR # *',
+                                          labelText: 'Builty / LR # (optional)',
                                           hintText: 'e.g. BL-VRL-9921',
                                           border: OutlineInputBorder(),
                                         ),
-                                        validator: (v) =>
-                                            (v == null || v.trim().isEmpty) ? 'Builty number required' : null,
                                       ),
                                     ),
                                   ],
