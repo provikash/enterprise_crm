@@ -35,6 +35,9 @@ import '../../../purchase/domain/repositories/purchase_repository.dart';
 import '../../../purchase/presentation/screens/purchase_workspace_screen.dart';
 import '../../../user_management/domain/repositories/user_management_repository.dart';
 import '../../../user_management/presentation/screens/users_and_access_screen.dart';
+import '../../../vendors/data/repositories/mock_vendor_repository.dart';
+import '../../../vendors/domain/repositories/vendor_repository.dart';
+import '../../../vendors/presentation/screens/vendor_workspace_screen.dart';
 import '../widgets/crm_app_header.dart';
 import '../widgets/crm_module_card.dart';
 import 'module_placeholder_screen.dart';
@@ -54,6 +57,7 @@ class AdminDashboardScreen extends StatelessWidget {
   final AttendanceRepository? attendanceRepository;
   final EmployeeKpiRepository? employeeKpiRepository;
   final PurchaseRepository? purchaseRepository;
+  final VendorRepository? vendorRepository;
   final LeadRepository? leadRepository;
   final UserLeadLinkRepository? userLeadLinkRepository;
   final LeadCallActivityRepository? callActivityRepository;
@@ -73,6 +77,7 @@ class AdminDashboardScreen extends StatelessWidget {
     this.attendanceRepository,
     this.employeeKpiRepository,
     this.purchaseRepository,
+    this.vendorRepository,
     this.leadRepository,
     this.userLeadLinkRepository,
     this.callActivityRepository,
@@ -159,6 +164,16 @@ class AdminDashboardScreen extends StatelessWidget {
                 callActivityRepository ?? MockLeadCallActivityRepository(),
             leadFollowUpRepository:
                 leadFollowUpRepository ?? MockLeadFollowUpRepository(),
+          ),
+        ),
+      );
+    } else if (module == CrmModule.vendorManagement) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => VendorWorkspaceScreen(
+            user: user,
+            repository: vendorRepository ?? MockVendorRepository(),
+            purchaseRepository: purchaseRepository,
           ),
         ),
       );

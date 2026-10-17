@@ -29,6 +29,7 @@ void main() {
       inventoryRepository: dependencies.inventoryRepository,
       dispatchRepository: dependencies.dispatchRepository,
       purchaseRepository: dependencies.purchaseRepository,
+      vendorRepository: dependencies.vendorRepository,
       hrPayrollDependencies: dependencies.hrPayrollDependencies,
     ),
   );

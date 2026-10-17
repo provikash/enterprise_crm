@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
+import '../../../../core/theme/theme_mode_controller.dart';
 import '../../../user_management/domain/inputs/update_managed_user_input.dart';
 import '../../../user_management/domain/repositories/user_management_repository.dart';
 
@@ -263,7 +264,31 @@ class _AccountProfileDialogState extends State<AccountProfileDialog> {
                   ),
                 ],
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
+
+              // Section: Appearance / Theme Mode
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Appearance',
+                    style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  ValueListenableBuilder<ThemeMode>(
+                    valueListenable: ThemeModeController.instance,
+                    builder: (context, mode, _) {
+                      final isDark = theme.brightness == Brightness.dark;
+                      return OutlinedButton.icon(
+                        key: const Key('account_dialog_theme_toggle'),
+                        icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode, size: 16),
+                        label: Text(isDark ? 'Switch to Light' : 'Switch to Dark'),
+                        onPressed: () => ThemeModeController.instance.toggleTheme(theme.brightness),
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
               const Divider(),
               const SizedBox(height: 12),
 

@@ -8,6 +8,7 @@ import '../../features/inventory/domain/repositories/inventory_repository.dart';
 import '../../features/leads/domain/repositories/lead_repository.dart';
 import '../../features/purchase/domain/repositories/purchase_repository.dart';
 import '../../features/user_management/domain/repositories/user_management_repository.dart';
+import '../../features/vendors/domain/repositories/vendor_repository.dart';
 import 'crm_dependencies.dart';
 import 'hr_payroll_dependencies.dart';
 
@@ -33,6 +34,7 @@ CrmDependencies createApiCrmDependencies({
   required InventoryRepository inventoryRepository,
   required DispatchRepository dispatchRepository,
   required PurchaseRepository purchaseRepository,
+  required VendorRepository vendorRepository,
   required HrPayrollDependencies hrPayrollDependencies,
 }) {
   return CrmDependencies(
@@ -45,6 +47,7 @@ CrmDependencies createApiCrmDependencies({
     inventoryRepository: inventoryRepository,
     dispatchRepository: dispatchRepository,
     purchaseRepository: purchaseRepository,
+    vendorRepository: vendorRepository,
     hrPayrollDependencies: hrPayrollDependencies,
   );
 }

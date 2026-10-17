@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../auth/domain/entities/current_user.dart';
+import '../../../../core/theme/theme_mode_controller.dart';
 import '../../../user_management/domain/repositories/user_management_repository.dart';
 import 'account_profile_dialog.dart';
 
@@ -78,6 +79,25 @@ class CrmAppHeader extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
               ],
+
+              // Dark / Light Theme Toggle Button
+              ValueListenableBuilder<ThemeMode>(
+                valueListenable: ThemeModeController.instance,
+                builder: (context, mode, _) {
+                  final isDark = theme.brightness == Brightness.dark;
+                  return IconButton(
+                    key: const Key('home_theme_toggle_button'),
+                    icon: Icon(
+                      isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                      size: 20,
+                      color: colorScheme.onSurface,
+                    ),
+                    tooltip: isDark ? 'Switch to Light Theme' : 'Switch to Dark Theme',
+                    onPressed: () => ThemeModeController.instance.toggleTheme(theme.brightness),
+                  );
+                },
+              ),
+              const SizedBox(width: 4),
 
               // Top Right Corner: Account Avatar
               Tooltip(

@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'bootstrap/hr_payroll_dependencies.dart';
 import '../core/config/app_config.dart';
+import '../core/theme/app_theme.dart';
+import '../core/theme/theme_mode_controller.dart';
 import '../features/auth/domain/repositories/auth_repository.dart';
 import '../features/auth/domain/repositories/user_lead_link_repository.dart';
 import '../features/auth/presentation/bloc/auth_cubit.dart';
@@ -31,6 +33,8 @@ import '../features/dispatch/data/repositories/mock_dispatch_repository.dart';
 import '../features/dispatch/domain/repositories/dispatch_repository.dart';
 import '../features/purchase/data/repositories/mock_purchase_repository.dart';
 import '../features/purchase/domain/repositories/purchase_repository.dart';
+import '../features/vendors/data/repositories/mock_vendor_repository.dart';
+import '../features/vendors/domain/repositories/vendor_repository.dart';
 import '../features/hr/domain/repositories/attendance_repository.dart';
 import '../features/hr/domain/repositories/employee_document_repository.dart';
 import '../features/hr/domain/repositories/employee_kpi_repository.dart';
@@ -60,6 +64,7 @@ class CrmApp extends StatefulWidget {
   final InventoryRepository? inventoryRepository;
   final DispatchRepository? dispatchRepository;
   final PurchaseRepository? purchaseRepository;
+  final VendorRepository? vendorRepository;
   final PayrollOperationsRepository? payrollOperationsRepository;
   final PayrollConfigurationRepository? payrollConfigurationRepository;
   final HrPayrollDependencies? hrPayrollDependencies;
@@ -82,6 +87,7 @@ class CrmApp extends StatefulWidget {
     this.inventoryRepository,
     this.dispatchRepository,
     this.purchaseRepository,
+    this.vendorRepository,
     this.payrollOperationsRepository,
     this.payrollConfigurationRepository,
     this.hrPayrollDependencies,
@@ -116,6 +122,7 @@ class _CrmAppState extends State<CrmApp> {
   AuthCubit? _authCubit;
   late final DispatchRepository _dispatchRepository;
   late final PurchaseRepository _purchaseRepository;
+  late final VendorRepository _vendorRepository;
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   EmployeeRepository? get _employeeRepository =>
@@ -140,6 +147,7 @@ class _CrmAppState extends State<CrmApp> {
     super.initState();
     _dispatchRepository = widget.dispatchRepository ?? MockDispatchRepository();
     _purchaseRepository = widget.purchaseRepository ?? MockPurchaseRepository();
+    _vendorRepository = widget.vendorRepository ?? MockVendorRepository();
     if (widget.authRepository != null) {
       _authCubit = AuthCubit(widget.authRepository!);
     }
@@ -186,6 +194,7 @@ class _CrmAppState extends State<CrmApp> {
                     inventoryRepository: widget.inventoryRepository!,
                     dispatchRepository: _dispatchRepository,
                     purchaseRepository: _purchaseRepository,
+                    vendorRepository: _vendorRepository,
                     userManagementRepository: widget.userManagementRepository,
                     employeeRepository: _employeeRepository,
                     employeeDocumentRepository: _employeeDocumentRepository,
@@ -224,6 +233,7 @@ class _CrmAppState extends State<CrmApp> {
                     inventoryRepository: widget.inventoryRepository!,
                     dispatchRepository: _dispatchRepository,
                     purchaseRepository: _purchaseRepository,
+                    vendorRepository: _vendorRepository,
                   );
                 }
               case AuthUnauthenticated():
@@ -243,27 +253,18 @@ class _CrmAppState extends State<CrmApp> {
       );
     }
 
-    Widget app = MaterialApp(
-      navigatorKey: _navigatorKey,
-      title: 'Enterprise CRM',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.light,
-        ),
-      ),
-      darkTheme: ThemeData(
-        useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.dark,
-        ),
-      ),
-      themeMode: ThemeMode.system,
-      home: content,
-      onGenerateRoute: (settings) {
+    Widget app = ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeModeController.instance,
+      builder: (context, themeMode, _) {
+        return MaterialApp(
+          navigatorKey: _navigatorKey,
+          title: 'Enterprise CRM',
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeMode,
+          home: content,
+          onGenerateRoute: (settings) {
         if (settings.name?.startsWith('/payroll') != true) return null;
         final authState = _authCubit?.state;
         final currentUser = authState is AuthAuthenticated
@@ -286,6 +287,8 @@ class _CrmAppState extends State<CrmApp> {
         );
       },
     );
+  },
+);
 
     if (widget.authRepository != null) {
       app = RepositoryProvider<AuthRepository>.value(

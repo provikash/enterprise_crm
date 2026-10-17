@@ -7,6 +7,7 @@ import '../../features/inventory/domain/repositories/inventory_repository.dart';
 import '../../features/leads/domain/repositories/lead_repository.dart';
 import '../../features/purchase/domain/repositories/purchase_repository.dart';
 import '../../features/user_management/domain/repositories/user_management_repository.dart';
+import '../../features/vendors/domain/repositories/vendor_repository.dart';
 import 'hr_payroll_dependencies.dart';
 
 /// Unified repository boundary for the Enterprise CRM application.
@@ -25,6 +26,7 @@ class CrmDependencies {
   final InventoryRepository inventoryRepository;
   final DispatchRepository dispatchRepository;
   final PurchaseRepository purchaseRepository;
+  final VendorRepository vendorRepository;
   final HrPayrollDependencies hrPayrollDependencies;
 
   const CrmDependencies({
@@ -37,6 +39,7 @@ class CrmDependencies {
     required this.inventoryRepository,
     required this.dispatchRepository,
     required this.purchaseRepository,
+    required this.vendorRepository,
     required this.hrPayrollDependencies,
   });
 }

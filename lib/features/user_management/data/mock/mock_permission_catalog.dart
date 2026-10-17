@@ -241,6 +241,26 @@ abstract final class MockPermissionCatalog {
       module: CrmModule.vendorManagement,
       displayName: 'View Vendors',
     ),
+    MockPermissionDefinition(
+      id: CrmPermissions.vendorCreate,
+      module: CrmModule.vendorManagement,
+      displayName: 'Create Vendors',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.vendorEdit,
+      module: CrmModule.vendorManagement,
+      displayName: 'Edit Vendors',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.vendorDelete,
+      module: CrmModule.vendorManagement,
+      displayName: 'Deactivate / Delete Vendors',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.vendorExportCsv,
+      module: CrmModule.vendorManagement,
+      displayName: 'Export Vendors (CSV)',
+    ),
     // Dispatch
     MockPermissionDefinition(
       id: CrmPermissions.dispatchView,

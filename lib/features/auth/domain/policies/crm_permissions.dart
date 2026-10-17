@@ -59,6 +59,10 @@ abstract final class CrmPermissions {
 
   // Vendor Management
   static const String vendorView = 'vendor.view';
+  static const String vendorCreate = 'vendor.create';
+  static const String vendorEdit = 'vendor.edit';
+  static const String vendorDelete = 'vendor.delete';
+  static const String vendorExportCsv = 'vendor.export.csv';
 
   // Dispatch
   static const String dispatchView = 'dispatch.view';
@@ -114,6 +118,10 @@ abstract final class CrmPermissions {
     purchaseExportPdf: CrmModule.purchase,
     purchaseDownloadBill: CrmModule.purchase,
     vendorView: CrmModule.vendorManagement,
+    vendorCreate: CrmModule.vendorManagement,
+    vendorEdit: CrmModule.vendorManagement,
+    vendorDelete: CrmModule.vendorManagement,
+    vendorExportCsv: CrmModule.vendorManagement,
     dispatchView: CrmModule.dispatch,
     dispatchCreate: CrmModule.dispatch,
     dispatchUpdateStatus: CrmModule.dispatch,

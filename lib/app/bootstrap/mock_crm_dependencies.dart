@@ -8,6 +8,7 @@ import '../../features/leads/data/repositories/mock_lead_repository.dart';
 import '../../features/purchase/data/repositories/mock_purchase_repository.dart';
 import '../../features/user_management/data/mock/mock_account_store.dart';
 import '../../features/user_management/data/repositories/mock_user_management_repository.dart';
+import '../../features/vendors/data/repositories/mock_vendor_repository.dart';
 import 'crm_dependencies.dart';
 import 'mock_hr_payroll_dependencies.dart';
 
@@ -30,6 +31,7 @@ CrmDependencies createMockCrmDependencies() {
   final inventoryRepository = MockInventoryRepository();
   final dispatchRepository = MockDispatchRepository();
   final purchaseRepository = MockPurchaseRepository();
+  final vendorRepository = MockVendorRepository();
   final hrPayrollDependencies = createMockHrPayrollDependencies();
 
   return CrmDependencies(
@@ -42,6 +44,7 @@ CrmDependencies createMockCrmDependencies() {
     inventoryRepository: inventoryRepository,
     dispatchRepository: dispatchRepository,
     purchaseRepository: purchaseRepository,
+    vendorRepository: vendorRepository,
     hrPayrollDependencies: hrPayrollDependencies,
   );
 }
