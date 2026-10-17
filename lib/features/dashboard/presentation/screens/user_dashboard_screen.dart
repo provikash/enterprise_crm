@@ -19,6 +19,10 @@ import '../../../inventory/domain/repositories/inventory_repository.dart';
 import '../../../inventory/data/repositories/mock_inventory_repository.dart';
 import '../../../inventory/presentation/screens/inventory_workspace_screen.dart';
 import '../../../leads/domain/repositories/lead_repository.dart';
+import '../../../approvals/data/repositories/mock_approval_repository.dart';
+import '../../../approvals/domain/repositories/approval_repository.dart';
+import '../../../approvals/presentation/screens/approvals_workspace_screen.dart';
+import '../../../notifications/presentation/cubit/notification_cubit.dart';
 import '../widgets/crm_app_header.dart';
 import '../widgets/crm_module_card.dart';
 import 'module_placeholder_screen.dart';
@@ -40,6 +44,8 @@ class UserDashboardScreen extends StatelessWidget {
   final AttendanceRepository? attendanceRepository;
   final EmployeeKpiRepository? employeeKpiRepository;
   final InventoryRepository? inventoryRepository;
+  final ApprovalRepository? approvalRepository;
+  final NotificationCubit? notificationCubit;
 
   const UserDashboardScreen({
     super.key,
@@ -55,6 +61,8 @@ class UserDashboardScreen extends StatelessWidget {
     this.attendanceRepository,
     this.employeeKpiRepository,
     this.inventoryRepository,
+    this.approvalRepository,
+    this.notificationCubit,
   });
 
   void _openModule(BuildContext context, CrmModule module) {
@@ -133,6 +141,15 @@ class UserDashboardScreen extends StatelessWidget {
       }
 
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+    } else if (module == CrmModule.approvalsNotifications) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ApprovalsWorkspaceScreen(
+            user: user,
+            repository: approvalRepository ?? MockApprovalRepository(),
+          ),
+        ),
+      );
     } else {
       Navigator.of(context).push(
         MaterialPageRoute(
@@ -164,7 +181,12 @@ class UserDashboardScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            CrmAppHeader(user: user, onLogout: onLogout),
+            CrmAppHeader(
+              user: user,
+              onLogout: onLogout,
+              notificationCubit: notificationCubit,
+              approvalRepository: approvalRepository,
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(

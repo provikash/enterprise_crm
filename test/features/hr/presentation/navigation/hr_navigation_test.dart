@@ -8,6 +8,9 @@ import 'package:enterprise_crm/features/calling/data/repositories/mock_lead_call
 import 'package:enterprise_crm/features/calling/data/repositories/mock_lead_follow_up_repository.dart';
 import 'package:enterprise_crm/features/dashboard/presentation/screens/admin_dashboard_screen.dart';
 import 'package:enterprise_crm/features/dashboard/presentation/screens/user_dashboard_screen.dart';
+import 'package:enterprise_crm/features/hr/data/repositories/mock_attendance_repository.dart';
+import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_document_repository.dart';
+import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_kpi_repository.dart';
 import 'package:enterprise_crm/features/hr/data/repositories/mock_employee_repository.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/add_employee_screen.dart';
 import 'package:enterprise_crm/features/hr/presentation/screens/edit_employee_screen.dart';
@@ -22,9 +25,15 @@ import '../../../../helpers/mock_auth_test_fixtures.dart';
 
 void main() {
   late MockEmployeeRepository repository;
+  late MockEmployeeDocumentRepository documentRepository;
+  late MockAttendanceRepository attendanceRepository;
+  late MockEmployeeKpiRepository kpiRepository;
 
   setUp(() {
     repository = MockEmployeeRepository();
+    documentRepository = MockEmployeeDocumentRepository();
+    attendanceRepository = MockAttendanceRepository();
+    kpiRepository = MockEmployeeKpiRepository();
   });
 
   Widget buildAdminApp({
@@ -40,6 +49,9 @@ void main() {
         onLogout: () {},
         onOpenLeadManagement: () {},
         employeeRepository: repo ?? repository,
+        employeeDocumentRepository: documentRepository,
+        attendanceRepository: attendanceRepository,
+        employeeKpiRepository: kpiRepository,
       ),
     );
   }
@@ -61,6 +73,9 @@ void main() {
         callActivityRepository: MockLeadCallActivityRepository(),
         leadFollowUpRepository: MockLeadFollowUpRepository(),
         employeeRepository: repo ?? repository,
+        employeeDocumentRepository: documentRepository,
+        attendanceRepository: attendanceRepository,
+        employeeKpiRepository: kpiRepository,
       ),
     );
   }

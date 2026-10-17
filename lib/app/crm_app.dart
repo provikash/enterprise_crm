@@ -37,6 +37,11 @@ import '../features/leads/presentation/widgets/lead_export_dialog.dart';
 import '../features/payroll/presentation/navigation/payroll_routes.dart';
 import '../features/payroll/configuration/domain/payroll_configuration_repository.dart';
 import '../features/payroll/operations/domain/payroll_operations_repository.dart';
+import '../features/approvals/domain/repositories/approval_repository.dart';
+import '../features/approvals/data/repositories/mock_approval_repository.dart';
+import '../features/notifications/data/repositories/mock_notification_repository.dart';
+import '../features/notifications/domain/repositories/notification_repository.dart';
+import '../features/notifications/presentation/cubit/notification_cubit.dart';
 
 /// Top-level application widget for the Enterprise CRM.
 class CrmApp extends StatefulWidget {
@@ -57,6 +62,8 @@ class CrmApp extends StatefulWidget {
   final PayrollOperationsRepository? payrollOperationsRepository;
   final PayrollConfigurationRepository? payrollConfigurationRepository;
   final HrPayrollDependencies? hrPayrollDependencies;
+  final ApprovalRepository? approvalRepository;
+  final NotificationRepository? notificationRepository;
 
   const CrmApp({
     super.key,
@@ -77,6 +84,8 @@ class CrmApp extends StatefulWidget {
     this.payrollOperationsRepository,
     this.payrollConfigurationRepository,
     this.hrPayrollDependencies,
+    this.approvalRepository,
+    this.notificationRepository,
   }) : assert(
          authRepository == null || userManagementRepository != null,
          'userManagementRepository must be provided when authRepository is enabled',
@@ -124,6 +133,17 @@ class _CrmAppState extends State<CrmApp> {
   PayrollOperationsRepository? get _payrollOperationsRepository =>
       widget.payrollOperationsRepository ??
       widget.hrPayrollDependencies?.payrollOperations;
+  late final ApprovalRepository _defaultApprovalRepository =
+      MockApprovalRepository();
+  ApprovalRepository get _approvalRepository =>
+      widget.approvalRepository ?? _defaultApprovalRepository;
+
+  late final NotificationRepository _defaultNotificationRepository =
+      MockNotificationRepository();
+  NotificationRepository get _notificationRepository =>
+      widget.notificationRepository ?? _defaultNotificationRepository;
+  late final NotificationCubit _notificationCubit =
+      NotificationCubit(_notificationRepository);
 
   @override
   void initState() {
@@ -147,6 +167,7 @@ class _CrmAppState extends State<CrmApp> {
   @override
   void dispose() {
     _authCubit?.close();
+    _notificationCubit.close();
     super.dispose();
   }
 
@@ -159,7 +180,9 @@ class _CrmAppState extends State<CrmApp> {
         value: _authCubit!,
         child: BlocConsumer<AuthCubit, AuthState>(
           listener: (context, state) {
-            if (state is AuthUnauthenticated) {
+            if (state is AuthAuthenticated) {
+              _notificationCubit.watchNotifications(state.user.id);
+            } else if (state is AuthUnauthenticated) {
               _navigatorKey.currentState?.popUntil((route) => route.isFirst);
             }
           },
@@ -177,6 +200,8 @@ class _CrmAppState extends State<CrmApp> {
                     employeeDocumentRepository: _employeeDocumentRepository,
                     attendanceRepository: _attendanceRepository,
                     employeeKpiRepository: _employeeKpiRepository,
+                    approvalRepository: _approvalRepository,
+                    notificationCubit: _notificationCubit,
                     onOpenLeadManagement: () {
                       _navigatorKey.currentState?.push(
                         MaterialPageRoute(
@@ -204,6 +229,8 @@ class _CrmAppState extends State<CrmApp> {
                     attendanceRepository: _attendanceRepository,
                     employeeKpiRepository: _employeeKpiRepository,
                     inventoryRepository: widget.inventoryRepository!,
+                    approvalRepository: _approvalRepository,
+                    notificationCubit: _notificationCubit,
                   );
                 }
               case AuthUnauthenticated():
@@ -319,6 +346,19 @@ class _CrmAppState extends State<CrmApp> {
         child: app,
       );
     }
+
+    app = RepositoryProvider<ApprovalRepository>.value(
+      value: _approvalRepository,
+      child: app,
+    );
+
+    app = RepositoryProvider<NotificationRepository>.value(
+      value: _notificationRepository,
+      child: BlocProvider<NotificationCubit>.value(
+        value: _notificationCubit,
+        child: app,
+      ),
+    );
 
     return RepositoryProvider<LeadRepository>.value(
       value: widget.leadRepository,

@@ -54,6 +54,14 @@ abstract final class CrmPermissions {
   // Vendor Management
   static const String vendorView = 'vendor.view';
 
+  // Approvals & Notifications
+  static const String approvalsView = 'approvals.view';
+  static const String approvalsAction = 'approvals.action';
+  static const String approvalsSubmit = 'approvals.submit';
+  static const String approvalsExport = 'approvals.export';
+  static const String notificationsView = 'notifications.view';
+  static const String notificationsManage = 'notifications.manage';
+
   /// Canonical mapping of permission identifiers to their owning CRM modules.
   static const Map<String, CrmModule> _moduleByPermission = {
     leadViewAssigned: CrmModule.leadManagement,
@@ -93,6 +101,12 @@ abstract final class CrmPermissions {
     inventoryExportXlsx: CrmModule.inventory,
     purchaseView: CrmModule.purchase,
     vendorView: CrmModule.vendorManagement,
+    approvalsView: CrmModule.approvalsNotifications,
+    approvalsAction: CrmModule.approvalsNotifications,
+    approvalsSubmit: CrmModule.approvalsNotifications,
+    approvalsExport: CrmModule.approvalsNotifications,
+    notificationsView: CrmModule.approvalsNotifications,
+    notificationsManage: CrmModule.approvalsNotifications,
   };
 
   /// Returns whether [permission] is a recognized permission identifier.

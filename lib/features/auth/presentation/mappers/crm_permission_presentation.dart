@@ -40,6 +40,12 @@ abstract final class CrmPermissionPresentation {
     CrmPermissions.inventoryExportXlsx: 'Export inventory (Excel)',
     CrmPermissions.purchaseView: 'View purchases',
     CrmPermissions.vendorView: 'View vendors',
+    CrmPermissions.approvalsView: 'View approvals',
+    CrmPermissions.approvalsAction: 'Approve or reject requests',
+    CrmPermissions.approvalsSubmit: 'Submit approval requests',
+    CrmPermissions.approvalsExport: 'Export approval history',
+    CrmPermissions.notificationsView: 'View notifications',
+    CrmPermissions.notificationsManage: 'Manage notifications',
   };
 
   /// Returns the human-readable display label for [permissionId].

@@ -24,7 +24,7 @@ class InventoryImportPreviewBuilder {
   }) {
     final candidateRows = <InventoryImportPreviewRow>[];
     final allDefinitions = [
-      if (customFieldDefinitions != null) ...customFieldDefinitions,
+      ...?customFieldDefinitions,
       ...mapping.stagedCustomFieldDefinitions,
     ];
 

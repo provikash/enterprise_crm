@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'app/crm_app.dart';
 import 'app/bootstrap/mock_hr_payroll_dependencies.dart';
+import 'features/approvals/data/repositories/mock_approval_repository.dart';
+import 'features/notifications/data/repositories/mock_notification_repository.dart';
+import 'features/notifications/domain/services/notification_dispatcher.dart';
 import 'features/auth/data/repositories/mock_auth_repository.dart';
 import 'features/auth/data/repositories/mock_user_lead_link_repository.dart';
 import 'features/calling/data/repositories/mock_lead_call_activity_repository.dart';
@@ -24,6 +27,15 @@ void main() {
   final inventoryRepository = MockInventoryRepository();
   final hrPayrollDependencies = createMockHrPayrollDependencies();
 
+  final notificationRepository = MockNotificationRepository();
+  final notificationDispatcher = DefaultNotificationDispatcher(
+    notificationRepository,
+  );
+  final approvalRepository = MockApprovalRepository(
+    null,
+    notificationDispatcher,
+  );
+
   runApp(
     CrmApp(
       leadRepository: leadRepository,
@@ -34,6 +46,8 @@ void main() {
       leadFollowUpRepository: leadFollowUpRepository,
       inventoryRepository: inventoryRepository,
       hrPayrollDependencies: hrPayrollDependencies,
+      approvalRepository: approvalRepository,
+      notificationRepository: notificationRepository,
     ),
   );
 }

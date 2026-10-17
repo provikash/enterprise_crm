@@ -93,12 +93,19 @@ void main() {
       expect(CrmPermissions.permissionsFor(CrmModule.dispatch), isEmpty);
       expect(
         CrmPermissions.permissionsFor(CrmModule.approvalsNotifications),
-        isEmpty,
+        {
+          CrmPermissions.approvalsView,
+          CrmPermissions.approvalsAction,
+          CrmPermissions.approvalsSubmit,
+          CrmPermissions.approvalsExport,
+          CrmPermissions.notificationsView,
+          CrmPermissions.notificationsManage,
+        },
       );
     });
 
     test('allKnown contains every registered permission', () {
-      expect(CrmPermissions.allKnown.length, 33);
+      expect(CrmPermissions.allKnown.length, 43);
       expect(
         CrmPermissions.permissionsFor(CrmModule.hrPayroll),
         containsAll({

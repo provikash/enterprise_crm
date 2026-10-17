@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
 
+import '../../../approvals/domain/repositories/approval_repository.dart';
 import '../../../auth/domain/entities/current_user.dart';
+import '../../../notifications/presentation/cubit/notification_cubit.dart';
+import '../../../notifications/presentation/widgets/notification_bell_button.dart';
 
 /// Simplified application header displayed across authenticated CRM dashboards.
 class CrmAppHeader extends StatelessWidget {
   final CurrentUser user;
   final VoidCallback onLogout;
+  final NotificationCubit? notificationCubit;
+  final ApprovalRepository? approvalRepository;
 
-  const CrmAppHeader({super.key, required this.user, required this.onLogout});
+  const CrmAppHeader({
+    super.key,
+    required this.user,
+    required this.onLogout,
+    this.notificationCubit,
+    this.approvalRepository,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -59,10 +70,20 @@ class CrmAppHeader extends StatelessWidget {
                 ),
               ],
 
-              // Spacer pushing logout to the far right edge
+              // Spacer pushing actions to the far right edge
               const Spacer(),
 
-              // Far Right: Only Logout
+              if (notificationCubit != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: NotificationBellButton(
+                    user: user,
+                    cubit: notificationCubit,
+                    approvalRepository: approvalRepository,
+                  ),
+                ),
+
+              // Far Right: Logout
               IconButton(
                 key: const Key('crm_header_logout_button'),
                 icon: const Icon(Icons.logout),
