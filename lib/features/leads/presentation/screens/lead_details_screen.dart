@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../notifications/domain/services/notification_dispatcher.dart';
 import '../../domain/entities/lead.dart';
 import '../../domain/repositories/lead_repository.dart';
 import '../bloc/lead_assignment_cubit.dart';
@@ -124,12 +125,20 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
       return;
     }
 
+    NotificationDispatcher? dispatcher;
+    try {
+      dispatcher = context.read<NotificationDispatcher>();
+    } catch (_) {}
+
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
         return BlocProvider(
-          create: (_) => LeadAssignmentCubit(repo!)..loadAssignableUsers(),
+          create: (_) => LeadAssignmentCubit(
+            repo!,
+            notificationDispatcher: dispatcher,
+          )..loadAssignableUsers(),
           child: _AssignLeadDialog(lead: lead),
         );
       },
@@ -154,12 +163,20 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
       return;
     }
 
+    NotificationDispatcher? dispatcher;
+    try {
+      dispatcher = context.read<NotificationDispatcher>();
+    } catch (_) {}
+
     final result = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
         return BlocProvider(
-          create: (_) => LeadReassignmentCubit(repo!)..loadAssignableUsers(),
+          create: (_) => LeadReassignmentCubit(
+            repo!,
+            notificationDispatcher: dispatcher,
+          )..loadAssignableUsers(),
           child: _ReassignLeadDialog(lead: lead),
         );
       },

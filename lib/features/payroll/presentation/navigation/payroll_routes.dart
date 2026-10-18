@@ -4,6 +4,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/config/app_config.dart';
 import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
+import '../../../approvals/domain/services/approval_bridge.dart';
+import '../../../notifications/domain/services/notification_dispatcher.dart';
 import '../../configuration/domain/payroll_configuration_repository.dart';
 import '../../configuration/presentation/bloc/payroll_configuration_cubit.dart';
 import '../../configuration/presentation/screens/payroll_configuration_screen.dart';
@@ -55,7 +57,22 @@ abstract final class PayrollRoutes {
     } else if (_workspace(routeName) case final workspace?
         when _workspaceEnabled(config, workspace)) {
       screen = BlocProvider(
-        create: (_) => PayrollOperationsCubit(operationsRepository)..load(),
+        create: (routeContext) {
+          ApprovalBridge? approvalBridge;
+          try {
+            approvalBridge = routeContext.read<ApprovalBridge>();
+          } catch (_) {}
+          NotificationDispatcher? notificationDispatcher;
+          try {
+            notificationDispatcher =
+                routeContext.read<NotificationDispatcher>();
+          } catch (_) {}
+          return PayrollOperationsCubit(
+            operationsRepository,
+            approvalBridge: approvalBridge,
+            notificationDispatcher: notificationDispatcher,
+          )..load();
+        },
         child: PayrollOperationsScreen(
           user: user,
           workspace: workspace,

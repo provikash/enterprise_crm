@@ -1,4 +1,8 @@
 import '../../core/network/api_client.dart';
+import '../../features/approvals/data/repositories/backend_approval_repository.dart';
+import '../../features/approvals/data/services/default_approval_bridge.dart';
+import '../../features/approvals/domain/repositories/approval_repository.dart';
+import '../../features/approvals/domain/services/approval_bridge.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/repositories/user_lead_link_repository.dart';
 import '../../features/calling/domain/repositories/lead_call_activity_repository.dart';
@@ -6,6 +10,9 @@ import '../../features/calling/domain/repositories/lead_follow_up_repository.dar
 import '../../features/dispatch/domain/repositories/dispatch_repository.dart';
 import '../../features/inventory/domain/repositories/inventory_repository.dart';
 import '../../features/leads/domain/repositories/lead_repository.dart';
+import '../../features/notifications/data/repositories/backend_notification_repository.dart';
+import '../../features/notifications/domain/repositories/notification_repository.dart';
+import '../../features/notifications/domain/services/notification_dispatcher.dart';
 import '../../features/purchase/domain/repositories/purchase_repository.dart';
 import '../../features/user_management/domain/repositories/user_management_repository.dart';
 import '../../features/vendors/domain/repositories/vendor_repository.dart';
@@ -36,7 +43,26 @@ CrmDependencies createApiCrmDependencies({
   required PurchaseRepository purchaseRepository,
   required VendorRepository vendorRepository,
   required HrPayrollDependencies hrPayrollDependencies,
+  ApprovalRepository? approvalRepository,
+  NotificationRepository? notificationRepository,
+  ApprovalBridge? approvalBridge,
+  NotificationDispatcher? notificationDispatcher,
 }) {
+  final resolvedNotificationRepo =
+      notificationRepository ??
+      BackendNotificationRepository(dio: apiClient.dio);
+  final resolvedNotificationDispatcher =
+      notificationDispatcher ??
+      DefaultNotificationDispatcher(resolvedNotificationRepo);
+  final resolvedApprovalRepo =
+      approvalRepository ?? BackendApprovalRepository(dio: apiClient.dio);
+  final resolvedApprovalBridge =
+      approvalBridge ??
+      DefaultApprovalBridge(
+        repository: resolvedApprovalRepo,
+        notificationDispatcher: resolvedNotificationDispatcher,
+      );
+
   return CrmDependencies(
     leadRepository: leadRepository,
     authRepository: authRepository,
@@ -49,5 +75,9 @@ CrmDependencies createApiCrmDependencies({
     purchaseRepository: purchaseRepository,
     vendorRepository: vendorRepository,
     hrPayrollDependencies: hrPayrollDependencies,
+    approvalRepository: resolvedApprovalRepo,
+    notificationRepository: resolvedNotificationRepo,
+    approvalBridge: resolvedApprovalBridge,
+    notificationDispatcher: resolvedNotificationDispatcher,
   );
 }

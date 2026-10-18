@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../notifications/domain/services/notification_dispatcher.dart';
 import '../../domain/entities/lead.dart';
 import '../../domain/repositories/lead_repository.dart';
 import '../bloc/lead_assignment_cubit.dart';
@@ -20,8 +21,16 @@ class BulkAssignLeadsDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    NotificationDispatcher? dispatcher;
+    try {
+      dispatcher = context.read<NotificationDispatcher>();
+    } catch (_) {}
+
     return BlocProvider(
-      create: (_) => LeadAssignmentCubit(repository)..loadAssignableUsers(),
+      create: (_) => LeadAssignmentCubit(
+        repository,
+        notificationDispatcher: dispatcher,
+      )..loadAssignableUsers(),
       child: _BulkAssignDialogContent(leads: leads),
     );
   }

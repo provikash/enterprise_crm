@@ -31,6 +31,10 @@ void main() {
       purchaseRepository: dependencies.purchaseRepository,
       vendorRepository: dependencies.vendorRepository,
       hrPayrollDependencies: dependencies.hrPayrollDependencies,
+      approvalRepository: dependencies.approvalRepository,
+      notificationRepository: dependencies.notificationRepository,
+      approvalBridge: dependencies.approvalBridge,
+      notificationDispatcher: dependencies.notificationDispatcher,
     ),
   );
 }

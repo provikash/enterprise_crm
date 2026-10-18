@@ -1,5 +1,12 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../approvals/domain/entities/approval_priority.dart';
+import '../../../../approvals/domain/services/approval_bridge.dart';
+import '../../../../auth/domain/entities/account_type.dart';
+import '../../../../auth/domain/entities/crm_module.dart';
+import '../../../../auth/domain/entities/current_user.dart';
+import '../../../../notifications/domain/entities/notification_priority.dart';
+import '../../../../notifications/domain/services/notification_dispatcher.dart';
 import '../../../shared/domain/money.dart';
 import '../../domain/payroll_operations.dart';
 import '../../domain/payroll_operations_repository.dart';
@@ -33,9 +40,16 @@ class PayrollOperationsReady extends PayrollOperationsState {
 
 class PayrollOperationsCubit extends Cubit<PayrollOperationsState> {
   final PayrollOperationsRepository _repository;
+  final ApprovalBridge? _approvalBridge;
+  final NotificationDispatcher? _notificationDispatcher;
 
-  PayrollOperationsCubit(this._repository)
-    : super(const PayrollOperationsLoading());
+  PayrollOperationsCubit(
+    this._repository, {
+    ApprovalBridge? approvalBridge,
+    NotificationDispatcher? notificationDispatcher,
+  })  : _approvalBridge = approvalBridge,
+        _notificationDispatcher = notificationDispatcher,
+        super(const PayrollOperationsLoading());
 
   Future<void> load() async {
     emit(const PayrollOperationsLoading());
@@ -93,7 +107,44 @@ class PayrollOperationsCubit extends Cubit<PayrollOperationsState> {
   );
 
   Future<void> submit(String runId, String actor) => _mutate(
-    () => _repository.submitRun(runId, actor),
+    () async {
+      final res = await _repository.submitRun(runId, actor);
+      final bridge = _approvalBridge;
+      if (bridge != null) {
+        try {
+          await bridge.submitForApproval(
+            module: CrmModule.hrPayroll,
+            entityType: 'payroll_run',
+            entityId: runId,
+            entityTitle: 'Monthly Pay Run ($runId)',
+            requester: CurrentUser(
+              id: actor,
+              displayName: actor,
+              accountType: AccountType.admin,
+            ),
+            priority: ApprovalPriority.high,
+            metadata: {'runId': runId, 'submittedBy': actor},
+          );
+        } catch (_) {
+          // Non-blocking bridge execution
+        }
+      }
+      final dispatcher = _notificationDispatcher;
+      if (dispatcher != null) {
+        try {
+          await dispatcher.notifySystemAlert(
+            recipientUserId: actor,
+            title: 'Pay Run Submitted: $runId',
+            message: 'Monthly pay run $runId has been submitted for review.',
+            priority: NotificationPriority.info,
+            module: CrmModule.hrPayroll,
+          );
+        } catch (_) {
+          // Non-blocking notification dispatch
+        }
+      }
+      return res;
+    },
     'Pay run submitted for review.',
   );
 
@@ -106,7 +157,24 @@ class PayrollOperationsCubit extends Cubit<PayrollOperationsState> {
   );
 
   Future<void> releasePayment(String batchId, String actor) => _mutate(
-    () => _repository.releasePayment(batchId, actor),
+    () async {
+      final res = await _repository.releasePayment(batchId, actor);
+      final dispatcher = _notificationDispatcher;
+      if (dispatcher != null) {
+        try {
+          await dispatcher.notifySystemAlert(
+            recipientUserId: actor,
+            title: 'Payroll Disbursed: $batchId',
+            message: 'Payment batch $batchId was released and marked as paid.',
+            priority: NotificationPriority.success,
+            module: CrmModule.hrPayroll,
+          );
+        } catch (_) {
+          // Non-blocking notification dispatch
+        }
+      }
+      return res;
+    },
     'Payment released and pay run marked paid.',
   );
 

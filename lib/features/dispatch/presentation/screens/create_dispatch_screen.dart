@@ -7,6 +7,7 @@ import '../../domain/entities/dispatch_item.dart';
 import '../../domain/inputs/create_dispatch_input.dart';
 import '../../domain/policies/dispatch_access_policy.dart';
 import '../../domain/repositories/dispatch_repository.dart';
+import '../../../notifications/domain/services/notification_dispatcher.dart';
 import '../bloc/create_dispatch_cubit.dart';
 import '../bloc/create_dispatch_state.dart';
 
@@ -14,11 +15,13 @@ import '../bloc/create_dispatch_state.dart';
 class CreateDispatchScreen extends StatelessWidget {
   final CurrentUser user;
   final DispatchRepository repository;
+  final NotificationDispatcher? notificationDispatcher;
 
   const CreateDispatchScreen({
     super.key,
     required this.user,
     required this.repository,
+    this.notificationDispatcher,
   });
 
   @override
@@ -27,8 +30,19 @@ class CreateDispatchScreen extends StatelessWidget {
       return const AccessRestrictedScreen();
     }
 
+    NotificationDispatcher? dispatcher = notificationDispatcher;
+    if (dispatcher == null) {
+      try {
+        dispatcher = context.read<NotificationDispatcher>();
+      } catch (_) {}
+    }
+
     return BlocProvider<CreateDispatchCubit>(
-      create: (_) => CreateDispatchCubit(repository),
+      create: (_) => CreateDispatchCubit(
+        repository,
+        notificationDispatcher: dispatcher,
+        currentUser: user,
+      ),
       child: const _CreateDispatchView(),
     );
   }

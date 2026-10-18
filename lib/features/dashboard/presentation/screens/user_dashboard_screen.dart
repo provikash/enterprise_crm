@@ -32,6 +32,10 @@ import '../../../purchase/presentation/screens/purchase_workspace_screen.dart';
 import '../../../vendors/data/repositories/mock_vendor_repository.dart';
 import '../../../vendors/domain/repositories/vendor_repository.dart';
 import '../../../vendors/presentation/screens/vendor_workspace_screen.dart';
+import '../../../approvals/data/repositories/mock_approval_repository.dart';
+import '../../../approvals/domain/repositories/approval_repository.dart';
+import '../../../approvals/presentation/screens/approvals_workspace_screen.dart';
+import '../../../notifications/presentation/cubit/notification_cubit.dart';
 import '../widgets/crm_app_header.dart';
 import '../widgets/crm_module_card.dart';
 import 'module_placeholder_screen.dart';
@@ -56,6 +60,8 @@ class UserDashboardScreen extends StatelessWidget {
   final DispatchRepository? dispatchRepository;
   final PurchaseRepository? purchaseRepository;
   final VendorRepository? vendorRepository;
+  final ApprovalRepository? approvalRepository;
+  final NotificationCubit? notificationCubit;
 
   const UserDashboardScreen({
     super.key,
@@ -74,6 +80,8 @@ class UserDashboardScreen extends StatelessWidget {
     this.dispatchRepository,
     this.purchaseRepository,
     this.vendorRepository,
+    this.approvalRepository,
+    this.notificationCubit,
   });
 
   void _openModule(BuildContext context, CrmModule module) {
@@ -176,6 +184,15 @@ class UserDashboardScreen extends StatelessWidget {
           ),
         ),
       );
+    } else if (module == CrmModule.approvalsNotifications) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ApprovalsWorkspaceScreen(
+            user: user,
+            repository: approvalRepository ?? MockApprovalRepository(),
+          ),
+        ),
+      );
     } else {
       Navigator.of(context).push(
         MaterialPageRoute(
@@ -206,7 +223,12 @@ class UserDashboardScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            CrmAppHeader(user: user, onLogout: onLogout),
+            CrmAppHeader(
+              user: user,
+              onLogout: onLogout,
+              notificationCubit: notificationCubit,
+              approvalRepository: approvalRepository,
+            ),
             Expanded(
               child: SingleChildScrollView(
                 padding: EdgeInsets.symmetric(

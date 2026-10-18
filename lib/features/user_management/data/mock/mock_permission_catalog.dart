@@ -297,6 +297,37 @@ abstract final class MockPermissionCatalog {
       module: CrmModule.dispatch,
       displayName: 'Download Dispatch Bill (PDF)',
     ),
+    // Approvals & Notifications
+    MockPermissionDefinition(
+      id: CrmPermissions.approvalsView,
+      module: CrmModule.approvalsNotifications,
+      displayName: 'View Approvals',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.approvalsAction,
+      module: CrmModule.approvalsNotifications,
+      displayName: 'Approve or Reject Requests',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.approvalsSubmit,
+      module: CrmModule.approvalsNotifications,
+      displayName: 'Submit Approval Requests',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.approvalsExport,
+      module: CrmModule.approvalsNotifications,
+      displayName: 'Export Approval History',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.notificationsView,
+      module: CrmModule.approvalsNotifications,
+      displayName: 'View Notifications',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.notificationsManage,
+      module: CrmModule.approvalsNotifications,
+      displayName: 'Manage Notifications',
+    ),
   ];
 
   /// Returns whether [permissionId] is a recognized permission identifier.

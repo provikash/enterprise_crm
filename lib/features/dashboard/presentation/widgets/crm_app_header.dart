@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../approvals/domain/repositories/approval_repository.dart';
 import '../../../auth/domain/entities/current_user.dart';
 import '../../../../core/theme/theme_mode_controller.dart';
 import '../../../user_management/domain/repositories/user_management_repository.dart';
 import 'account_profile_dialog.dart';
+import '../../../notifications/presentation/cubit/notification_cubit.dart';
+import '../../../notifications/presentation/widgets/notification_bell_button.dart';
 
 /// Application header displayed across authenticated CRM dashboards.
 ///
@@ -14,12 +17,16 @@ class CrmAppHeader extends StatelessWidget {
   final CurrentUser user;
   final VoidCallback onLogout;
   final UserManagementRepository? userManagementRepository;
+  final NotificationCubit? notificationCubit;
+  final ApprovalRepository? approvalRepository;
 
   const CrmAppHeader({
     super.key,
     required this.user,
     required this.onLogout,
     this.userManagementRepository,
+    this.notificationCubit,
+    this.approvalRepository,
   });
 
   void _openAccountDialog(BuildContext context) {
@@ -79,6 +86,16 @@ class CrmAppHeader extends StatelessWidget {
                 ),
                 const SizedBox(width: 10),
               ],
+
+              if (notificationCubit != null)
+                Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: NotificationBellButton(
+                    user: user,
+                    cubit: notificationCubit!,
+                    approvalRepository: approvalRepository,
+                  ),
+                ),
 
               // Dark / Light Theme Toggle Button
               ValueListenableBuilder<ThemeMode>(

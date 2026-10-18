@@ -7,6 +7,8 @@ import '../../domain/entities/purchase_order_item.dart';
 import '../../domain/inputs/create_purchase_order_input.dart';
 import '../../domain/policies/purchase_access_policy.dart';
 import '../../domain/repositories/purchase_repository.dart';
+import '../../../approvals/domain/services/approval_bridge.dart';
+import '../../../notifications/domain/services/notification_dispatcher.dart';
 import '../bloc/create_purchase_order_cubit.dart';
 import '../bloc/create_purchase_order_state.dart';
 
@@ -14,11 +16,15 @@ import '../bloc/create_purchase_order_state.dart';
 class CreatePurchaseOrderScreen extends StatelessWidget {
   final CurrentUser user;
   final PurchaseRepository repository;
+  final ApprovalBridge? approvalBridge;
+  final NotificationDispatcher? notificationDispatcher;
 
   const CreatePurchaseOrderScreen({
     super.key,
     required this.user,
     required this.repository,
+    this.approvalBridge,
+    this.notificationDispatcher,
   });
 
   @override
@@ -27,8 +33,27 @@ class CreatePurchaseOrderScreen extends StatelessWidget {
       return const AccessRestrictedScreen();
     }
 
+    ApprovalBridge? bridge = approvalBridge;
+    if (bridge == null) {
+      try {
+        bridge = context.read<ApprovalBridge>();
+      } catch (_) {}
+    }
+
+    NotificationDispatcher? dispatcher = notificationDispatcher;
+    if (dispatcher == null) {
+      try {
+        dispatcher = context.read<NotificationDispatcher>();
+      } catch (_) {}
+    }
+
     return BlocProvider<CreatePurchaseOrderCubit>(
-      create: (_) => CreatePurchaseOrderCubit(repository),
+      create: (_) => CreatePurchaseOrderCubit(
+        repository,
+        approvalBridge: bridge,
+        notificationDispatcher: dispatcher,
+        currentUser: user,
+      ),
       child: const _CreatePurchaseOrderView(),
     );
   }

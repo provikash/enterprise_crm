@@ -1,5 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../auth/domain/entities/crm_module.dart';
+import '../../../notifications/domain/entities/notification_priority.dart';
+import '../../../notifications/domain/services/notification_dispatcher.dart';
 import '../../domain/entities/lead.dart';
 import '../../domain/entities/lead_assignee.dart';
 import '../../domain/entities/lead_assignment_request.dart';
@@ -9,8 +12,13 @@ import 'lead_assignment_state.dart';
 /// Cubit managing assignable user loading and lead assignment operations.
 class LeadAssignmentCubit extends Cubit<LeadAssignmentState> {
   final LeadRepository _repository;
+  final NotificationDispatcher? _notificationDispatcher;
 
-  LeadAssignmentCubit(this._repository) : super(const LeadAssignmentState());
+  LeadAssignmentCubit(
+    this._repository, {
+    NotificationDispatcher? notificationDispatcher,
+  })  : _notificationDispatcher = notificationDispatcher,
+        super(const LeadAssignmentState());
 
   /// Loads the list of assignable users from the repository.
   Future<void> loadAssignableUsers() async {
@@ -113,6 +121,26 @@ class LeadAssignmentCubit extends Cubit<LeadAssignmentState> {
         leadId: lead.id,
         assigneeId: state.selectedAssignee!.id,
       );
+
+      final dispatcher = _notificationDispatcher;
+      if (dispatcher != null) {
+        final assigneeId = state.selectedAssignee?.id;
+        if (assigneeId != null) {
+          try {
+            final leadTitle = lead.name ?? 'Lead #${lead.id}';
+            await dispatcher.notifySystemAlert(
+              recipientUserId: assigneeId,
+              title: 'New Lead Assignment: $leadTitle',
+              message: 'Lead "$leadTitle" has been assigned to you.',
+              priority: NotificationPriority.info,
+              module: CrmModule.leadManagement,
+            );
+          } catch (_) {
+            // Non-blocking notification dispatch
+          }
+        }
+      }
+
       emit(
         state.copyWith(submissionStatus: AssignmentSubmissionStatus.success),
       );
@@ -173,6 +201,25 @@ class LeadAssignmentCubit extends Cubit<LeadAssignmentState> {
         assigneeId: state.selectedAssignee!.id,
       );
       await _repository.assignLeads(request);
+
+      final dispatcher = _notificationDispatcher;
+      if (dispatcher != null) {
+        final assigneeId = state.selectedAssignee?.id;
+        if (assigneeId != null) {
+          try {
+            await dispatcher.notifySystemAlert(
+              recipientUserId: assigneeId,
+              title: 'Bulk Lead Assignment',
+              message: '${leads.length} leads have been assigned to your queue.',
+              priority: NotificationPriority.info,
+              module: CrmModule.leadManagement,
+            );
+          } catch (_) {
+            // Non-blocking notification dispatch
+          }
+        }
+      }
+
       emit(
         state.copyWith(submissionStatus: AssignmentSubmissionStatus.success),
       );

@@ -1,5 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../auth/domain/entities/crm_module.dart';
+import '../../../notifications/domain/entities/notification_priority.dart';
+import '../../../notifications/domain/services/notification_dispatcher.dart';
 import '../../domain/entities/lead.dart';
 import '../../domain/entities/lead_assignee.dart';
 import '../../domain/entities/lead_assignment_request.dart';
@@ -9,9 +12,13 @@ import 'lead_reassignment_state.dart';
 /// Cubit managing assignable user loading and single lead reassignment.
 class LeadReassignmentCubit extends Cubit<LeadReassignmentState> {
   final LeadRepository _repository;
+  final NotificationDispatcher? _notificationDispatcher;
 
-  LeadReassignmentCubit(this._repository)
-    : super(const LeadReassignmentState());
+  LeadReassignmentCubit(
+    this._repository, {
+    NotificationDispatcher? notificationDispatcher,
+  })  : _notificationDispatcher = notificationDispatcher,
+        super(const LeadReassignmentState());
 
   /// Loads the list of assignable users from the repository.
   Future<void> loadAssignableUsers() async {
@@ -157,6 +164,26 @@ class LeadReassignmentCubit extends Cubit<LeadReassignmentState> {
           reason: normalizedReason,
         ),
       );
+
+      final dispatcher = _notificationDispatcher;
+      if (dispatcher != null) {
+        final assigneeId = state.selectedAssignee?.id;
+        if (assigneeId != null) {
+          try {
+            final leadTitle = lead.name ?? 'Lead #${lead.id}';
+            await dispatcher.notifySystemAlert(
+              recipientUserId: assigneeId,
+              title: 'Lead Reassigned to You: $leadTitle',
+              message: 'Lead "$leadTitle" has been reassigned to you.${normalizedReason != null ? ' Reason: "$normalizedReason"' : ''}',
+              priority: NotificationPriority.info,
+              module: CrmModule.leadManagement,
+            );
+          } catch (_) {
+            // Non-blocking notification dispatch
+          }
+        }
+      }
+
       emit(
         state.copyWith(submissionStatus: ReassignmentSubmissionStatus.success),
       );

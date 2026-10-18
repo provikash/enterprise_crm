@@ -38,6 +38,10 @@ import '../../../user_management/presentation/screens/users_and_access_screen.da
 import '../../../vendors/data/repositories/mock_vendor_repository.dart';
 import '../../../vendors/domain/repositories/vendor_repository.dart';
 import '../../../vendors/presentation/screens/vendor_workspace_screen.dart';
+import '../../../approvals/data/repositories/mock_approval_repository.dart';
+import '../../../approvals/domain/repositories/approval_repository.dart';
+import '../../../approvals/presentation/screens/approvals_workspace_screen.dart';
+import '../../../notifications/presentation/cubit/notification_cubit.dart';
 import '../widgets/crm_app_header.dart';
 import '../widgets/crm_module_card.dart';
 import 'module_placeholder_screen.dart';
@@ -62,6 +66,8 @@ class AdminDashboardScreen extends StatelessWidget {
   final UserLeadLinkRepository? userLeadLinkRepository;
   final LeadCallActivityRepository? callActivityRepository;
   final LeadFollowUpRepository? leadFollowUpRepository;
+  final ApprovalRepository? approvalRepository;
+  final NotificationCubit? notificationCubit;
 
   const AdminDashboardScreen({
     super.key,
@@ -82,6 +88,8 @@ class AdminDashboardScreen extends StatelessWidget {
     this.userLeadLinkRepository,
     this.callActivityRepository,
     this.leadFollowUpRepository,
+    this.approvalRepository,
+    this.notificationCubit,
   });
 
   void _openModule(BuildContext context, CrmModule module) {
@@ -177,6 +185,15 @@ class AdminDashboardScreen extends StatelessWidget {
           ),
         ),
       );
+    } else if (module == CrmModule.approvalsNotifications) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ApprovalsWorkspaceScreen(
+            user: user,
+            repository: approvalRepository ?? MockApprovalRepository(),
+          ),
+        ),
+      );
     } else {
       Navigator.of(context).push(
         MaterialPageRoute(
@@ -219,6 +236,8 @@ class AdminDashboardScreen extends StatelessWidget {
               user: user,
               onLogout: onLogout,
               userManagementRepository: userManagementRepository,
+              notificationCubit: notificationCubit,
+              approvalRepository: approvalRepository,
             ),
             Expanded(
               child: SingleChildScrollView(

@@ -7,6 +7,10 @@ import '../../features/inventory/domain/repositories/inventory_repository.dart';
 import '../../features/leads/domain/repositories/lead_repository.dart';
 import '../../features/purchase/domain/repositories/purchase_repository.dart';
 import '../../features/user_management/domain/repositories/user_management_repository.dart';
+import '../../features/approvals/domain/repositories/approval_repository.dart';
+import '../../features/approvals/domain/services/approval_bridge.dart';
+import '../../features/notifications/domain/repositories/notification_repository.dart';
+import '../../features/notifications/domain/services/notification_dispatcher.dart';
 import '../../features/vendors/domain/repositories/vendor_repository.dart';
 import 'hr_payroll_dependencies.dart';
 
@@ -28,6 +32,10 @@ class CrmDependencies {
   final PurchaseRepository purchaseRepository;
   final VendorRepository vendorRepository;
   final HrPayrollDependencies hrPayrollDependencies;
+  final ApprovalRepository? approvalRepository;
+  final NotificationRepository? notificationRepository;
+  final ApprovalBridge? approvalBridge;
+  final NotificationDispatcher? notificationDispatcher;
 
   const CrmDependencies({
     required this.leadRepository,
@@ -41,5 +49,9 @@ class CrmDependencies {
     required this.purchaseRepository,
     required this.vendorRepository,
     required this.hrPayrollDependencies,
+    this.approvalRepository,
+    this.notificationRepository,
+    this.approvalBridge,
+    this.notificationDispatcher,
   });
 }
