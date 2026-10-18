@@ -19,8 +19,8 @@ class DefaultApprovalBridge implements ApprovalBridge {
   const DefaultApprovalBridge({
     required ApprovalRepository repository,
     NotificationDispatcher? notificationDispatcher,
-  })  : _repository = repository,
-        _notificationDispatcher = notificationDispatcher;
+  }) : _repository = repository,
+       _notificationDispatcher = notificationDispatcher;
 
   @override
   Future<ApprovalRequest> submitForApproval({
@@ -73,9 +73,19 @@ class DefaultApprovalBridge implements ApprovalBridge {
     required String entityId,
   }) async {
     final requests = await _repository.getApprovals();
+    final normalized = entityId.trim().toLowerCase();
     try {
       return requests.firstWhere(
-        (r) => r.entityType == entityType && r.entityId == entityId,
+        (r) =>
+            r.entityType.toLowerCase() == entityType.toLowerCase() &&
+            (r.entityId.trim().toLowerCase() == normalized ||
+                r.id.trim().toLowerCase() == normalized ||
+                (r.metadata['poNumber']?.toString().trim().toLowerCase() ==
+                    normalized) ||
+                (r.metadata['po_number']?.toString().trim().toLowerCase() ==
+                    normalized) ||
+                (r.metadata['vendorId']?.toString().trim().toLowerCase() ==
+                    normalized)),
       );
     } catch (_) {
       return null;

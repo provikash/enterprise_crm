@@ -98,10 +98,29 @@ class MockNotificationStore {
     }
   }
 
+  bool _matchesRecipient(String notificationRecipient, String queryRecipient) {
+    if (notificationRecipient == queryRecipient) return true;
+    if ((notificationRecipient == 'usr_admin' && queryRecipient == 'admin') ||
+        (notificationRecipient == 'admin' && queryRecipient == 'usr_admin')) {
+      return true;
+    }
+    if ((notificationRecipient == 'usr_standard' && queryRecipient == 'user') ||
+        (notificationRecipient == 'user' && queryRecipient == 'usr_standard')) {
+      return true;
+    }
+    if ((notificationRecipient == 'usr_buyer' && queryRecipient == 'buyer') ||
+        (notificationRecipient == 'buyer' && queryRecipient == 'usr_buyer')) {
+      return true;
+    }
+    return false;
+  }
+
   /// Returns a stream of notifications for a specific recipient user.
   Stream<List<CrmNotification>> watchNotifications(String recipientUserId) {
     return _streamController.stream.map(
-      (list) => list.where((n) => n.recipientUserId == recipientUserId).toList(),
+      (list) => list
+          .where((n) => _matchesRecipient(n.recipientUserId, recipientUserId))
+          .toList(),
     );
   }
 
@@ -112,7 +131,7 @@ class MockNotificationStore {
     NotificationCategory? category,
   }) {
     return _notifications.where((n) {
-      if (n.recipientUserId != recipientUserId) return false;
+      if (!_matchesRecipient(n.recipientUserId, recipientUserId)) return false;
       if (unreadOnly == true && n.isRead) return false;
       if (category != null && n.category != category) return false;
       return true;
@@ -122,14 +141,16 @@ class MockNotificationStore {
   /// Calculates the unread notification count for a user.
   int getUnreadCount(String recipientUserId) {
     return _notifications
-        .where((n) => n.recipientUserId == recipientUserId && !n.isRead)
+        .where(
+          (n) => _matchesRecipient(n.recipientUserId, recipientUserId) && !n.isRead,
+        )
         .length;
   }
 
   /// Marks a specific notification as read.
   void markAsRead({required String notificationId, required String userId}) {
     final index = _notifications.indexWhere(
-      (n) => n.id == notificationId && n.recipientUserId == userId,
+      (n) => n.id == notificationId && _matchesRecipient(n.recipientUserId, userId),
     );
     if (index != -1 && !_notifications[index].isRead) {
       _notifications[index] = _notifications[index].copyWith(
@@ -145,7 +166,8 @@ class MockNotificationStore {
     var changed = false;
     final now = DateTime.now().toUtc();
     for (var i = 0; i < _notifications.length; i++) {
-      if (_notifications[i].recipientUserId == userId && !_notifications[i].isRead) {
+      if (_matchesRecipient(_notifications[i].recipientUserId, userId) &&
+          !_notifications[i].isRead) {
         _notifications[i] = _notifications[i].copyWith(
           isRead: true,
           readAt: now,
@@ -165,7 +187,8 @@ class MockNotificationStore {
   }) {
     final countBefore = _notifications.length;
     _notifications.removeWhere(
-      (n) => n.id == notificationId && n.recipientUserId == userId,
+      (n) =>
+          n.id == notificationId && _matchesRecipient(n.recipientUserId, userId),
     );
     if (_notifications.length != countBefore) {
       _notify();

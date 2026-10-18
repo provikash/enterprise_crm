@@ -83,9 +83,7 @@ class _VendorWorkspaceViewState extends State<_VendorWorkspaceView> {
   void _openAddVendor(BuildContext context) async {
     final created = await Navigator.of(context).push<bool>(
       MaterialPageRoute(
-        builder: (_) => CreateEditVendorScreen(
-          repository: widget.repository,
-        ),
+        builder: (_) => CreateEditVendorScreen(repository: widget.repository),
       ),
     );
 
@@ -133,9 +131,14 @@ class _VendorWorkspaceViewState extends State<_VendorWorkspaceView> {
         title: const Text('Delete Vendor?'),
         content: Text('Are you sure you want to remove ${vendor.companyName}?'),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+            ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Delete', style: TextStyle(color: Colors.white)),
           ),
@@ -157,7 +160,9 @@ class _VendorWorkspaceViewState extends State<_VendorWorkspaceView> {
 
     if (result == true && context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Vendor directory exported successfully.')),
+        const SnackBar(
+          content: Text('Vendor directory exported successfully.'),
+        ),
       );
     }
   }
@@ -179,20 +184,26 @@ class _VendorWorkspaceViewState extends State<_VendorWorkspaceView> {
           if (canExport)
             BlocBuilder<VendorListCubit, VendorListState>(
               builder: (context, state) {
-                final vendors = state is VendorListLoaded ? state.vendors : <VendorRecord>[];
+                final vendors = state is VendorListLoaded
+                    ? state.vendors
+                    : <VendorRecord>[];
                 if (isCompact) {
                   return IconButton(
                     key: const Key('vendor_export_button'),
                     icon: const Icon(Icons.download, size: 20),
                     tooltip: 'Export',
-                    onPressed: vendors.isEmpty ? null : () => _handleExport(context, vendors),
+                    onPressed: vendors.isEmpty
+                        ? null
+                        : () => _handleExport(context, vendors),
                   );
                 }
                 return TextButton.icon(
                   key: const Key('vendor_export_button'),
                   icon: const Icon(Icons.download, size: 18),
                   label: const Text('Export'),
-                  onPressed: vendors.isEmpty ? null : () => _handleExport(context, vendors),
+                  onPressed: vendors.isEmpty
+                      ? null
+                      : () => _handleExport(context, vendors),
                 );
               },
             ),
@@ -229,12 +240,17 @@ class _VendorWorkspaceViewState extends State<_VendorWorkspaceView> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.error_outline, size: 48, color: Color(0xFFEF4444)),
+                      const Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: Color(0xFFEF4444),
+                      ),
                       const SizedBox(height: 12),
                       Text(state.message, style: const TextStyle(fontSize: 16)),
                       const SizedBox(height: 16),
                       ElevatedButton(
-                        onPressed: () => context.read<VendorListCubit>().refresh(),
+                        onPressed: () =>
+                            context.read<VendorListCubit>().refresh(),
                         child: const Text('Retry'),
                       ),
                     ],
@@ -265,8 +281,9 @@ class _VendorWorkspaceViewState extends State<_VendorWorkspaceView> {
                           VendorSummaryCards(
                             summary: state.summary,
                             selectedStatus: state.query.status,
-                            onStatusSelected: (status) =>
-                                context.read<VendorListCubit>().filterByStatus(status),
+                            onStatusSelected: (status) => context
+                                .read<VendorListCubit>()
+                                .filterByStatus(status),
                           ),
                           const SizedBox(height: 16),
 
@@ -276,10 +293,12 @@ class _VendorWorkspaceViewState extends State<_VendorWorkspaceView> {
                             searchController: _searchController,
                             onSearchChanged: (text) =>
                                 context.read<VendorListCubit>().search(text),
-                            onStatusChanged: (status) =>
-                                context.read<VendorListCubit>().filterByStatus(status),
-                            onCategoryChanged: (category) =>
-                                context.read<VendorListCubit>().filterByCategory(category),
+                            onStatusChanged: (status) => context
+                                .read<VendorListCubit>()
+                                .filterByStatus(status),
+                            onCategoryChanged: (category) => context
+                                .read<VendorListCubit>()
+                                .filterByCategory(category),
                             onClearFilters: () {
                               _searchController.clear();
                               context.read<VendorListCubit>().clearFilters();
@@ -293,35 +312,52 @@ class _VendorWorkspaceViewState extends State<_VendorWorkspaceView> {
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                side: const BorderSide(color: Color(0xFFE2E8F0)),
+                                side: const BorderSide(
+                                  color: Color(0xFFE2E8F0),
+                                ),
                               ),
                               clipBehavior: Clip.antiAlias,
                               child: VendorDataTable(
                                 vendors: state.vendors,
-                                horizontalController: _horizontalScrollController,
+                                horizontalController:
+                                    _horizontalScrollController,
                                 onView: (v) => _openVendorDetails(context, v),
-                                onEdit: canEdit ? (v) => _openEditVendor(context, v) : null,
-                                onDelete: canDelete ? (v) => _handleDelete(context, v) : null,
+                                onEdit: canEdit
+                                    ? (v) => _openEditVendor(context, v)
+                                    : null,
+                                onDelete: canDelete
+                                    ? (v) => _handleDelete(context, v)
+                                    : null,
                               ),
                             )
                           else
                             state.vendors.isEmpty
                                 ? Container(
-                                    padding: const EdgeInsets.symmetric(vertical: 40),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 40,
+                                    ),
                                     alignment: Alignment.center,
-                                    child: const Text('No vendors found matching criteria.'),
+                                    child: const Text(
+                                      'No vendors found matching criteria.',
+                                    ),
                                   )
                                 : ListView.builder(
                                     shrinkWrap: true,
-                                    physics: const NeverScrollableScrollPhysics(),
+                                    physics:
+                                        const NeverScrollableScrollPhysics(),
                                     itemCount: state.vendors.length,
                                     itemBuilder: (context, index) {
                                       final v = state.vendors[index];
                                       return VendorMobileCard(
                                         vendor: v,
-                                        onTap: () => _openVendorDetails(context, v),
-                                        onEdit: canEdit ? () => _openEditVendor(context, v) : null,
-                                        onDelete: canDelete ? () => _handleDelete(context, v) : null,
+                                        onTap: () =>
+                                            _openVendorDetails(context, v),
+                                        onEdit: canEdit
+                                            ? () => _openEditVendor(context, v)
+                                            : null,
+                                        onDelete: canDelete
+                                            ? () => _handleDelete(context, v)
+                                            : null,
                                       );
                                     },
                                   ),

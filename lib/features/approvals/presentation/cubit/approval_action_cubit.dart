@@ -1,5 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../features/auth/domain/entities/current_user.dart';
+import '../../../../features/notifications/domain/services/notification_dispatcher.dart';
+import '../../../../features/purchase/domain/entities/purchase_order_status.dart';
+import '../../../../features/purchase/domain/repositories/purchase_repository.dart';
+import '../../../../features/vendors/domain/entities/vendor_status.dart';
+import '../../../../features/vendors/domain/repositories/vendor_repository.dart';
 import '../../domain/entities/approval_action_type.dart';
 import '../../domain/entities/approval_request.dart';
 import '../../domain/policies/approvals_access_policy.dart';
@@ -10,8 +15,19 @@ import 'approval_action_state.dart';
 /// with access policy verification and strict input validation.
 class ApprovalActionCubit extends Cubit<ApprovalActionState> {
   final ApprovalRepository _repository;
+  final NotificationDispatcher? _notificationDispatcher;
+  final PurchaseRepository? _purchaseRepository;
+  final VendorRepository? _vendorRepository;
 
-  ApprovalActionCubit(this._repository) : super(const ApprovalActionInitial());
+  ApprovalActionCubit(
+    this._repository, {
+    NotificationDispatcher? notificationDispatcher,
+    PurchaseRepository? purchaseRepository,
+    VendorRepository? vendorRepository,
+  })  : _notificationDispatcher = notificationDispatcher,
+        _purchaseRepository = purchaseRepository,
+        _vendorRepository = vendorRepository,
+        super(const ApprovalActionInitial());
 
   /// Resets state back to initial idle.
   void reset() {
@@ -25,7 +41,8 @@ class ApprovalActionCubit extends Cubit<ApprovalActionState> {
     String? comment,
     ApprovalRequest? request,
   }) async {
-    if (request != null && !ApprovalsAccessPolicy.canPerformDecision(actor, request)) {
+    if (request != null &&
+        !ApprovalsAccessPolicy.canPerformDecision(actor, request)) {
       emit(
         const ApprovalActionFailure(
           'You do not have permission to approve this request.',
@@ -43,6 +60,40 @@ class ApprovalActionCubit extends Cubit<ApprovalActionState> {
         actor: actor,
         comment: comment?.trim().isNotEmpty == true ? comment!.trim() : null,
       );
+
+      // Cross-module synchronization
+      if (request != null) {
+        if (request.entityType.toLowerCase() == 'purchase_order' &&
+            _purchaseRepository != null) {
+          try {
+            await _purchaseRepository.updatePurchaseOrderStatus(
+              request.entityId,
+              PurchaseOrderStatus.approved,
+              approvedBy: actor.displayName,
+            );
+          } catch (_) {}
+        } else if (request.entityType.toLowerCase() == 'vendor' &&
+            _vendorRepository != null) {
+          try {
+            final v = await _vendorRepository.getVendorById(request.entityId);
+            if (v != null) {
+              await _vendorRepository.updateVendor(
+                v.copyWith(status: VendorStatus.active),
+              );
+            }
+          } catch (_) {}
+        }
+      }
+
+      if (_notificationDispatcher != null) {
+        try {
+          await _notificationDispatcher.notifyApprovalDecision(
+            request: updated,
+            decision: 'Approved',
+            notes: comment,
+          );
+        } catch (_) {}
+      }
 
       if (isClosed) return;
       emit(
@@ -81,7 +132,8 @@ class ApprovalActionCubit extends Cubit<ApprovalActionState> {
       return;
     }
 
-    if (request != null && !ApprovalsAccessPolicy.canPerformDecision(actor, request)) {
+    if (request != null &&
+        !ApprovalsAccessPolicy.canPerformDecision(actor, request)) {
       emit(
         const ApprovalActionFailure(
           'You do not have permission to reject this request.',
@@ -99,6 +151,30 @@ class ApprovalActionCubit extends Cubit<ApprovalActionState> {
         actor: actor,
         rejectionReason: trimmedReason,
       );
+
+      // Cross-module synchronization
+      if (request != null) {
+        if (request.entityType.toLowerCase() == 'purchase_order' &&
+            _purchaseRepository != null) {
+          try {
+            await _purchaseRepository.updatePurchaseOrderStatus(
+              request.entityId,
+              PurchaseOrderStatus.cancelled,
+              notes: 'Rejected by ${actor.displayName}: $trimmedReason',
+            );
+          } catch (_) {}
+        }
+      }
+
+      if (_notificationDispatcher != null) {
+        try {
+          await _notificationDispatcher.notifyApprovalDecision(
+            request: updated,
+            decision: 'Rejected',
+            notes: trimmedReason,
+          );
+        } catch (_) {}
+      }
 
       if (isClosed) return;
       emit(
@@ -137,7 +213,8 @@ class ApprovalActionCubit extends Cubit<ApprovalActionState> {
       return;
     }
 
-    if (request != null && !ApprovalsAccessPolicy.canPerformDecision(actor, request)) {
+    if (request != null &&
+        !ApprovalsAccessPolicy.canPerformDecision(actor, request)) {
       emit(
         const ApprovalActionFailure(
           'You do not have permission to request revision for this request.',
@@ -182,7 +259,8 @@ class ApprovalActionCubit extends Cubit<ApprovalActionState> {
     String? reason,
     ApprovalRequest? request,
   }) async {
-    if (request != null && !ApprovalsAccessPolicy.canCancelRequest(actor, request)) {
+    if (request != null &&
+        !ApprovalsAccessPolicy.canCancelRequest(actor, request)) {
       emit(
         const ApprovalActionFailure(
           'You do not have permission to cancel this request.',

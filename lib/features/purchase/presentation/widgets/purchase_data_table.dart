@@ -53,13 +53,22 @@ class _PurchaseDataTableState extends State<PurchaseDataTable> {
         label: Text('PO #', style: TextStyle(fontWeight: FontWeight.bold)),
       ),
       DataColumn(
-        label: Text('Vendor Name', style: TextStyle(fontWeight: FontWeight.bold)),
+        label: Text(
+          'Vendor Name',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       DataColumn(
-        label: Text('Order Date', style: TextStyle(fontWeight: FontWeight.bold)),
+        label: Text(
+          'Order Date',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       DataColumn(
-        label: Text('Exp. Delivery', style: TextStyle(fontWeight: FontWeight.bold)),
+        label: Text(
+          'Exp. Delivery',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       DataColumn(
         label: Text('Items', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -106,26 +115,22 @@ class _PurchaseDataTableState extends State<PurchaseDataTable> {
               ],
             ),
           ),
+          DataCell(Text(_formatDate(record.orderDate))),
           DataCell(
-            Text(_formatDate(record.orderDate)),
+            Text(
+              record.expectedDeliveryDate != null
+                  ? _formatDate(record.expectedDeliveryDate!)
+                  : '—',
+            ),
           ),
-          DataCell(
-            Text(record.expectedDeliveryDate != null
-                ? _formatDate(record.expectedDeliveryDate!)
-                : '—'),
-          ),
-          DataCell(
-            Text('${record.items.length} items'),
-          ),
+          DataCell(Text('${record.items.length} items')),
           DataCell(
             Text(
               '₹${record.totalAmount.toStringAsFixed(2)}',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
           ),
-          DataCell(
-            PurchaseStatusBadge(status: record.status),
-          ),
+          DataCell(PurchaseStatusBadge(status: record.status)),
           DataCell(
             OutlinedButton.icon(
               key: Key('purchase_view_button_${record.id}'),
@@ -134,10 +139,7 @@ class _PurchaseDataTableState extends State<PurchaseDataTable> {
               label: const Text('View'),
               style: OutlinedButton.styleFrom(
                 visualDensity: VisualDensity.compact,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               ),
             ),
           ),

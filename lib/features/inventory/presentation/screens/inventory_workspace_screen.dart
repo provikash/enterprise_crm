@@ -324,7 +324,11 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
                   controlBar,
                   const Divider(height: 1),
                   Expanded(
-                    child: _buildContent(context, state, isInsideScrollable: false),
+                    child: _buildContent(
+                      context,
+                      state,
+                      isInsideScrollable: false,
+                    ),
                   ),
                   ?pagination,
                 ],
@@ -827,17 +831,25 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
     final hasCategory = items.any((s) => s.item.category.trim().isNotEmpty);
     final hasBrand = items.any((s) => s.item.brand?.trim().isNotEmpty == true);
     final hasUnit = items.any((s) => s.item.unit.trim().isNotEmpty);
-    final hasBarcode = items.any((s) => s.item.barcode?.trim().isNotEmpty == true);
+    final hasBarcode = items.any(
+      (s) => s.item.barcode?.trim().isNotEmpty == true,
+    );
     final hasWarehouse = items.any((s) => s.item.warehouse.trim().isNotEmpty);
-    final hasBinLocation = items.any((s) => s.item.binLocation?.trim().isNotEmpty == true);
-    final hasSupplier = items.any((s) => s.item.supplier?.trim().isNotEmpty == true);
+    final hasBinLocation = items.any(
+      (s) => s.item.binLocation?.trim().isNotEmpty == true,
+    );
+    final hasSupplier = items.any(
+      (s) => s.item.supplier?.trim().isNotEmpty == true,
+    );
     final hasUnitCost = items.any((s) => s.item.unitCostInr != null);
     final hasSellingPrice = items.any((s) => s.item.sellingPriceInr != null);
     final hasQuantity = true;
     final hasReorderLevel = items.any((s) => s.item.reorderLevel != null);
     final hasMaxStock = items.any((s) => s.item.maxStock != null);
     final hasGst = items.any((s) => s.item.gstPercent != null);
-    final hasBatchNumber = items.any((s) => s.item.batchNumber?.trim().isNotEmpty == true);
+    final hasBatchNumber = items.any(
+      (s) => s.item.batchNumber?.trim().isNotEmpty == true,
+    );
     final hasExpiryDate = items.any((s) => s.item.expiryDate != null);
     final hasLastRestocked = items.any((s) => s.item.lastRestockedDate != null);
     final hasStockStatus = true;
@@ -869,7 +881,9 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
           children: [
             Checkbox(
               key: const Key('inventory_select_all_checkbox'),
-              value: items.isNotEmpty && items.every((s) => _selectedItemIds.contains(s.item.id)),
+              value:
+                  items.isNotEmpty &&
+                  items.every((s) => _selectedItemIds.contains(s.item.id)),
               tristate: true,
               side: const BorderSide(color: Colors.white, width: 1.5),
               checkColor: const Color(0xFF1A365D),
@@ -891,27 +905,66 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
       ),
       const DataColumn(label: Text('Product Name', style: headerTextStyle)),
       const DataColumn(label: Text('SKU', style: headerTextStyle)),
-      if (hasCategory) const DataColumn(label: Text('Category', style: headerTextStyle)),
-      if (hasBrand) const DataColumn(label: Text('Brand', style: headerTextStyle)),
-      if (hasUnit) const DataColumn(label: Text('Unit', style: headerTextStyle)),
-      if (hasBarcode) const DataColumn(label: Text('Barcode', style: headerTextStyle)),
-      if (hasWarehouse) const DataColumn(label: Text('Warehouse', style: headerTextStyle)),
-      if (hasBinLocation) const DataColumn(label: Text('Bin Location', style: headerTextStyle)),
-      if (hasSupplier) const DataColumn(label: Text('Supplier', style: headerTextStyle)),
-      if (hasUnitCost) const DataColumn(label: Text('Unit Cost (₹)', style: headerTextStyle), numeric: true),
-      if (hasSellingPrice) const DataColumn(label: Text('Selling Price (₹)', style: headerTextStyle), numeric: true),
-      if (hasQuantity) const DataColumn(label: Text('Quantity', style: headerTextStyle), numeric: true),
-      if (hasReorderLevel) const DataColumn(label: Text('Reorder Level', style: headerTextStyle), numeric: true),
-      if (hasMaxStock) const DataColumn(label: Text('Max Stock', style: headerTextStyle), numeric: true),
-      if (hasGst) const DataColumn(label: Text('GST (%)', style: headerTextStyle), numeric: true),
-      if (hasBatchNumber) const DataColumn(label: Text('Batch Number', style: headerTextStyle)),
-      if (hasExpiryDate) const DataColumn(label: Text('Expiry Date', style: headerTextStyle)),
-      if (hasLastRestocked) const DataColumn(label: Text('Last Restocked', style: headerTextStyle)),
-      if (hasIsActive) const DataColumn(label: Text('Active', style: headerTextStyle)),
-      if (hasStockStatus) const DataColumn(label: Text('Status', style: headerTextStyle)),
-      if (hasNotes) const DataColumn(label: Text('Notes', style: headerTextStyle)),
+      if (hasCategory)
+        const DataColumn(label: Text('Category', style: headerTextStyle)),
+      if (hasBrand)
+        const DataColumn(label: Text('Brand', style: headerTextStyle)),
+      if (hasUnit)
+        const DataColumn(label: Text('Unit', style: headerTextStyle)),
+      if (hasBarcode)
+        const DataColumn(label: Text('Barcode', style: headerTextStyle)),
+      if (hasWarehouse)
+        const DataColumn(label: Text('Warehouse', style: headerTextStyle)),
+      if (hasBinLocation)
+        const DataColumn(label: Text('Bin Location', style: headerTextStyle)),
+      if (hasSupplier)
+        const DataColumn(label: Text('Supplier', style: headerTextStyle)),
+      if (hasUnitCost)
+        const DataColumn(
+          label: Text('Unit Cost (₹)', style: headerTextStyle),
+          numeric: true,
+        ),
+      if (hasSellingPrice)
+        const DataColumn(
+          label: Text('Selling Price (₹)', style: headerTextStyle),
+          numeric: true,
+        ),
+      if (hasQuantity)
+        const DataColumn(
+          label: Text('Quantity', style: headerTextStyle),
+          numeric: true,
+        ),
+      if (hasReorderLevel)
+        const DataColumn(
+          label: Text('Reorder Level', style: headerTextStyle),
+          numeric: true,
+        ),
+      if (hasMaxStock)
+        const DataColumn(
+          label: Text('Max Stock', style: headerTextStyle),
+          numeric: true,
+        ),
+      if (hasGst)
+        const DataColumn(
+          label: Text('GST (%)', style: headerTextStyle),
+          numeric: true,
+        ),
+      if (hasBatchNumber)
+        const DataColumn(label: Text('Batch Number', style: headerTextStyle)),
+      if (hasExpiryDate)
+        const DataColumn(label: Text('Expiry Date', style: headerTextStyle)),
+      if (hasLastRestocked)
+        const DataColumn(label: Text('Last Restocked', style: headerTextStyle)),
+      if (hasIsActive)
+        const DataColumn(label: Text('Active', style: headerTextStyle)),
+      if (hasStockStatus)
+        const DataColumn(label: Text('Status', style: headerTextStyle)),
+      if (hasNotes)
+        const DataColumn(label: Text('Notes', style: headerTextStyle)),
       for (final key in sortedCustomKeys)
-        DataColumn(label: Text(_formatCustomHeader(key), style: headerTextStyle)),
+        DataColumn(
+          label: Text(_formatCustomHeader(key), style: headerTextStyle),
+        ),
       const DataColumn(label: Text('Actions', style: headerTextStyle)),
     ];
 
@@ -999,22 +1052,36 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
           ),
         if (hasBinLocation)
           DataCell(
-            Text(item.binLocation?.trim().isNotEmpty == true ? item.binLocation! : '—'),
+            Text(
+              item.binLocation?.trim().isNotEmpty == true
+                  ? item.binLocation!
+                  : '—',
+            ),
             onTap: () => _openDetails(context, item.id),
           ),
         if (hasSupplier)
           DataCell(
-            Text(item.supplier?.trim().isNotEmpty == true ? item.supplier! : '—'),
+            Text(
+              item.supplier?.trim().isNotEmpty == true ? item.supplier! : '—',
+            ),
             onTap: () => _openDetails(context, item.id),
           ),
         if (hasUnitCost)
           DataCell(
-            Text(item.unitCostInr != null ? _formatCurrency(item.unitCostInr!) : '—'),
+            Text(
+              item.unitCostInr != null
+                  ? _formatCurrency(item.unitCostInr!)
+                  : '—',
+            ),
             onTap: () => _openDetails(context, item.id),
           ),
         if (hasSellingPrice)
           DataCell(
-            Text(item.sellingPriceInr != null ? _formatCurrency(item.sellingPriceInr!) : '—'),
+            Text(
+              item.sellingPriceInr != null
+                  ? _formatCurrency(item.sellingPriceInr!)
+                  : '—',
+            ),
             onTap: () => _openDetails(context, item.id),
           ),
         if (hasQuantity)
@@ -1031,7 +1098,9 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
           DataCell(
             Text(
               item.reorderLevel != null
-                  ? InventoryDisplayFormatters.formatQuantity(item.reorderLevel!)
+                  ? InventoryDisplayFormatters.formatQuantity(
+                      item.reorderLevel!,
+                    )
                   : '—',
             ),
             onTap: () => _openDetails(context, item.id),
@@ -1056,7 +1125,11 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
           ),
         if (hasBatchNumber)
           DataCell(
-            Text(item.batchNumber?.trim().isNotEmpty == true ? item.batchNumber! : '—'),
+            Text(
+              item.batchNumber?.trim().isNotEmpty == true
+                  ? item.batchNumber!
+                  : '—',
+            ),
             onTap: () => _openDetails(context, item.id),
           ),
         if (hasExpiryDate)
@@ -1066,7 +1139,11 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
           ),
         if (hasLastRestocked)
           DataCell(
-            Text(item.lastRestockedDate != null ? _formatDate(item.lastRestockedDate!) : '—'),
+            Text(
+              item.lastRestockedDate != null
+                  ? _formatDate(item.lastRestockedDate!)
+                  : '—',
+            ),
             onTap: () => _openDetails(context, item.id),
           ),
         if (hasIsActive)
@@ -1114,7 +1191,9 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
           if (states.contains(WidgetState.selected)) {
             return colorScheme.primaryContainer.withValues(alpha: 0.2);
           }
-          return isEven ? colorScheme.surface : colorScheme.surfaceContainerLowest;
+          return isEven
+              ? colorScheme.surface
+              : colorScheme.surfaceContainerLowest;
         }),
         cells: cells,
       );
@@ -1122,7 +1201,8 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isAndroidApk = !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+        final isAndroidApk =
+            !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
         final innerTable = Scrollbar(
           controller: _verticalScrollController,
           thumbVisibility: true,
@@ -1250,11 +1330,7 @@ class _InventoryWorkspaceViewState extends State<_InventoryWorkspaceView> {
       ),
       child: Text(
         status.displayName,
-        style: TextStyle(
-          color: fg,
-          fontWeight: FontWeight.bold,
-          fontSize: 12,
-        ),
+        style: TextStyle(color: fg, fontWeight: FontWeight.bold, fontSize: 12),
       ),
     );
   }

@@ -28,8 +28,12 @@ class NotificationBellButton extends StatelessWidget {
     return BlocBuilder<NotificationCubit, NotificationState>(
       bloc: effectiveCubit,
       builder: (context, state) {
-        final int unreadCount = state is NotificationLoaded ? state.unreadCount : 0;
-        final notifications = state is NotificationLoaded ? state.notifications : const [];
+        final int unreadCount = state is NotificationLoaded
+            ? state.unreadCount
+            : 0;
+        final notifications = state is NotificationLoaded
+            ? state.notifications
+            : const [];
 
         return Stack(
           alignment: Alignment.center,
@@ -55,12 +59,21 @@ class NotificationBellButton extends StatelessWidget {
                 right: 6,
                 child: IgnorePointer(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                    constraints: const BoxConstraints(minWidth: 16, minHeight: 16),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 5,
+                      vertical: 2,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 16,
+                      minHeight: 16,
+                    ),
                     decoration: BoxDecoration(
                       color: colorScheme.error,
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: colorScheme.surface, width: 1.5),
+                      border: Border.all(
+                        color: colorScheme.surface,
+                        width: 1.5,
+                      ),
                     ),
                     alignment: Alignment.center,
                     child: Text(
@@ -113,18 +126,30 @@ class NotificationBellButton extends StatelessWidget {
     } else {
       showDialog<void>(
         context: context,
-        barrierColor: Colors.black.withValues(alpha: 0.25),
+        barrierColor: Colors.black.withValues(alpha: 0.15),
         builder: (dialogContext) {
-          return Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: NotificationDropdownPopover(
-                notifications: List.from(notifications),
-                unreadCount: unreadCount,
-                user: user,
-                cubit: effectiveCubit,
-                approvalRepository: approvalRepository,
-                onClose: () => Navigator.of(dialogContext).pop(),
+          return SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 56.0, right: 16.0),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 420,
+                    maxHeight: 560,
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: NotificationDropdownPopover(
+                      notifications: List.from(notifications),
+                      unreadCount: unreadCount,
+                      user: user,
+                      cubit: effectiveCubit,
+                      approvalRepository: approvalRepository,
+                      onClose: () => Navigator.of(dialogContext).pop(),
+                    ),
+                  ),
+                ),
               ),
             ),
           );

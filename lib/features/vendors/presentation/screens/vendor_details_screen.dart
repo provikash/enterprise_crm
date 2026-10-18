@@ -138,11 +138,18 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Vendor?'),
-        content: Text('Are you sure you want to remove ${_vendor.companyName}? This action cannot be undone.'),
+        content: Text(
+          'Are you sure you want to remove ${_vendor.companyName}? This action cannot be undone.',
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
           ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFDC2626)),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFDC2626),
+            ),
             onPressed: () => Navigator.of(ctx).pop(true),
             child: const Text('Delete', style: TextStyle(color: Colors.white)),
           ),
@@ -216,14 +223,23 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
                             title: 'Contact Information',
                             icon: Icons.contact_phone_outlined,
                             rows: [
-                              _buildDataRow('Contact Person', _vendor.contactPerson),
+                              _buildDataRow(
+                                'Contact Person',
+                                _vendor.contactPerson,
+                              ),
                               _buildDataRow('Phone', _vendor.phone),
                               if (_vendor.alternatePhone.isNotEmpty)
-                                _buildDataRow('Alternate Phone', _vendor.alternatePhone),
+                                _buildDataRow(
+                                  'Alternate Phone',
+                                  _vendor.alternatePhone,
+                                ),
                               if (_vendor.email.isNotEmpty)
                                 _buildDataRow('Email Address', _vendor.email),
                               if (_vendor.address.isNotEmpty)
-                                _buildDataRow('Office Address', '${_vendor.address}, ${_vendor.city}, ${_vendor.state} - ${_vendor.pincode}'),
+                                _buildDataRow(
+                                  'Office Address',
+                                  '${_vendor.address}, ${_vendor.city}, ${_vendor.state} - ${_vendor.pincode}',
+                                ),
                             ],
                           ),
                           const SizedBox(height: 16),
@@ -231,9 +247,18 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
                             title: 'Commercial Terms',
                             icon: Icons.payments_outlined,
                             rows: [
-                              _buildDataRow('Payment Terms', _vendor.paymentTerms),
-                              _buildDataRow('Credit Limit', '₹ ${_vendor.creditLimitInr.toStringAsFixed(2)}'),
-                              _buildDataRow('Supplier Rating', '${_vendor.rating.toStringAsFixed(1)} / 5.0'),
+                              _buildDataRow(
+                                'Payment Terms',
+                                _vendor.paymentTerms,
+                              ),
+                              _buildDataRow(
+                                'Credit Limit',
+                                '₹ ${_vendor.creditLimitInr.toStringAsFixed(2)}',
+                              ),
+                              _buildDataRow(
+                                'Supplier Rating',
+                                '${_vendor.rating.toStringAsFixed(1)} / 5.0',
+                              ),
                             ],
                           ),
                         ],
@@ -249,7 +274,10 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
                               _buildDataRow('GSTIN', _vendor.gstin),
                               _buildDataRow('PAN', _vendor.pan),
                               _buildDataRow('Category', _vendor.category),
-                              _buildDataRow('Registered State', _vendor.state.isNotEmpty ? _vendor.state : '—'),
+                              _buildDataRow(
+                                'Registered State',
+                                _vendor.state.isNotEmpty ? _vendor.state : '—',
+                              ),
                             ],
                           ),
                           const SizedBox(height: 16),
@@ -258,7 +286,10 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
                             icon: Icons.account_balance_outlined,
                             rows: [
                               _buildDataRow('Bank Name', _vendor.bankName),
-                              _buildDataRow('Account Number', _vendor.accountNumber),
+                              _buildDataRow(
+                                'Account Number',
+                                _vendor.accountNumber,
+                              ),
                               _buildDataRow('IFSC Code', _vendor.ifscCode),
                               _buildDataRow('Branch Name', _vendor.branchName),
                             ],
@@ -269,11 +300,7 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
                       if (isNarrow) {
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            col1,
-                            const SizedBox(height: 16),
-                            col2,
-                          ],
+                          children: [col1, const SizedBox(height: 16), col2],
                         );
                       }
 
@@ -293,9 +320,7 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
                     _buildCard(
                       title: 'Operational Notes',
                       icon: Icons.notes_outlined,
-                      rows: [
-                        _buildDataRow('Notes', _vendor.notes),
-                      ],
+                      rows: [_buildDataRow('Notes', _vendor.notes)],
                     ),
                   ],
 
@@ -335,7 +360,11 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
                     color: colorScheme.primaryContainer,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(Icons.storefront, size: 24, color: colorScheme.onPrimaryContainer),
+                  child: Icon(
+                    Icons.storefront,
+                    size: 24,
+                    color: colorScheme.onPrimaryContainer,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -381,7 +410,10 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
                   decoration: BoxDecoration(
                     color: colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(8),
@@ -390,7 +422,11 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.star, color: Color(0xFFF59E0B), size: 16),
+                      const Icon(
+                        Icons.star,
+                        color: Color(0xFFF59E0B),
+                        size: 16,
+                      ),
                       const SizedBox(width: 4),
                       Text(
                         _vendor.rating.toStringAsFixed(1),
@@ -410,7 +446,10 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
                       ? const SizedBox(
                           width: 14,
                           height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Icon(Icons.picture_as_pdf_outlined, size: 16),
                   label: const Text('Download PDF'),
@@ -485,7 +524,10 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
             width: 115,
             child: Text(
               label,
-              style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+              style: TextStyle(
+                fontSize: 13,
+                color: colorScheme.onSurfaceVariant,
+              ),
             ),
           ),
           Expanded(
@@ -525,7 +567,11 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
                 Expanded(
                   child: Row(
                     children: [
-                      Icon(Icons.receipt_long_outlined, size: 18, color: colorScheme.primary),
+                      Icon(
+                        Icons.receipt_long_outlined,
+                        size: 18,
+                        color: colorScheme.primary,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -544,14 +590,21 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
                 if (_relatedOrders != null) ...[
                   const SizedBox(width: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: colorScheme.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Text(
                       '${_relatedOrders!.length} Order(s)',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
                   ),
                 ],
@@ -570,7 +623,10 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 child: Text(
                   'No recent Purchase Orders recorded for this supplier.',
-                  style: TextStyle(fontSize: 13, color: colorScheme.onSurfaceVariant),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
                 ),
               )
             else
@@ -600,16 +656,24 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
                             ),
                             Text(
                               '${po.items.length} item(s) • Total: ₹ ${po.totalAmount.toStringAsFixed(2)}',
-                              style: TextStyle(fontSize: 12, color: colorScheme.onSurfaceVariant),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
                             color: colorScheme.surfaceContainerHigh,
                             borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: colorScheme.outlineVariant),
+                            border: Border.all(
+                              color: colorScheme.outlineVariant,
+                            ),
                           ),
                           child: Text(
                             po.status.displayName,
@@ -656,8 +720,14 @@ class _VendorDetailsScreenState extends State<VendorDetailsScreen> {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(10)),
-      child: Text(status.displayName, style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.bold)),
+      decoration: BoxDecoration(
+        color: bg,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Text(
+        status.displayName,
+        style: TextStyle(color: fg, fontSize: 11, fontWeight: FontWeight.bold),
+      ),
     );
   }
 }

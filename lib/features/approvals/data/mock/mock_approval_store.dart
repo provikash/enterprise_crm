@@ -89,7 +89,13 @@ class MockApprovalStore {
             timestamp: t1,
           ),
         ],
-        metadata: const {'vendorId': 'vnd_acme', 'vendorName': 'ACME Steel'},
+        metadata: const {
+          'poNumber': 'PO-2026-003',
+          'po_number': 'PO-9821',
+          'linkedPoId': 'po_003',
+          'vendorId': 'vnd_acme',
+          'vendorName': 'ACME Steel',
+        },
       ),
       ApprovalRequest(
         id: 'appr-002',

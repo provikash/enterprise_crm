@@ -27,11 +27,7 @@ class ApprovalDataTable extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.inbox_outlined,
-              size: 48,
-              color: colorScheme.outline,
-            ),
+            Icon(Icons.inbox_outlined, size: 48, color: colorScheme.outline),
             const SizedBox(height: 12),
             Text(
               'No approval requests match the selected filters.',
@@ -58,28 +54,52 @@ class ApprovalDataTable extends StatelessWidget {
           horizontalMargin: 16,
           columns: const [
             DataColumn(
-              label: Text('Request #', style: TextStyle(fontWeight: FontWeight.bold)),
+              label: Text(
+                'Request #',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
             DataColumn(
-              label: Text('Item / Title', style: TextStyle(fontWeight: FontWeight.bold)),
+              label: Text(
+                'Item / Title',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
             DataColumn(
-              label: Text('Module', style: TextStyle(fontWeight: FontWeight.bold)),
+              label: Text(
+                'Module',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
             DataColumn(
-              label: Text('Requester', style: TextStyle(fontWeight: FontWeight.bold)),
+              label: Text(
+                'Requester',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
             DataColumn(
-              label: Text('Submitted', style: TextStyle(fontWeight: FontWeight.bold)),
+              label: Text(
+                'Submitted',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
             DataColumn(
-              label: Text('Priority', style: TextStyle(fontWeight: FontWeight.bold)),
+              label: Text(
+                'Priority',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
             DataColumn(
-              label: Text('Status', style: TextStyle(fontWeight: FontWeight.bold)),
+              label: Text(
+                'Status',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
             DataColumn(
-              label: Text('Action', style: TextStyle(fontWeight: FontWeight.bold)),
+              label: Text(
+                'Action',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
           rows: requests.map((request) {
@@ -128,9 +148,14 @@ class ApprovalDataTable extends StatelessWidget {
                 // Module
                 DataCell(
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 3,
+                    ),
                     decoration: BoxDecoration(
-                      color: colorScheme.secondaryContainer.withValues(alpha: 0.5),
+                      color: colorScheme.secondaryContainer.withValues(
+                        alpha: 0.5,
+                      ),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -236,11 +261,7 @@ class ApprovalDataTable extends StatelessWidget {
       ),
       child: Text(
         priority.displayName,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: fg,
-        ),
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: fg),
       ),
     );
   }
@@ -275,11 +296,7 @@ class ApprovalDataTable extends StatelessWidget {
       ),
       child: Text(
         status.displayName,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: fg,
-        ),
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: fg),
       ),
     );
   }

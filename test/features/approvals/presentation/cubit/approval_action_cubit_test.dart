@@ -27,7 +27,10 @@ void main() {
       displayName: 'Paula Lead',
       accountType: AccountType.user,
       modules: {CrmModule.approvalsNotifications},
-      permissions: {CrmPermissions.approvalsAction, CrmPermissions.approvalsView},
+      permissions: {
+        CrmPermissions.approvalsAction,
+        CrmPermissions.approvalsView,
+      },
     );
 
     final requesterUser = const CurrentUser(
@@ -35,7 +38,10 @@ void main() {
       displayName: 'Bob Buyer',
       accountType: AccountType.user,
       modules: {CrmModule.approvalsNotifications},
-      permissions: {CrmPermissions.approvalsAction, CrmPermissions.approvalsView},
+      permissions: {
+        CrmPermissions.approvalsAction,
+        CrmPermissions.approvalsView,
+      },
     );
 
     setUp(() {
@@ -144,7 +150,8 @@ void main() {
       await cubit.requestRevision(
         requestId: 'appr-003',
         actor: adminUser,
-        revisionNotes: 'Please upload certificate of incorporation with apostille.',
+        revisionNotes:
+            'Please upload certificate of incorporation with apostille.',
       );
       await expectation;
 

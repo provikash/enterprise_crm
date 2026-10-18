@@ -8,6 +8,9 @@ import '../../domain/entities/approval_request.dart';
 import '../../domain/entities/approval_status.dart';
 import '../../domain/policies/approvals_access_policy.dart';
 import '../../domain/repositories/approval_repository.dart';
+import '../../../notifications/domain/services/notification_dispatcher.dart';
+import '../../../purchase/domain/repositories/purchase_repository.dart';
+import '../../../vendors/domain/repositories/vendor_repository.dart';
 import '../cubit/approval_action_cubit.dart';
 import '../cubit/approval_action_state.dart';
 import '../cubit/approval_detail_cubit.dart';
@@ -20,30 +23,56 @@ import '../widgets/approval_step_stepper.dart';
 class ApprovalDetailScreen extends StatelessWidget {
   final String requestId;
   final CurrentUser user;
-  final ApprovalRepository repository;
+  final ApprovalRepository? repository;
 
   const ApprovalDetailScreen({
     super.key,
     required this.requestId,
     required this.user,
-    required this.repository,
+    this.repository,
   });
 
   @override
   Widget build(BuildContext context) {
+    ApprovalRepository? repo = repository;
+    if (repo == null) {
+      try {
+        repo = context.read<ApprovalRepository>();
+      } catch (_) {}
+    }
+
+    NotificationDispatcher? dispatcher;
+    try {
+      dispatcher = context.read<NotificationDispatcher>();
+    } catch (_) {}
+
+    PurchaseRepository? purchaseRepo;
+    try {
+      purchaseRepo = context.read<PurchaseRepository>();
+    } catch (_) {}
+
+    VendorRepository? vendorRepo;
+    try {
+      vendorRepo = context.read<VendorRepository>();
+    } catch (_) {}
+
+    final activeRepo = repo!;
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(
-          create: (_) => ApprovalDetailCubit(repository)..loadDetail(requestId),
+          create: (_) => ApprovalDetailCubit(activeRepo)..loadDetail(requestId),
         ),
         BlocProvider(
-          create: (_) => ApprovalActionCubit(repository),
+          create: (_) => ApprovalActionCubit(
+            activeRepo,
+            notificationDispatcher: dispatcher,
+            purchaseRepository: purchaseRepo,
+            vendorRepository: vendorRepo,
+          ),
         ),
       ],
-      child: _ApprovalDetailView(
-        requestId: requestId,
-        user: user,
-      ),
+      child: _ApprovalDetailView(requestId: requestId, user: user),
     );
   }
 }
@@ -52,10 +81,7 @@ class _ApprovalDetailView extends StatelessWidget {
   final String requestId;
   final CurrentUser user;
 
-  const _ApprovalDetailView({
-    required this.requestId,
-    required this.user,
-  });
+  const _ApprovalDetailView({required this.requestId, required this.user});
 
   void _showActionDialog(
     BuildContext context, {
@@ -147,7 +173,8 @@ class _ApprovalDetailView extends StatelessWidget {
         ),
         body: BlocBuilder<ApprovalDetailCubit, ApprovalDetailState>(
           builder: (context, state) {
-            if (state is ApprovalDetailLoading || state is ApprovalDetailInitial) {
+            if (state is ApprovalDetailLoading ||
+                state is ApprovalDetailInitial) {
               return const Center(child: CircularProgressIndicator());
             }
 
@@ -158,7 +185,11 @@ class _ApprovalDetailView extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.error_outline, size: 48, color: colorScheme.error),
+                      Icon(
+                        Icons.error_outline,
+                        size: 48,
+                        color: colorScheme.error,
+                      ),
                       const SizedBox(height: 12),
                       Text(
                         state.message,
@@ -169,7 +200,9 @@ class _ApprovalDetailView extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       FilledButton.icon(
-                        onPressed: () => context.read<ApprovalDetailCubit>().loadDetail(requestId),
+                        onPressed: () => context
+                            .read<ApprovalDetailCubit>()
+                            .loadDetail(requestId),
                         icon: const Icon(Icons.refresh),
                         label: const Text('Retry'),
                       ),
@@ -182,14 +215,23 @@ class _ApprovalDetailView extends StatelessWidget {
             final loaded = state as ApprovalDetailLoaded;
             final request = loaded.request;
 
-            final canDecide = ApprovalsAccessPolicy.canPerformDecision(user, request);
-            final canCancel = ApprovalsAccessPolicy.canCancelRequest(user, request);
+            final canDecide = ApprovalsAccessPolicy.canPerformDecision(
+              user,
+              request,
+            );
+            final canCancel = ApprovalsAccessPolicy.canCancelRequest(
+              user,
+              request,
+            );
 
             return Center(
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 1000),
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -225,13 +267,20 @@ class _ApprovalDetailView extends StatelessWidget {
                         context,
                         title: 'Audit Activity Timeline',
                         icon: Icons.history,
-                        child: ApprovalActivityTimeline(activities: loaded.auditTrail),
+                        child: ApprovalActivityTimeline(
+                          activities: loaded.auditTrail,
+                        ),
                       ),
                       const SizedBox(height: 24),
 
                       // Actions row (if actionable)
                       if (canDecide || canCancel) ...[
-                        _buildActionToolbar(context, request: request, canDecide: canDecide, canCancel: canCancel),
+                        _buildActionToolbar(
+                          context,
+                          request: request,
+                          canDecide: canDecide,
+                          canCancel: canCancel,
+                        ),
                         const SizedBox(height: 24),
                       ],
                     ],
@@ -253,7 +302,9 @@ class _ApprovalDetailView extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
+        side: BorderSide(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -359,7 +410,9 @@ class _ApprovalDetailView extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  color: colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.5,
+                  ),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -402,7 +455,9 @@ class _ApprovalDetailView extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
+        side: BorderSide(
+          color: colorScheme.outlineVariant.withValues(alpha: 0.6),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -431,7 +486,10 @@ class _ApprovalDetailView extends StatelessWidget {
     );
   }
 
-  Widget _buildMetadataView(BuildContext context, Map<String, dynamic> metadata) {
+  Widget _buildMetadataView(
+    BuildContext context,
+    Map<String, dynamic> metadata,
+  ) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -441,15 +499,15 @@ class _ApprovalDetailView extends StatelessWidget {
         borderRadius: BorderRadius.circular(8),
       ),
       child: Table(
-        columnWidths: const {
-          0: IntrinsicColumnWidth(),
-          1: FlexColumnWidth(),
-        },
+        columnWidths: const {0: IntrinsicColumnWidth(), 1: FlexColumnWidth()},
         children: metadata.entries.map((entry) {
           return TableRow(
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 child: Text(
                   entry.key,
                   style: theme.textTheme.labelMedium?.copyWith(
@@ -459,7 +517,10 @@ class _ApprovalDetailView extends StatelessWidget {
                 ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
                 child: Text(
                   entry.value.toString(),
                   style: theme.textTheme.bodyMedium,
@@ -480,9 +541,7 @@ class _ApprovalDetailView extends StatelessWidget {
   }) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -633,11 +692,7 @@ class _ApprovalDetailView extends StatelessWidget {
       ),
       child: Text(
         priority.displayName.toUpperCase(),
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: fg,
-        ),
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: fg),
       ),
     );
   }
@@ -672,11 +727,7 @@ class _ApprovalDetailView extends StatelessWidget {
       ),
       child: Text(
         status.displayName.toUpperCase(),
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.bold,
-          color: fg,
-        ),
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: fg),
       ),
     );
   }
