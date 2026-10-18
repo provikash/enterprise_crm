@@ -137,11 +137,46 @@ class _AttendanceListViewState extends State<_AttendanceListView> {
               ),
             ],
           ),
-          body: Column(
-            children: [
-              _buildHeaderControls(context, state, colorScheme),
-              Expanded(child: _buildBody(context, state, theme, colorScheme)),
-            ],
+          body: LayoutBuilder(
+            builder: (context, constraints) {
+              final isHeightConstrained = constraints.maxHeight < 560;
+              final headerControls =
+                  _buildHeaderControls(context, state, colorScheme);
+
+              if (isHeightConstrained) {
+                return SingleChildScrollView(
+                  scrollDirection: Axis.vertical,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      headerControls,
+                      _buildBody(
+                        context,
+                        state,
+                        theme,
+                        colorScheme,
+                        isInsideScrollable: true,
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              return Column(
+                children: [
+                  headerControls,
+                  Expanded(
+                    child: _buildBody(
+                      context,
+                      state,
+                      theme,
+                      colorScheme,
+                      isInsideScrollable: false,
+                    ),
+                  ),
+                ],
+              );
+            },
           ),
         );
       },
@@ -296,8 +331,9 @@ class _AttendanceListViewState extends State<_AttendanceListView> {
     BuildContext context,
     AttendanceListState state,
     ThemeData theme,
-    ColorScheme colorScheme,
-  ) {
+    ColorScheme colorScheme, {
+    bool isInsideScrollable = false,
+  }) {
     if (state.isLoading) {
       return const Center(
         child: CircularProgressIndicator(
@@ -372,18 +408,30 @@ class _AttendanceListViewState extends State<_AttendanceListView> {
     return LayoutBuilder(
       builder: (context, constraints) {
         return constraints.maxWidth >= 600
-            ? _buildDesktopTable(context, state.filteredRecords, colorScheme)
-            : _buildMobileList(context, state.filteredRecords);
+            ? _buildDesktopTable(
+                context,
+                state.filteredRecords,
+                colorScheme,
+                isInsideScrollable: isInsideScrollable,
+              )
+            : _buildMobileList(
+                context,
+                state.filteredRecords,
+                isInsideScrollable: isInsideScrollable,
+              );
       },
     );
   }
 
   Widget _buildMobileList(
     BuildContext context,
-    List<AttendanceRecord> records,
-  ) {
+    List<AttendanceRecord> records, {
+    bool isInsideScrollable = false,
+  }) {
     return ListView.separated(
       key: const Key('attendance_mobile_list'),
+      shrinkWrap: isInsideScrollable,
+      physics: isInsideScrollable ? const NeverScrollableScrollPhysics() : null,
       padding: const EdgeInsets.all(16.0),
       itemCount: records.length,
       separatorBuilder: (_, _) => const SizedBox(height: 12),
@@ -401,10 +449,12 @@ class _AttendanceListViewState extends State<_AttendanceListView> {
   Widget _buildDesktopTable(
     BuildContext context,
     List<AttendanceRecord> records,
-    ColorScheme colorScheme,
-  ) {
+    ColorScheme colorScheme, {
+    bool isInsideScrollable = false,
+  }) {
     return SingleChildScrollView(
       key: const Key('attendance_desktop_table_scroll'),
+      physics: isInsideScrollable ? const NeverScrollableScrollPhysics() : null,
       padding: const EdgeInsets.all(16.0),
       child: Card(
         elevation: 0,

@@ -266,7 +266,7 @@ class MockAccountStore {
 
   /// Resets or establishes the authentication password for a managed user.
   void resetPassword({required String id, required String newPassword}) {
-    final user = getUserById(id);
+    final user = getUserById(id) ?? findUserByUserId(id);
     if (user == null) {
       throw const UserManagementException('User not found.');
     }

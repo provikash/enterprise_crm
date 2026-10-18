@@ -27,6 +27,10 @@ import '../features/leads/data/services/lead_export_file_saver.dart';
 import '../features/leads/presentation/screens/lead_list_screen.dart';
 import '../features/calling/domain/repositories/lead_call_activity_repository.dart';
 import '../features/calling/domain/repositories/lead_follow_up_repository.dart';
+import '../features/dispatch/data/repositories/mock_dispatch_repository.dart';
+import '../features/dispatch/domain/repositories/dispatch_repository.dart';
+import '../features/purchase/data/repositories/mock_purchase_repository.dart';
+import '../features/purchase/domain/repositories/purchase_repository.dart';
 import '../features/hr/domain/repositories/attendance_repository.dart';
 import '../features/hr/domain/repositories/employee_document_repository.dart';
 import '../features/hr/domain/repositories/employee_kpi_repository.dart';
@@ -59,6 +63,8 @@ class CrmApp extends StatefulWidget {
   final AttendanceRepository? attendanceRepository;
   final EmployeeKpiRepository? employeeKpiRepository;
   final InventoryRepository? inventoryRepository;
+  final DispatchRepository? dispatchRepository;
+  final PurchaseRepository? purchaseRepository;
   final PayrollOperationsRepository? payrollOperationsRepository;
   final PayrollConfigurationRepository? payrollConfigurationRepository;
   final HrPayrollDependencies? hrPayrollDependencies;
@@ -81,6 +87,8 @@ class CrmApp extends StatefulWidget {
     this.attendanceRepository,
     this.employeeKpiRepository,
     this.inventoryRepository,
+    this.dispatchRepository,
+    this.purchaseRepository,
     this.payrollOperationsRepository,
     this.payrollConfigurationRepository,
     this.hrPayrollDependencies,
@@ -115,6 +123,8 @@ class CrmApp extends StatefulWidget {
 
 class _CrmAppState extends State<CrmApp> {
   AuthCubit? _authCubit;
+  late final DispatchRepository _dispatchRepository;
+  late final PurchaseRepository _purchaseRepository;
   final GlobalKey<NavigatorState> _navigatorKey = GlobalKey<NavigatorState>();
 
   EmployeeRepository? get _employeeRepository =>
@@ -148,6 +158,8 @@ class _CrmAppState extends State<CrmApp> {
   @override
   void initState() {
     super.initState();
+    _dispatchRepository = widget.dispatchRepository ?? MockDispatchRepository();
+    _purchaseRepository = widget.purchaseRepository ?? MockPurchaseRepository();
     if (widget.authRepository != null) {
       _authCubit = AuthCubit(widget.authRepository!);
     }
@@ -195,13 +207,22 @@ class _CrmAppState extends State<CrmApp> {
                     appConfig: widget.appConfig,
                     onLogout: () => _authCubit!.logout(),
                     inventoryRepository: widget.inventoryRepository!,
+                    dispatchRepository: _dispatchRepository,
+                    purchaseRepository: _purchaseRepository,
                     userManagementRepository: widget.userManagementRepository,
                     employeeRepository: _employeeRepository,
                     employeeDocumentRepository: _employeeDocumentRepository,
                     attendanceRepository: _attendanceRepository,
                     employeeKpiRepository: _employeeKpiRepository,
+<<<<<<< HEAD
                     approvalRepository: _approvalRepository,
                     notificationCubit: _notificationCubit,
+=======
+                    leadRepository: widget.leadRepository,
+                    userLeadLinkRepository: widget.userLeadLinkRepository,
+                    callActivityRepository: widget.leadCallActivityRepository,
+                    leadFollowUpRepository: widget.leadFollowUpRepository,
+>>>>>>> 2a7fa8767b573363291c48c15547378cecf22e00
                     onOpenLeadManagement: () {
                       _navigatorKey.currentState?.push(
                         MaterialPageRoute(
@@ -229,8 +250,13 @@ class _CrmAppState extends State<CrmApp> {
                     attendanceRepository: _attendanceRepository,
                     employeeKpiRepository: _employeeKpiRepository,
                     inventoryRepository: widget.inventoryRepository!,
+<<<<<<< HEAD
                     approvalRepository: _approvalRepository,
                     notificationCubit: _notificationCubit,
+=======
+                    dispatchRepository: _dispatchRepository,
+                    purchaseRepository: _purchaseRepository,
+>>>>>>> 2a7fa8767b573363291c48c15547378cecf22e00
                   );
                 }
               case AuthUnauthenticated():

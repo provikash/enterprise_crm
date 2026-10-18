@@ -10,6 +10,13 @@ import '../../../auth/domain/repositories/user_lead_link_repository.dart';
 import '../../../calling/domain/repositories/lead_call_activity_repository.dart';
 import '../../../calling/domain/repositories/lead_follow_up_repository.dart';
 import '../../../calling/presentation/screens/user_calling_workspace_screen.dart';
+import '../../../dispatch/data/repositories/mock_dispatch_repository.dart';
+import '../../../dispatch/domain/repositories/dispatch_repository.dart';
+import '../../../dispatch/presentation/screens/dispatch_workspace_screen.dart';
+import '../../../hr/data/repositories/mock_attendance_repository.dart';
+import '../../../hr/data/repositories/mock_employee_document_repository.dart';
+import '../../../hr/data/repositories/mock_employee_kpi_repository.dart';
+import '../../../hr/data/repositories/mock_employee_repository.dart';
 import '../../../hr/domain/repositories/attendance_repository.dart';
 import '../../../hr/domain/repositories/employee_document_repository.dart';
 import '../../../hr/domain/repositories/employee_kpi_repository.dart';
@@ -19,10 +26,16 @@ import '../../../inventory/domain/repositories/inventory_repository.dart';
 import '../../../inventory/data/repositories/mock_inventory_repository.dart';
 import '../../../inventory/presentation/screens/inventory_workspace_screen.dart';
 import '../../../leads/domain/repositories/lead_repository.dart';
+<<<<<<< HEAD
 import '../../../approvals/data/repositories/mock_approval_repository.dart';
 import '../../../approvals/domain/repositories/approval_repository.dart';
 import '../../../approvals/presentation/screens/approvals_workspace_screen.dart';
 import '../../../notifications/presentation/cubit/notification_cubit.dart';
+=======
+import '../../../purchase/data/repositories/mock_purchase_repository.dart';
+import '../../../purchase/domain/repositories/purchase_repository.dart';
+import '../../../purchase/presentation/screens/purchase_workspace_screen.dart';
+>>>>>>> 2a7fa8767b573363291c48c15547378cecf22e00
 import '../widgets/crm_app_header.dart';
 import '../widgets/crm_module_card.dart';
 import 'module_placeholder_screen.dart';
@@ -44,8 +57,13 @@ class UserDashboardScreen extends StatelessWidget {
   final AttendanceRepository? attendanceRepository;
   final EmployeeKpiRepository? employeeKpiRepository;
   final InventoryRepository? inventoryRepository;
+<<<<<<< HEAD
   final ApprovalRepository? approvalRepository;
   final NotificationCubit? notificationCubit;
+=======
+  final DispatchRepository? dispatchRepository;
+  final PurchaseRepository? purchaseRepository;
+>>>>>>> 2a7fa8767b573363291c48c15547378cecf22e00
 
   const UserDashboardScreen({
     super.key,
@@ -61,8 +79,13 @@ class UserDashboardScreen extends StatelessWidget {
     this.attendanceRepository,
     this.employeeKpiRepository,
     this.inventoryRepository,
+<<<<<<< HEAD
     this.approvalRepository,
     this.notificationCubit,
+=======
+    this.dispatchRepository,
+    this.purchaseRepository,
+>>>>>>> 2a7fa8767b573363291c48c15547378cecf22e00
   });
 
   void _openModule(BuildContext context, CrmModule module) {
@@ -91,19 +114,11 @@ class UserDashboardScreen extends StatelessWidget {
         ),
       );
     } else if (module == CrmModule.hrPayroll) {
-      final employees = employeeRepository;
-      final documents = employeeDocumentRepository;
-      final attendance = attendanceRepository;
-      final kpis = employeeKpiRepository;
-      if (employees == null ||
-          documents == null ||
-          attendance == null ||
-          kpis == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('HR repositories are not configured.')),
-        );
-        return;
-      }
+      final employees = employeeRepository ?? MockEmployeeRepository();
+      final documents =
+          employeeDocumentRepository ?? MockEmployeeDocumentRepository();
+      final attendance = attendanceRepository ?? MockAttendanceRepository();
+      final kpis = employeeKpiRepository ?? MockEmployeeKpiRepository();
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => HrHomeScreen(
@@ -140,6 +155,7 @@ class UserDashboardScreen extends StatelessWidget {
         screen = BlocProvider<AuthCubit>.value(value: authCubit, child: screen);
       }
 
+<<<<<<< HEAD
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
     } else if (module == CrmModule.approvalsNotifications) {
       Navigator.of(context).push(
@@ -147,6 +163,28 @@ class UserDashboardScreen extends StatelessWidget {
           builder: (_) => ApprovalsWorkspaceScreen(
             user: user,
             repository: approvalRepository ?? MockApprovalRepository(),
+=======
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => screen,
+        ),
+      );
+    } else if (module == CrmModule.dispatch) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => DispatchWorkspaceScreen(
+            user: user,
+            repository: dispatchRepository ?? MockDispatchRepository(),
+          ),
+        ),
+      );
+    } else if (module == CrmModule.purchase) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PurchaseWorkspaceScreen(
+            user: user,
+            repository: purchaseRepository ?? MockPurchaseRepository(),
+>>>>>>> 2a7fa8767b573363291c48c15547378cecf22e00
           ),
         ),
       );
@@ -159,7 +197,6 @@ class UserDashboardScreen extends StatelessWidget {
     }
   }
 
-  @override
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);

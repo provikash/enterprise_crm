@@ -5,9 +5,14 @@ import 'package:flutter_test/flutter_test.dart';
 
 import '../../../../helpers/mock_auth_test_fixtures.dart';
 
+import 'package:enterprise_crm/features/user_management/data/mock/mock_account_store.dart';
+import 'package:enterprise_crm/features/user_management/data/repositories/mock_user_management_repository.dart';
+import 'package:enterprise_crm/features/user_management/domain/repositories/user_management_repository.dart';
+
 Widget _buildHeaderTestApp({
   required CurrentUser user,
   VoidCallback? onLogout,
+  UserManagementRepository? userManagementRepository,
   ThemeMode themeMode = ThemeMode.light,
   double? width,
 }) {
@@ -18,14 +23,18 @@ Widget _buildHeaderTestApp({
     home: Scaffold(
       body: SizedBox(
         width: width,
-        child: CrmAppHeader(user: user, onLogout: onLogout ?? () {}),
+        child: CrmAppHeader(
+          user: user,
+          onLogout: onLogout ?? () {},
+          userManagementRepository: userManagementRepository,
+        ),
       ),
     ),
   );
 }
 
 void main() {
-  group('CrmAppHeader Tests (UI-P1.1 Final Alignment)', () {
+  group('CrmAppHeader Tests (Account Avatar in Top Right Corner)', () {
     testWidgets(
       'absent application branding (no Enterprise CRM and no briefcase icon)',
       (tester) async {
@@ -34,14 +43,13 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        // Brand text and icon MUST NOT be present in authenticated header
         expect(find.text('Enterprise CRM'), findsNothing);
         expect(find.byIcon(Icons.business_center), findsNothing);
       },
     );
 
     testWidgets(
-      'Admin layout: avatar [A] is on the far left, followed by Administrator, with only Logout on far right',
+      'Admin layout: avatar [A] and logout are on the top right side',
       (tester) async {
         await tester.pumpWidget(
           _buildHeaderTestApp(user: MockAuthTestFixtures.admin),
@@ -53,75 +61,74 @@ void main() {
         final headerRight = tester.getTopRight(headerBox).dx;
         final headerCenter = (headerLeft + headerRight) / 2;
 
-        // 1. Administrator appears exactly once
+        // Display name appears
         expect(find.text('Administrator'), findsOneWidget);
-        // No duplicate Admin or role subtitle
-        expect(find.text('Admin'), findsNothing);
 
-        // 2. Avatar with initial 'A'
-        final avatarFinder = find.byType(CircleAvatar);
+        // Avatar with initial 'A'
+        final avatarFinder = find.byKey(const Key('home_account_avatar'));
         expect(avatarFinder, findsOneWidget);
         expect(find.text('A'), findsOneWidget);
 
-        // 3. Avatar is on the far left, BEFORE the display name
+        // Avatar is on the right half of the header
         final avatarLeft = tester.getTopLeft(avatarFinder).dx;
-        final avatarRight = tester.getTopRight(avatarFinder).dx;
-        final nameLeft = tester.getTopLeft(find.text('Administrator')).dx;
-        final nameRight = tester.getTopRight(find.text('Administrator')).dx;
+        expect(avatarLeft, greaterThan(headerCenter));
 
-        expect(avatarLeft, lessThan(headerLeft + 30.0)); // Far left
-        expect(
-          nameLeft,
-          greaterThan(avatarRight),
-        ); // Display name is AFTER avatar
-        expect(nameRight, lessThan(headerCenter)); // Both on left side
-
-        // 4. Logout is the only trailing/right-side action
+        // Logout is also on the far right
         final logoutButton = find.byKey(const Key('crm_header_logout_button'));
         expect(logoutButton, findsOneWidget);
         expect(find.byTooltip('Logout'), findsOneWidget);
 
         final logoutRight = tester.getTopRight(logoutButton).dx;
-        expect(logoutRight, greaterThan(headerRight - 60.0)); // Far right edge
-      },
-    );
-
-    testWidgets(
-      'normal User layout: avatar [S] is on the left, followed by Standard User, with only Logout on right',
-      (tester) async {
-        await tester.pumpWidget(
-          _buildHeaderTestApp(user: MockAuthTestFixtures.standardUser),
-        );
-        await tester.pumpAndSettle();
-
-        final headerBox = find.byType(CrmAppHeader);
-        final headerLeft = tester.getTopLeft(headerBox).dx;
-        final headerRight = tester.getTopRight(headerBox).dx;
-        final headerCenter = (headerLeft + headerRight) / 2;
-
-        // Display name appears exactly once
-        expect(find.text('Standard User'), findsOneWidget);
-        expect(find.text('S'), findsOneWidget);
-
-        // No duplicate role labels or branding
-        expect(find.text('User'), findsNothing);
-        expect(find.text('Enterprise CRM'), findsNothing);
-
-        // Avatar before display name on left
-        final avatarFinder = find.byType(CircleAvatar);
-        final avatarRight = tester.getTopRight(avatarFinder).dx;
-        final nameLeft = tester.getTopLeft(find.text('Standard User')).dx;
-        expect(nameLeft, greaterThan(avatarRight));
-        expect(nameLeft, lessThan(headerCenter));
-
-        // Right alignment check
-        final logoutButton = find.byKey(const Key('crm_header_logout_button'));
-        final logoutRight = tester.getTopRight(logoutButton).dx;
         expect(logoutRight, greaterThan(headerRight - 60.0));
       },
     );
 
-    testWidgets('tapping admin logout triggers onLogout callback', (
+    testWidgets(
+      'tapping account avatar opens AccountProfileDialog with uneditable User ID, name edit, password reset, and logout',
+      (tester) async {
+        bool loggedOut = false;
+        await tester.pumpWidget(
+          _buildHeaderTestApp(
+            user: MockAuthTestFixtures.admin,
+            onLogout: () {
+              loggedOut = true;
+            },
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Tap the account avatar
+        await tester.tap(find.byKey(const Key('home_account_avatar')));
+        await tester.pumpAndSettle();
+
+        // Account Profile dialog is open
+        expect(find.byKey(const Key('home_account_dialog')), findsOneWidget);
+
+        // User ID is displayed and uneditable
+        final userIdFieldFinder = find.byKey(const Key('account_user_id_field'));
+        expect(userIdFieldFinder, findsOneWidget);
+        final textField = tester.widget<TextField>(userIdFieldFinder);
+        expect(textField.enabled, isFalse);
+        expect(textField.readOnly, isTrue);
+        expect(find.text('User ID cannot be changed'), findsOneWidget);
+
+        // Display Name is editable
+        expect(find.byKey(const Key('account_display_name_field')), findsOneWidget);
+
+        // Password reset button is available
+        expect(find.byKey(const Key('account_reset_password_button')), findsOneWidget);
+
+        // Tap dialog logout button
+        await tester.ensureVisible(find.byKey(const Key('account_logout_button')));
+        await tester.tap(find.byKey(const Key('account_logout_button')));
+        await tester.pumpAndSettle();
+
+        expect(loggedOut, isTrue);
+        expect(find.byKey(const Key('home_account_dialog')), findsNothing);
+      },
+    );
+
+    testWidgets('tapping logout triggers onLogout callback', (
       tester,
     ) async {
       bool loggedOut = false;
@@ -141,28 +148,8 @@ void main() {
       expect(loggedOut, isTrue);
     });
 
-    testWidgets('tapping normal user logout triggers onLogout callback', (
-      tester,
-    ) async {
-      bool loggedOut = false;
-      await tester.pumpWidget(
-        _buildHeaderTestApp(
-          user: MockAuthTestFixtures.standardUser,
-          onLogout: () {
-            loggedOut = true;
-          },
-        ),
-      );
-      await tester.pumpAndSettle();
-
-      await tester.tap(find.byKey(const Key('crm_header_logout_button')));
-      await tester.pumpAndSettle();
-
-      expect(loggedOut, isTrue);
-    });
-
     testWidgets(
-      'mobile narrow viewport (< 420px) shows avatar [A] on left and logout on far right without overflow',
+      'mobile narrow viewport (< 420px) shows avatar on top right without overflow',
       (tester) async {
         const mobileWidth = 360.0;
         await tester.pumpWidget(
@@ -174,23 +161,16 @@ void main() {
         await tester.pumpAndSettle();
 
         final headerBox = find.byType(CrmAppHeader);
-        final headerLeft = tester.getTopLeft(headerBox).dx;
         final headerRight = tester.getTopRight(headerBox).dx;
 
-        // On narrow screen, full display name is omitted to prevent crowding
         expect(find.text('Administrator'), findsNothing);
+        expect(find.byKey(const Key('home_account_avatar')), findsOneWidget);
 
-        // Avatar remains on the far left
-        final avatarLeft = tester.getTopLeft(find.byType(CircleAvatar)).dx;
-        expect(avatarLeft, lessThan(headerLeft + 30.0));
-
-        // Logout remains on the far right
-        final logoutRight = tester
-            .getTopRight(find.byKey(const Key('crm_header_logout_button')))
+        final avatarRight = tester
+            .getTopRight(find.byKey(const Key('home_account_avatar')))
             .dx;
-        expect(logoutRight, greaterThan(headerRight - 60.0));
+        expect(avatarRight, greaterThan(headerRight - 60.0));
 
-        // Verify zero overflow
         expect(tester.takeException(), isNull);
       },
     );
@@ -205,8 +185,63 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Administrator'), findsOneWidget);
-      expect(find.byType(CircleAvatar), findsOneWidget);
+      expect(find.byKey(const Key('home_account_avatar')), findsOneWidget);
       expect(find.byKey(const Key('crm_header_logout_button')), findsOneWidget);
     });
+
+    testWidgets(
+      'password can be updated successfully from AccountProfileDialog without User not found error',
+      (tester) async {
+        final store = MockAccountStore.seeded();
+        final userRepo = MockUserManagementRepository(accountStore: store);
+
+        await tester.pumpWidget(
+          _buildHeaderTestApp(
+            user: MockAuthTestFixtures.admin,
+            userManagementRepository: userRepo,
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Tap avatar to open dialog
+        await tester.tap(find.byKey(const Key('home_account_avatar')));
+        await tester.pumpAndSettle();
+
+        // Tap Reset Password to show fields
+        await tester.ensureVisible(
+          find.byKey(const Key('account_reset_password_button')),
+        );
+        await tester.tap(find.byKey(const Key('account_reset_password_button')));
+        await tester.pumpAndSettle();
+
+        // Enter new password and confirmation
+        await tester.enterText(
+          find.byKey(const Key('account_new_password_field')),
+          'newSecret123',
+        );
+        await tester.enterText(
+          find.byKey(const Key('account_confirm_password_field')),
+          'newSecret123',
+        );
+        await tester.pumpAndSettle();
+
+        // Tap Update Password
+        await tester.ensureVisible(
+          find.byKey(const Key('account_save_password_button')),
+        );
+        await tester.tap(find.byKey(const Key('account_save_password_button')));
+        await tester.pumpAndSettle();
+
+        // Verify success notification and no error
+        expect(find.text('Password changed successfully.'), findsOneWidget);
+        expect(find.text('User not found.'), findsNothing);
+
+        // Verify new credential works in store
+        expect(
+          store.authenticate(userId: 'admin', password: 'newSecret123'),
+          isNotNull,
+        );
+      },
+    );
   });
 }

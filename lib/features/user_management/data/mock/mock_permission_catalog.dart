@@ -203,7 +203,37 @@ abstract final class MockPermissionCatalog {
     MockPermissionDefinition(
       id: CrmPermissions.purchaseView,
       module: CrmModule.purchase,
-      displayName: 'View Purchases',
+      displayName: 'View Purchase Orders',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.purchaseCreate,
+      module: CrmModule.purchase,
+      displayName: 'Create Purchase Orders',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.purchaseApprove,
+      module: CrmModule.purchase,
+      displayName: 'Approve Purchase Orders',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.purchaseReceiveStock,
+      module: CrmModule.purchase,
+      displayName: 'Receive Stock / Goods',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.purchaseExportCsv,
+      module: CrmModule.purchase,
+      displayName: 'Export Purchase (CSV)',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.purchaseExportPdf,
+      module: CrmModule.purchase,
+      displayName: 'Export Purchase Register (PDF)',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.purchaseDownloadBill,
+      module: CrmModule.purchase,
+      displayName: 'Download Purchase Bill (PDF)',
     ),
     // Vendor Management
     MockPermissionDefinition(
@@ -211,6 +241,7 @@ abstract final class MockPermissionCatalog {
       module: CrmModule.vendorManagement,
       displayName: 'View Vendors',
     ),
+<<<<<<< HEAD
     // Approvals & Notifications
     MockPermissionDefinition(
       id: CrmPermissions.approvalsView,
@@ -241,6 +272,43 @@ abstract final class MockPermissionCatalog {
       id: CrmPermissions.notificationsManage,
       module: CrmModule.approvalsNotifications,
       displayName: 'Manage Notifications',
+=======
+    // Dispatch
+    MockPermissionDefinition(
+      id: CrmPermissions.dispatchView,
+      module: CrmModule.dispatch,
+      displayName: 'View Dispatch Records',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.dispatchCreate,
+      module: CrmModule.dispatch,
+      displayName: 'Create Dispatch Orders',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.dispatchUpdateStatus,
+      module: CrmModule.dispatch,
+      displayName: 'Update Shipment Status',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.dispatchExportCsv,
+      module: CrmModule.dispatch,
+      displayName: 'Export Dispatch (CSV)',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.dispatchExportXlsx,
+      module: CrmModule.dispatch,
+      displayName: 'Export Dispatch (Excel)',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.dispatchExportPdf,
+      module: CrmModule.dispatch,
+      displayName: 'Export Dispatch Register (PDF)',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.dispatchDownloadBill,
+      module: CrmModule.dispatch,
+      displayName: 'Download Dispatch Bill (PDF)',
+>>>>>>> 2a7fa8767b573363291c48c15547378cecf22e00
     ),
   ];
 

@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../domain/entities/current_user.dart';
 import '../../domain/repositories/auth_repository.dart';
 import 'auth_state.dart';
 
@@ -39,6 +40,13 @@ class AuthCubit extends Cubit<AuthState> {
   Future<void> logout() async {
     await _repository.logout();
     emit(const AuthUnauthenticated());
+  }
+
+  /// Updates current authenticated user profile attributes in state.
+  void updateCurrentUser(CurrentUser user) {
+    if (state is AuthAuthenticated) {
+      emit(AuthAuthenticated(user));
+    }
   }
 
   /// Clears any transient failure state back to unauthenticated.

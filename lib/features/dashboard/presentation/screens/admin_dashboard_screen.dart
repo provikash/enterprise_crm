@@ -6,6 +6,13 @@ import '../../../auth/domain/entities/crm_module.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../auth/domain/entities/current_user.dart';
+import '../../../dispatch/data/repositories/mock_dispatch_repository.dart';
+import '../../../dispatch/domain/repositories/dispatch_repository.dart';
+import '../../../dispatch/presentation/screens/dispatch_workspace_screen.dart';
+import '../../../hr/data/repositories/mock_attendance_repository.dart';
+import '../../../hr/data/repositories/mock_employee_document_repository.dart';
+import '../../../hr/data/repositories/mock_employee_kpi_repository.dart';
+import '../../../hr/data/repositories/mock_employee_repository.dart';
 import '../../../hr/domain/repositories/attendance_repository.dart';
 import '../../../hr/domain/repositories/employee_document_repository.dart';
 import '../../../hr/domain/repositories/employee_kpi_repository.dart';
@@ -14,6 +21,18 @@ import '../../../hr/presentation/screens/hr_home_screen.dart';
 import '../../../inventory/domain/repositories/inventory_repository.dart';
 import '../../../inventory/data/repositories/mock_inventory_repository.dart';
 import '../../../inventory/presentation/screens/inventory_workspace_screen.dart';
+import '../../../auth/domain/repositories/user_lead_link_repository.dart';
+import '../../../auth/data/repositories/mock_user_lead_link_repository.dart';
+import '../../../calling/data/repositories/mock_lead_call_activity_repository.dart';
+import '../../../calling/data/repositories/mock_lead_follow_up_repository.dart';
+import '../../../calling/domain/repositories/lead_call_activity_repository.dart';
+import '../../../calling/domain/repositories/lead_follow_up_repository.dart';
+import '../../../calling/presentation/screens/user_calling_workspace_screen.dart';
+import '../../../leads/data/repositories/mock_lead_repository.dart';
+import '../../../leads/domain/repositories/lead_repository.dart';
+import '../../../purchase/data/repositories/mock_purchase_repository.dart';
+import '../../../purchase/domain/repositories/purchase_repository.dart';
+import '../../../purchase/presentation/screens/purchase_workspace_screen.dart';
 import '../../../user_management/domain/repositories/user_management_repository.dart';
 import '../../../user_management/presentation/screens/users_and_access_screen.dart';
 import '../../../approvals/data/repositories/mock_approval_repository.dart';
@@ -32,13 +51,22 @@ class AdminDashboardScreen extends StatelessWidget {
   final VoidCallback onLogout;
   final VoidCallback onOpenLeadManagement;
   final InventoryRepository? inventoryRepository;
+  final DispatchRepository? dispatchRepository;
   final UserManagementRepository? userManagementRepository;
   final EmployeeRepository? employeeRepository;
   final EmployeeDocumentRepository? employeeDocumentRepository;
   final AttendanceRepository? attendanceRepository;
   final EmployeeKpiRepository? employeeKpiRepository;
+<<<<<<< HEAD
   final ApprovalRepository? approvalRepository;
   final NotificationCubit? notificationCubit;
+=======
+  final PurchaseRepository? purchaseRepository;
+  final LeadRepository? leadRepository;
+  final UserLeadLinkRepository? userLeadLinkRepository;
+  final LeadCallActivityRepository? callActivityRepository;
+  final LeadFollowUpRepository? leadFollowUpRepository;
+>>>>>>> 2a7fa8767b573363291c48c15547378cecf22e00
 
   const AdminDashboardScreen({
     super.key,
@@ -47,32 +75,33 @@ class AdminDashboardScreen extends StatelessWidget {
     required this.onLogout,
     required this.onOpenLeadManagement,
     this.inventoryRepository,
+    this.dispatchRepository,
     this.userManagementRepository,
     this.employeeRepository,
     this.employeeDocumentRepository,
     this.attendanceRepository,
     this.employeeKpiRepository,
+<<<<<<< HEAD
     this.approvalRepository,
     this.notificationCubit,
+=======
+    this.purchaseRepository,
+    this.leadRepository,
+    this.userLeadLinkRepository,
+    this.callActivityRepository,
+    this.leadFollowUpRepository,
+>>>>>>> 2a7fa8767b573363291c48c15547378cecf22e00
   });
 
   void _openModule(BuildContext context, CrmModule module) {
     if (module == CrmModule.leadManagement) {
       onOpenLeadManagement();
     } else if (module == CrmModule.hrPayroll) {
-      final employees = employeeRepository;
-      final documents = employeeDocumentRepository;
-      final attendance = attendanceRepository;
-      final kpis = employeeKpiRepository;
-      if (employees == null ||
-          documents == null ||
-          attendance == null ||
-          kpis == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('HR repositories are not configured.')),
-        );
-        return;
-      }
+      final employees = employeeRepository ?? MockEmployeeRepository();
+      final documents =
+          employeeDocumentRepository ?? MockEmployeeDocumentRepository();
+      final attendance = attendanceRepository ?? MockAttendanceRepository();
+      final kpis = employeeKpiRepository ?? MockEmployeeKpiRepository();
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => HrHomeScreen(
@@ -109,6 +138,7 @@ class AdminDashboardScreen extends StatelessWidget {
         screen = BlocProvider<AuthCubit>.value(value: authCubit, child: screen);
       }
 
+<<<<<<< HEAD
       Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
     } else if (module == CrmModule.approvalsNotifications) {
       Navigator.of(context).push(
@@ -116,6 +146,43 @@ class AdminDashboardScreen extends StatelessWidget {
           builder: (_) => ApprovalsWorkspaceScreen(
             user: user,
             repository: approvalRepository ?? MockApprovalRepository(),
+=======
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => screen,
+        ),
+      );
+    } else if (module == CrmModule.dispatch) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => DispatchWorkspaceScreen(
+            user: user,
+            repository: dispatchRepository ?? MockDispatchRepository(),
+          ),
+        ),
+      );
+    } else if (module == CrmModule.purchase) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => PurchaseWorkspaceScreen(
+            user: user,
+            repository: purchaseRepository ?? MockPurchaseRepository(),
+          ),
+        ),
+      );
+    } else if (module == CrmModule.calling) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => UserCallingWorkspaceScreen(
+            user: user,
+            leadRepository: leadRepository ?? MockLeadRepository(),
+            linkRepository:
+                userLeadLinkRepository ?? MockUserLeadLinkRepository(),
+            callActivityRepository:
+                callActivityRepository ?? MockLeadCallActivityRepository(),
+            leadFollowUpRepository:
+                leadFollowUpRepository ?? MockLeadFollowUpRepository(),
+>>>>>>> 2a7fa8767b573363291c48c15547378cecf22e00
           ),
         ),
       );
@@ -160,8 +227,12 @@ class AdminDashboardScreen extends StatelessWidget {
             CrmAppHeader(
               user: user,
               onLogout: onLogout,
+<<<<<<< HEAD
               notificationCubit: notificationCubit,
               approvalRepository: approvalRepository,
+=======
+              userManagementRepository: userManagementRepository,
+>>>>>>> 2a7fa8767b573363291c48c15547378cecf22e00
             ),
             Expanded(
               child: SingleChildScrollView(

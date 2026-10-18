@@ -50,10 +50,17 @@ abstract final class CrmPermissions {
 
   // Purchase
   static const String purchaseView = 'purchase.view';
+  static const String purchaseCreate = 'purchase.create';
+  static const String purchaseApprove = 'purchase.approve';
+  static const String purchaseReceiveStock = 'purchase.receive_stock';
+  static const String purchaseExportCsv = 'purchase.export.csv';
+  static const String purchaseExportPdf = 'purchase.export.pdf';
+  static const String purchaseDownloadBill = 'purchase.bill.download';
 
   // Vendor Management
   static const String vendorView = 'vendor.view';
 
+<<<<<<< HEAD
   // Approvals & Notifications
   static const String approvalsView = 'approvals.view';
   static const String approvalsAction = 'approvals.action';
@@ -61,6 +68,16 @@ abstract final class CrmPermissions {
   static const String approvalsExport = 'approvals.export';
   static const String notificationsView = 'notifications.view';
   static const String notificationsManage = 'notifications.manage';
+=======
+  // Dispatch
+  static const String dispatchView = 'dispatch.view';
+  static const String dispatchCreate = 'dispatch.create';
+  static const String dispatchUpdateStatus = 'dispatch.update_status';
+  static const String dispatchExportCsv = 'dispatch.export.csv';
+  static const String dispatchExportXlsx = 'dispatch.export.xlsx';
+  static const String dispatchExportPdf = 'dispatch.export.pdf';
+  static const String dispatchDownloadBill = 'dispatch.bill.download';
+>>>>>>> 2a7fa8767b573363291c48c15547378cecf22e00
 
   /// Canonical mapping of permission identifiers to their owning CRM modules.
   static const Map<String, CrmModule> _moduleByPermission = {
@@ -100,13 +117,29 @@ abstract final class CrmPermissions {
     inventoryExportCsv: CrmModule.inventory,
     inventoryExportXlsx: CrmModule.inventory,
     purchaseView: CrmModule.purchase,
+    purchaseCreate: CrmModule.purchase,
+    purchaseApprove: CrmModule.purchase,
+    purchaseReceiveStock: CrmModule.purchase,
+    purchaseExportCsv: CrmModule.purchase,
+    purchaseExportPdf: CrmModule.purchase,
+    purchaseDownloadBill: CrmModule.purchase,
     vendorView: CrmModule.vendorManagement,
+<<<<<<< HEAD
     approvalsView: CrmModule.approvalsNotifications,
     approvalsAction: CrmModule.approvalsNotifications,
     approvalsSubmit: CrmModule.approvalsNotifications,
     approvalsExport: CrmModule.approvalsNotifications,
     notificationsView: CrmModule.approvalsNotifications,
     notificationsManage: CrmModule.approvalsNotifications,
+=======
+    dispatchView: CrmModule.dispatch,
+    dispatchCreate: CrmModule.dispatch,
+    dispatchUpdateStatus: CrmModule.dispatch,
+    dispatchExportCsv: CrmModule.dispatch,
+    dispatchExportXlsx: CrmModule.dispatch,
+    dispatchExportPdf: CrmModule.dispatch,
+    dispatchDownloadBill: CrmModule.dispatch,
+>>>>>>> 2a7fa8767b573363291c48c15547378cecf22e00
   };
 
   /// Returns whether [permission] is a recognized permission identifier.

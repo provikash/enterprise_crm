@@ -14,6 +14,9 @@ import '../bloc/employee_details_cubit.dart';
 import '../bloc/employee_details_state.dart';
 import '../widgets/hr_info_row.dart';
 import '../widgets/hr_section_card.dart';
+import '../../data/repositories/mock_attendance_repository.dart';
+import '../../data/repositories/mock_employee_document_repository.dart';
+import '../../data/repositories/mock_employee_kpi_repository.dart';
 import 'edit_employee_screen.dart';
 import 'employee_attendance_history_screen.dart';
 import 'employee_documents_screen.dart';
@@ -338,16 +341,23 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
                         ),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                         onTap: () {
+                          EmployeeDocumentRepository? docRepo =
+                              widget.documentRepository;
+                          if (docRepo == null) {
+                            try {
+                              docRepo = RepositoryProvider.of<
+                                EmployeeDocumentRepository
+                              >(context, listen: false);
+                            } catch (_) {
+                              docRepo = MockEmployeeDocumentRepository();
+                            }
+                          }
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => EmployeeDocumentsScreen(
                                 user: widget.user,
                                 employee: employee,
-                                repository:
-                                    widget.documentRepository ??
-                                    RepositoryProvider.of<
-                                      EmployeeDocumentRepository
-                                    >(context, listen: false),
+                                repository: docRepo!,
                               ),
                             ),
                           );
@@ -390,17 +400,23 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
                         ),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                         onTap: () {
+                          AttendanceRepository? attRepo =
+                              widget.attendanceRepository;
+                          if (attRepo == null) {
+                            try {
+                              attRepo = RepositoryProvider.of<
+                                AttendanceRepository
+                              >(context, listen: false);
+                            } catch (_) {
+                              attRepo = MockAttendanceRepository();
+                            }
+                          }
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => EmployeeAttendanceHistoryScreen(
                                 user: widget.user,
                                 employee: employee,
-                                repository:
-                                    widget.attendanceRepository ??
-                                    RepositoryProvider.of<AttendanceRepository>(
-                                      context,
-                                      listen: false,
-                                    ),
+                                repository: attRepo!,
                               ),
                             ),
                           );
@@ -443,16 +459,22 @@ class _EmployeeDetailsViewState extends State<_EmployeeDetailsView> {
                         ),
                         trailing: const Icon(Icons.arrow_forward_ios, size: 14),
                         onTap: () {
+                          EmployeeKpiRepository? kpiRepo = widget.kpiRepository;
+                          if (kpiRepo == null) {
+                            try {
+                              kpiRepo = RepositoryProvider.of<
+                                EmployeeKpiRepository
+                              >(context, listen: false);
+                            } catch (_) {
+                              kpiRepo = MockEmployeeKpiRepository();
+                            }
+                          }
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => EmployeeKpiListScreen(
                                 user: widget.user,
                                 initialEmployeeId: employee.id,
-                                kpiRepository:
-                                    widget.kpiRepository ??
-                                    RepositoryProvider.of<
-                                      EmployeeKpiRepository
-                                    >(context, listen: false),
+                                kpiRepository: kpiRepo!,
                                 employeeRepository: widget.repository,
                               ),
                             ),

@@ -93,8 +93,8 @@ void main() {
       expect(UserCallingPolicy.canUseCalling(user), isFalse);
     });
 
-    test('false for admin user (admin has separate workflow)', () {
-      expect(UserCallingPolicy.canUseCalling(adminUser), isFalse);
+    test('true for admin user (admin has access across all modules)', () {
+      expect(UserCallingPolicy.canUseCalling(adminUser), isTrue);
     });
   });
 
@@ -245,14 +245,14 @@ void main() {
         );
       });
 
-      test('false for admin user', () {
+      test('true for admin user (admin has all power)', () {
         expect(
           UserCallingPolicy.canRecordActivityForLead(
             user: adminUser,
             lead: ownLead,
             linkedAssigneeId: 'agent-1',
           ),
-          isFalse,
+          isTrue,
         );
       });
     },

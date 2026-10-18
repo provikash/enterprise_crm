@@ -22,7 +22,7 @@ void main() {
 
     test('seeded: unknown user returns null', () async {
       final repo = MockUserLeadLinkRepository();
-      expect(await repo.getLinkForUser('usr_admin'), isNull);
+      expect(await repo.getLinkForUser('usr_unknown'), isNull);
       expect(await repo.getLinkForUser('nonexistent'), isNull);
     });
 

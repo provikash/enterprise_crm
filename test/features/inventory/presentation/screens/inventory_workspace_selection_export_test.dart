@@ -33,9 +33,11 @@ void main() {
     expect(selection, findsOneWidget);
     await tester.ensureVisible(selection);
     await tester.tap(selection);
-    await tester.tap(
-      find.byKey(const Key('inventory_workspace_export_button')),
-    );
+    await tester.pumpAndSettle();
+
+    final exportBtn = find.byKey(const Key('inventory_workspace_export_button'));
+    await tester.ensureVisible(exportBtn);
+    await tester.tap(exportBtn);
     await tester.pumpAndSettle();
 
     expect(find.text('Selected Records (1 items)'), findsOneWidget);

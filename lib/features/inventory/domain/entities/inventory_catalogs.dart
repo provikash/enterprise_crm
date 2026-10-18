@@ -43,12 +43,9 @@ class InventoryCatalogs {
         'set',
       };
 
-  /// Default warehouses including the legacy default ('Default') and the 3 seed workbook facilities.
+  /// Default warehouses: preset facilities removed to allow users to add their custom warehouses.
   static Set<String> _defaultWarehouses() => {
         'Default',
-        'BLR-01',
-        'DEL-01',
-        'MUM-01',
       };
 
   Set<String> get categories => Set.unmodifiable(_categories);

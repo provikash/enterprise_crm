@@ -76,7 +76,7 @@ class LeadCallHistoryCubit extends Cubit<LeadCallHistoryState> {
     try {
       // 5. Resolve identity link
       final link = await _linkRepository.getLinkForUser(_user.id);
-      if (link == null) {
+      if (!_user.isAdmin && link == null) {
         emit(
           const LeadCallHistoryAccessDenied(
             'User is not linked to an assignee identity.',
@@ -86,13 +86,15 @@ class LeadCallHistoryCubit extends Cubit<LeadCallHistoryState> {
       }
 
       // 6. Validate assignee identity exists
-      final assignees = await _leadRepository.getAssignableUsers();
-      final assigneeExists = assignees.any((a) => a.id == link.leadAssigneeId);
-      if (!assigneeExists) {
-        emit(
-          const LeadCallHistoryAccessDenied('Assigned identity is invalid.'),
-        );
-        return;
+      if (link != null) {
+        final assignees = await _leadRepository.getAssignableUsers();
+        final assigneeExists = assignees.any((a) => a.id == link.leadAssigneeId);
+        if (!_user.isAdmin && !assigneeExists) {
+          emit(
+            const LeadCallHistoryAccessDenied('Assigned identity is invalid.'),
+          );
+          return;
+        }
       }
 
       // 7. Fresh Lead retrieval
@@ -106,7 +108,7 @@ class LeadCallHistoryCubit extends Cubit<LeadCallHistoryState> {
       if (!UserCallingPolicy.canViewLeadHistory(
         user: _user,
         lead: freshLead,
-        linkedAssigneeId: link.leadAssigneeId,
+        linkedAssigneeId: link?.leadAssigneeId,
       )) {
         emit(
           const LeadCallHistoryAccessDenied(

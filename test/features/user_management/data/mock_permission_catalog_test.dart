@@ -172,6 +172,26 @@ void main() {
       expect(inventoryPerms.contains('inventory.import.xlsx'), isTrue);
     });
 
+    test('purchase permissions map to purchase module', () {
+      expect(
+        MockPermissionCatalog.getModuleForPermission('purchase.create'),
+        CrmModule.purchase,
+      );
+      expect(
+        MockPermissionCatalog.getModuleForPermission('purchase.bill.download'),
+        CrmModule.purchase,
+      );
+      final purchasePerms =
+          MockPermissionCatalog.getPermissionsForModule(CrmModule.purchase);
+      expect(purchasePerms.contains('purchase.view'), isTrue);
+      expect(purchasePerms.contains('purchase.create'), isTrue);
+      expect(purchasePerms.contains('purchase.approve'), isTrue);
+      expect(purchasePerms.contains('purchase.receive_stock'), isTrue);
+      expect(purchasePerms.contains('purchase.export.csv'), isTrue);
+      expect(purchasePerms.contains('purchase.export.pdf'), isTrue);
+      expect(purchasePerms.contains('purchase.bill.download'), isTrue);
+    });
+
     test(
       'exposes every enterprise HR and payroll permission in user forms',
       () {

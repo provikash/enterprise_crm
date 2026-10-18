@@ -137,7 +137,7 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
         key: const Key('create_user_unauthorized_screen'),
         appBar: AppBar(title: const Text('Access Denied')),
         body: Center(
-          child: Padding(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24.0),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -441,8 +441,10 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                     const SizedBox(height: 32),
 
                     // Actions Row
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
+                    Wrap(
+                      alignment: WrapAlignment.end,
+                      spacing: 16,
+                      runSpacing: 12,
                       children: [
                         OutlinedButton(
                           key: const Key('create_user_cancel_button'),
@@ -451,7 +453,6 @@ class _CreateUserScreenState extends State<CreateUserScreen> {
                               : () => Navigator.of(context).pop(false),
                           child: const Text('Cancel'),
                         ),
-                        const SizedBox(width: 16),
                         ElevatedButton.icon(
                           key: const Key('create_user_submit_button'),
                           onPressed: _isSubmitting ? null : _handleSave,

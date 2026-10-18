@@ -82,21 +82,23 @@ class CallingDashboardCubit extends Cubit<CallingDashboardState> {
     try {
       // 3. Resolve CRM user -> LeadAssignee link
       final link = await _linkRepository.getLinkForUser(_user.id);
-      if (link == null) {
+      if (!_user.isAdmin && link == null) {
         emit(const CallingDashboardNoLink());
         return;
       }
 
       // 4. Validate that the mapped assignee exists in the Lead domain
-      final assignees = await _leadRepository.getAssignableUsers();
-      final assigneeExists = assignees.any((a) => a.id == link.leadAssigneeId);
-      if (!assigneeExists) {
-        emit(const CallingDashboardInvalidLink());
-        return;
+      if (link != null) {
+        final assignees = await _leadRepository.getAssignableUsers();
+        final assigneeExists = assignees.any((a) => a.id == link.leadAssigneeId);
+        if (!_user.isAdmin && !assigneeExists) {
+          emit(const CallingDashboardInvalidLink());
+          return;
+        }
       }
 
       // 5. Safely retrieve ALL currently assigned Leads across pages
-      // Every page retains assignedUserId = linkedAssigneeId
+      // Every page retains assignedUserId = linkedAssigneeId (or all leads if admin has no link)
       // Deduplicate by Lead.id into a Map to prevent accidental page overlap duplicates
       final leadsById = <String, Lead>{};
       var page = 1;
@@ -104,7 +106,7 @@ class CallingDashboardCubit extends Cubit<CallingDashboardState> {
 
       while (hasNext) {
         final leadPage = await _leadRepository.getLeads(
-          LeadQuery(assignedUserId: link.leadAssigneeId, page: page),
+          LeadQuery(assignedUserId: link?.leadAssigneeId, page: page),
         );
 
         for (final lead in leadPage.items) {

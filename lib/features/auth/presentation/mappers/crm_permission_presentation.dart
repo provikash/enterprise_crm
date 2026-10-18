@@ -39,13 +39,29 @@ abstract final class CrmPermissionPresentation {
     CrmPermissions.inventoryExportCsv: 'Export inventory (CSV)',
     CrmPermissions.inventoryExportXlsx: 'Export inventory (Excel)',
     CrmPermissions.purchaseView: 'View purchases',
+    CrmPermissions.purchaseCreate: 'Create purchase orders',
+    CrmPermissions.purchaseApprove: 'Approve purchase orders',
+    CrmPermissions.purchaseReceiveStock: 'Receive stock / goods',
+    CrmPermissions.purchaseExportCsv: 'Export purchase (CSV)',
+    CrmPermissions.purchaseExportPdf: 'Export purchase register (PDF)',
+    CrmPermissions.purchaseDownloadBill: 'Download purchase bill (PDF)',
     CrmPermissions.vendorView: 'View vendors',
+<<<<<<< HEAD
     CrmPermissions.approvalsView: 'View approvals',
     CrmPermissions.approvalsAction: 'Approve or reject requests',
     CrmPermissions.approvalsSubmit: 'Submit approval requests',
     CrmPermissions.approvalsExport: 'Export approval history',
     CrmPermissions.notificationsView: 'View notifications',
     CrmPermissions.notificationsManage: 'Manage notifications',
+=======
+    CrmPermissions.dispatchView: 'View dispatch records',
+    CrmPermissions.dispatchCreate: 'Create dispatch orders',
+    CrmPermissions.dispatchUpdateStatus: 'Update shipment status',
+    CrmPermissions.dispatchExportCsv: 'Export dispatch (CSV)',
+    CrmPermissions.dispatchExportXlsx: 'Export dispatch (Excel)',
+    CrmPermissions.dispatchExportPdf: 'Export dispatch register (PDF)',
+    CrmPermissions.dispatchDownloadBill: 'Download bill / challan (PDF)',
+>>>>>>> 2a7fa8767b573363291c48c15547378cecf22e00
   };
 
   /// Returns the human-readable display label for [permissionId].
