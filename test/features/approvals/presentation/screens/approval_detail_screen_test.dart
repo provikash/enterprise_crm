@@ -1,5 +1,8 @@
 import 'package:enterprise_crm/features/approvals/data/mock/mock_approval_store.dart';
 import 'package:enterprise_crm/features/approvals/data/repositories/mock_approval_repository.dart';
+import 'package:enterprise_crm/features/approvals/domain/entities/approval_step.dart';
+import 'package:enterprise_crm/features/approvals/domain/entities/approval_step_status.dart';
+import 'package:enterprise_crm/features/approvals/domain/inputs/create_approval_request_input.dart';
 import 'package:enterprise_crm/features/approvals/presentation/screens/approval_detail_screen.dart';
 import 'package:enterprise_crm/features/auth/domain/entities/account_type.dart';
 import 'package:enterprise_crm/features/auth/domain/entities/crm_module.dart';
@@ -85,6 +88,85 @@ void main() {
 
     // Maker-Checker blocks requester from deciding on their own request
     expect(find.byKey(const Key('approval_action_approve_btn')), findsNothing);
+    expect(find.byKey(const Key('approval_detail_governance_notice')), findsOneWidget);
+  });
+
+  testWidgets('ApprovalDetailScreen displays step routing notice for non-assigned user',
+      (tester) async {
+    final store = MockApprovalStore();
+    final repo = MockApprovalRepository(store);
+
+    final assignedReq = await repo.submitRequest(
+      const CreateApprovalRequestInput(
+        module: CrmModule.purchase,
+        entityType: 'purchase_order',
+        entityId: 'po-custom-assigned',
+        entityTitle: 'Special PO (Assigned Step)',
+        requesterId: 'usr_other_requester',
+        requesterName: 'Other Person',
+        steps: [
+          ApprovalStep(
+            id: 'step-assigned-test',
+            stepOrder: 1,
+            title: 'Designated Audit Step',
+            assignedRole: 'Finance Director',
+            assignedUserId: 'usr_frank_finance',
+            assignedUserName: 'Frank Finance',
+            status: ApprovalStepStatus.pending,
+          ),
+        ],
+      ),
+    );
+
+    // Standard user with approvals.action who is neither Frank Finance nor admin
+    final standardUser = CurrentUser(
+      id: 'usr_new_user',
+      accountType: AccountType.user,
+      modules: {CrmModule.approvalsNotifications},
+      permissions: {'approvals.view', 'approvals.action'},
+      displayName: 'New User',
+    );
+
+    await tester.pumpWidget(
+      buildDetailScreen(
+        requestId: assignedReq.id,
+        user: standardUser,
+        repository: repo,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('approval_action_approve_btn')), findsNothing);
+    expect(find.byKey(const Key('approval_detail_governance_notice')), findsOneWidget);
+    expect(find.textContaining('Step Routing: This workflow step is assigned to Frank Finance'), findsOneWidget);
+  });
+
+  testWidgets('ApprovalDetailScreen allows standard user with approvals.action to approve role-based request',
+      (tester) async {
+    final store = MockApprovalStore();
+    final repo = MockApprovalRepository(store);
+
+    // Standard user with approvals.action on appr-001 (role-based Finance Director step)
+    final standardUser = CurrentUser(
+      id: 'usr_permitted_standard',
+      accountType: AccountType.user,
+      modules: {CrmModule.approvalsNotifications},
+      permissions: {'approvals.view', 'approvals.action'},
+      displayName: 'Standard Approver',
+    );
+
+    await tester.pumpWidget(
+      buildDetailScreen(
+        requestId: 'appr-001',
+        user: standardUser,
+        repository: repo,
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // Action buttons must be present!
+    expect(find.byKey(const Key('approval_action_approve_btn')), findsOneWidget);
+    expect(find.byKey(const Key('approval_action_reject_btn')), findsOneWidget);
   });
 
   testWidgets('ApprovalDetailScreen renders without overflow on 320x568 mobile viewport',

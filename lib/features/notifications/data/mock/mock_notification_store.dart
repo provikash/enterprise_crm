@@ -92,27 +92,32 @@ class MockNotificationStore {
     _notify();
   }
 
+  /// Normalizes and checks if a notification's [storedRecipient] matches the querying [targetUser].
+  ///
+  /// Supports both canonical system identifiers and login usernames:
+  /// - `admin` matches `usr_admin` and `admin`
+  /// - `user` matches `usr_standard` and `user`
+  static bool _matchesRecipient(String storedRecipient, String targetUser) {
+    if (storedRecipient == targetUser) return true;
+    if ((storedRecipient == 'usr_admin' || storedRecipient == 'admin') &&
+        (targetUser == 'usr_admin' || targetUser == 'admin')) {
+      return true;
+    }
+    if ((storedRecipient == 'usr_standard' || storedRecipient == 'user') &&
+        (targetUser == 'usr_standard' || targetUser == 'user')) {
+      return true;
+    }
+    if ((storedRecipient == 'usr_buyer' || storedRecipient == 'buyer') &&
+        (targetUser == 'usr_buyer' || targetUser == 'buyer')) {
+      return true;
+    }
+    return false;
+  }
+
   void _notify() {
     if (!_streamController.isClosed) {
       _streamController.add(List.unmodifiable(_notifications));
     }
-  }
-
-  bool _matchesRecipient(String notificationRecipient, String queryRecipient) {
-    if (notificationRecipient == queryRecipient) return true;
-    if ((notificationRecipient == 'usr_admin' && queryRecipient == 'admin') ||
-        (notificationRecipient == 'admin' && queryRecipient == 'usr_admin')) {
-      return true;
-    }
-    if ((notificationRecipient == 'usr_standard' && queryRecipient == 'user') ||
-        (notificationRecipient == 'user' && queryRecipient == 'usr_standard')) {
-      return true;
-    }
-    if ((notificationRecipient == 'usr_buyer' && queryRecipient == 'buyer') ||
-        (notificationRecipient == 'buyer' && queryRecipient == 'usr_buyer')) {
-      return true;
-    }
-    return false;
   }
 
   /// Returns a stream of notifications for a specific recipient user.

@@ -59,7 +59,7 @@ final class ApprovalInboxLoaded extends ApprovalInboxState {
             return false;
           }
         case ApprovalInboxTab.mySubmissions:
-          if (currentUserId != null && req.requesterId != currentUserId) {
+          if (currentUserId != null && !_matchesUserActivity(req, currentUserId!)) {
             return false;
           }
       }
@@ -89,6 +89,61 @@ final class ApprovalInboxLoaded extends ApprovalInboxState {
     }).toList();
   }
 
+  static bool _matchesUserActivity(ApprovalRequest req, String currentUserId) {
+    // 1. Matches as requester
+    if (_matchesRequester(req.requesterId, currentUserId)) return true;
+
+    // 2. Matches as final decider (approved or rejected)
+    if (req.decidedByUserId != null &&
+        _matchesUserId(req.decidedByUserId!, currentUserId)) {
+      return true;
+    }
+
+    // 3. Matches in step decisions
+    if (req.steps.any((s) =>
+        s.decidedByUserId != null &&
+        _matchesUserId(s.decidedByUserId!, currentUserId))) {
+      return true;
+    }
+
+    // 4. Matches in audit activities
+    if (req.auditTrail.any((a) => _matchesUserId(a.actorUserId, currentUserId))) {
+      return true;
+    }
+
+    return false;
+  }
+
+  static bool _matchesUserId(String targetId, String currentUserId) {
+    final t = targetId.trim().toLowerCase();
+    final c = currentUserId.trim().toLowerCase();
+    if (t == c) return true;
+    if ((c == 'admin' || c == 'usr_admin') && (t == 'admin' || t == 'usr_admin')) {
+      return true;
+    }
+    if ((c == 'user' || c == 'usr_standard') && (t == 'user' || t == 'usr_standard')) {
+      return true;
+    }
+    return false;
+  }
+
+  static bool _matchesRequester(String reqRequesterId, String currentUserId) {
+    final r = reqRequesterId.trim().toLowerCase();
+    final c = currentUserId.trim().toLowerCase();
+    if (r == c) return true;
+    if ((c == 'admin' || c == 'usr_admin') &&
+        (r == 'admin' ||
+            r == 'usr_admin' ||
+            r == 'usr_admin_assistant')) {
+      return true;
+    }
+    if ((c == 'user' || c == 'usr_standard') &&
+        (r == 'user' || r == 'usr_standard')) {
+      return true;
+    }
+    return false;
+  }
+
   /// Total pending items across all modules.
   int get pendingCount => allRequests
       .where((r) =>
@@ -107,9 +162,9 @@ final class ApprovalInboxLoaded extends ApprovalInboxState {
           r.status == ApprovalStatus.cancelled)
       .length;
 
-  /// Total submissions created by the current user.
+  /// Total submissions or decisions actioned by the current user.
   int get mySubmissionsCount => currentUserId != null
-      ? allRequests.where((r) => r.requesterId == currentUserId).length
+      ? allRequests.where((r) => _matchesUserActivity(r, currentUserId!)).length
       : 0;
 
   /// Creates a copy of this state with specified parameters overridden.

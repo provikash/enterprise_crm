@@ -106,5 +106,24 @@ void main() {
         ),
       );
     });
+
+    test('supports login aliases (admin for usr_admin, user for usr_standard)', () async {
+      final notifsAdmin = await repository.getNotifications(recipientUserId: 'admin');
+      expect(notifsAdmin.length, 3);
+
+      final unreadAdmin = await repository.getUnreadCount('admin');
+      expect(unreadAdmin, 2);
+
+      final notifsUser = await repository.getNotifications(recipientUserId: 'user');
+      expect(notifsUser.length, 1);
+      expect(notifsUser.first.id, 'notif-202');
+
+      final unreadUser = await repository.getUnreadCount('user');
+      expect(unreadUser, 1);
+
+      await repository.markAllAsRead('admin');
+      final afterMark = await repository.getUnreadCount('admin');
+      expect(afterMark, 0);
+    });
   });
 }

@@ -41,7 +41,9 @@ abstract final class ApprovalsAccessPolicy {
     // If active step is assigned to a specific user, only that user can act.
     final step = request.currentStep;
     if (step != null && step.assignedUserId != null) {
-      return step.assignedUserId == user.id;
+      final assigned = step.assignedUserId!.trim().toLowerCase();
+      final uid = user.id.trim().toLowerCase();
+      return assigned == uid;
     }
 
     return true;

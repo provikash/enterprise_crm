@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../features/auth/domain/entities/current_user.dart';
+import '../../../../features/auth/domain/policies/crm_permissions.dart';
 import '../../../dashboard/presentation/mappers/crm_module_presentation.dart';
 import '../../domain/entities/approval_action_type.dart';
 import '../../domain/entities/approval_priority.dart';
@@ -272,6 +273,12 @@ class _ApprovalDetailView extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 24),
+
+                      // Governance Notice (when user cannot decide on an actionable request)
+                      if (!canDecide && request.isActionable) ...[
+                        _buildGovernanceNotice(context, request: request),
+                        const SizedBox(height: 16),
+                      ],
 
                       // Actions row (if actionable)
                       if (canDecide || canCancel) ...[
@@ -735,5 +742,52 @@ class _ApprovalDetailView extends StatelessWidget {
   String _formatDateTime(DateTime dt) {
     return '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
         '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+  }
+
+  Widget _buildGovernanceNotice(BuildContext context, {required ApprovalRequest request}) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final step = request.currentStep;
+
+    String message;
+    final isRequester = !user.isAdmin && request.requesterId == user.id;
+    final isAssignedToOther = step != null &&
+        step.assignedUserId != null &&
+        step.assignedUserId != user.id;
+
+    if (isRequester) {
+      message = 'Maker-Checker Governance: You submitted this request. Originators cannot approve their own requests.';
+    } else if (!user.hasPermission(CrmPermissions.approvalsAction)) {
+      message = 'View-Only Access: Your user account does not have the "Approve or Reject Requests" permission.';
+    } else if (isAssignedToOther) {
+      final assigned = step.assignedUserName ?? step.assignedRole ?? step.assignedUserId;
+      message = 'Step Routing: This workflow step is assigned to $assigned. Only the designated approver or an Administrator can take action.';
+    } else {
+      message = 'This request is awaiting action by an authorized approver.';
+    }
+
+    return Container(
+      key: const Key('approval_detail_governance_notice'),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: colorScheme.outlineVariant.withValues(alpha: 0.6)),
+      ),
+      child: Row(
+        children: [
+          Icon(Icons.info_outline, size: 20, color: colorScheme.primary),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              message,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

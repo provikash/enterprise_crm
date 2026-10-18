@@ -25,6 +25,14 @@ class NotificationBellButton extends StatelessWidget {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    if (effectiveCubit.state is NotificationInitial) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!effectiveCubit.isClosed && effectiveCubit.state is NotificationInitial) {
+          effectiveCubit.watchNotifications(user.id);
+        }
+      });
+    }
+
     return BlocBuilder<NotificationCubit, NotificationState>(
       bloc: effectiveCubit,
       builder: (context, state) {

@@ -201,6 +201,10 @@ class _CrmAppState extends State<CrmApp> {
     _vendorRepository = widget.vendorRepository ?? MockVendorRepository();
     if (widget.authRepository != null) {
       _authCubit = AuthCubit(widget.authRepository!);
+      final authState = _authCubit!.state;
+      if (authState is AuthAuthenticated) {
+        _notificationCubit.watchNotifications(authState.user.id);
+      }
     }
   }
 

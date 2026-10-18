@@ -31,6 +31,14 @@ class _NotificationCenterScreenState extends State<NotificationCenterScreen> {
   bool _unreadOnly = false;
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.cubit.state is NotificationInitial) {
+      widget.cubit.watchNotifications(widget.user.id);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
 
     return BlocBuilder<NotificationCubit, NotificationState>(
