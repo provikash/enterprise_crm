@@ -7,6 +7,7 @@ import '../../../auth/domain/repositories/user_lead_link_repository.dart';
 import '../../../leads/domain/entities/lead.dart';
 import '../../../leads/domain/repositories/lead_repository.dart';
 import '../../data/repositories/mock_lead_call_activity_repository.dart';
+import '../../data/repositories/mock_lead_follow_up_repository.dart';
 import '../../data/services/mock_calling_workflow_service.dart';
 import '../../domain/entities/call_outcome.dart';
 import '../../domain/policies/user_calling_policy.dart';
@@ -45,14 +46,12 @@ class RecordCallActivityCubit extends Cubit<RecordCallActivityState> {
        _leadRepository = leadRepository,
        _workflowService =
            workflowService ??
-           (callActivityRepository != null && followUpRepository != null
-               ? MockCallingWorkflowService(
-                   callActivityRepository: callActivityRepository,
-                   followUpRepository: followUpRepository,
-                 )
-               : (throw ArgumentError(
-                   'Either workflowService or both callActivityRepository and followUpRepository must be provided.',
-                 ))),
+           MockCallingWorkflowService(
+             callActivityRepository:
+                 callActivityRepository ?? MockLeadCallActivityRepository(),
+             followUpRepository:
+                 followUpRepository ?? MockLeadFollowUpRepository(),
+           ),
        _now = now ?? DateTime.now,
        super(const RecordCallActivityInitial());
 

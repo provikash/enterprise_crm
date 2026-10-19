@@ -169,9 +169,9 @@ class AdminDashboardScreen extends StatelessWidget {
             linkRepository:
                 userLeadLinkRepository ?? MockUserLeadLinkRepository(),
             callActivityRepository:
-                callActivityRepository ?? MockLeadCallActivityRepository(),
+                callActivityRepository ?? MockLeadCallActivityRepository.seeded(),
             leadFollowUpRepository:
-                leadFollowUpRepository ?? MockLeadFollowUpRepository(),
+                leadFollowUpRepository ?? MockLeadFollowUpRepository.seeded(),
           ),
         ),
       );

@@ -21,6 +21,61 @@ class MockLeadCallActivityRepository implements LeadCallActivityRepository {
     }
   }
 
+  factory MockLeadCallActivityRepository.seeded({NowProvider? now}) {
+    final currentNow = now != null ? now() : DateTime.now();
+    final todayTwoPm = DateTime(
+      currentNow.year,
+      currentNow.month,
+      currentNow.day,
+      14,
+      0,
+    );
+    final tomorrowElevenAm = DateTime(
+      currentNow.year,
+      currentNow.month,
+      currentNow.day,
+      11,
+      0,
+    ).add(const Duration(days: 1));
+    final yesterdayThreePm = DateTime(
+      currentNow.year,
+      currentNow.month,
+      currentNow.day,
+      15,
+      30,
+    ).subtract(const Duration(days: 1));
+
+    return MockLeadCallActivityRepository(
+      now: now,
+      initialActivities: [
+        LeadCallActivity(
+          id: 'call-act-1',
+          leadId: 'mock-lead-1',
+          performedByUserId: 'agent-1',
+          outcome: CallOutcome.followUp,
+          rescheduleAt: todayTwoPm,
+          createdAt: currentNow.subtract(const Duration(hours: 3)),
+        ),
+        LeadCallActivity(
+          id: 'call-act-2',
+          leadId: 'mock-lead-5',
+          performedByUserId: 'agent-1',
+          outcome: CallOutcome.visitScheduled,
+          rescheduleAt: tomorrowElevenAm,
+          createdAt: currentNow.subtract(const Duration(hours: 1)),
+        ),
+        LeadCallActivity(
+          id: 'call-act-3',
+          leadId: 'mock-lead-1',
+          performedByUserId: 'agent-1',
+          outcome: CallOutcome.notConnected,
+          rescheduleAt: yesterdayThreePm,
+          createdAt: currentNow.subtract(const Duration(days: 2)),
+        ),
+      ],
+    );
+  }
+
   /// Direct inspection of all recorded activities in mock for testing assertions.
   List<LeadCallActivity> get recordedActivities =>
       List.unmodifiable(_activities);

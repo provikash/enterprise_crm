@@ -316,7 +316,16 @@ void main() {
         // 4. Select outcome 'Dispatched'
         await tester.tap(find.byKey(const Key('record_call_outcome_dropdown')));
         await tester.pumpAndSettle();
-        await tester.tap(find.text('Dispatched').last);
+
+        final dispatchedFinder = find.text('Dispatched');
+        await tester.scrollUntilVisible(
+          dispatchedFinder,
+          50.0,
+          scrollable: find.byType(Scrollable).last,
+        );
+        await tester.ensureVisible(dispatchedFinder.last);
+        await tester.pumpAndSettle();
+        await tester.tap(dispatchedFinder.last);
         await tester.pumpAndSettle();
 
         // 5. Submit activity

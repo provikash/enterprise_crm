@@ -30,8 +30,8 @@ CrmDependencies createMockCrmDependencies() {
     accountStore: accountStore,
   );
   final userLeadLinkRepository = MockUserLeadLinkRepository();
-  final leadCallActivityRepository = MockLeadCallActivityRepository();
-  final leadFollowUpRepository = MockLeadFollowUpRepository();
+  final leadCallActivityRepository = MockLeadCallActivityRepository.seeded();
+  final leadFollowUpRepository = MockLeadFollowUpRepository.seeded();
   final inventoryRepository = MockInventoryRepository();
   final dispatchRepository = MockDispatchRepository();
   final purchaseRepository = MockPurchaseRepository();

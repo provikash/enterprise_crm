@@ -313,17 +313,21 @@ class _CallingDashboardViewState extends State<_CallingDashboardView> {
     }
   }
 
-  void _openMyAssignedLeads(BuildContext context) {
-    Navigator.of(context).push(
+  void _openMyAssignedLeads(BuildContext context) async {
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => UserLeadWorkspaceScreen(
           user: widget.user,
           linkRepository: widget.linkRepository,
           leadRepository: widget.leadRepository,
           callActivityRepository: widget.callActivityRepository,
+          leadFollowUpRepository: widget.leadFollowUpRepository,
         ),
       ),
     );
+    if (context.mounted) {
+      context.read<CallingDashboardCubit>().refresh();
+    }
   }
 
   @override

@@ -27,6 +27,90 @@ class MockLeadFollowUpRepository implements LeadFollowUpRepository {
     }
   }
 
+  factory MockLeadFollowUpRepository.seeded({NowProvider? now}) {
+    final currentNow = now != null ? now() : DateTime.now();
+    final todayTwoPm = DateTime(
+      currentNow.year,
+      currentNow.month,
+      currentNow.day,
+      14,
+      0,
+    );
+    final tomorrowElevenAm = DateTime(
+      currentNow.year,
+      currentNow.month,
+      currentNow.day,
+      11,
+      0,
+    ).add(const Duration(days: 1));
+    final yesterdayThreePm = DateTime(
+      currentNow.year,
+      currentNow.month,
+      currentNow.day,
+      15,
+      30,
+    ).subtract(const Duration(days: 1));
+
+    return MockLeadFollowUpRepository(
+      now: now,
+      initialFollowUps: [
+        LeadFollowUp(
+          id: 'follow-up-1',
+          leadId: 'mock-lead-1',
+          sourceCallActivityId: 'call-act-1',
+          scheduledAt: todayTwoPm,
+          status: FollowUpStatus.pending,
+          createdAt: currentNow.subtract(const Duration(hours: 3)),
+          updatedAt: currentNow.subtract(const Duration(hours: 3)),
+        ),
+        LeadFollowUp(
+          id: 'follow-up-2',
+          leadId: 'mock-lead-5',
+          sourceCallActivityId: 'call-act-2',
+          scheduledAt: tomorrowElevenAm,
+          status: FollowUpStatus.pending,
+          createdAt: currentNow.subtract(const Duration(hours: 1)),
+          updatedAt: currentNow.subtract(const Duration(hours: 1)),
+        ),
+        LeadFollowUp(
+          id: 'follow-up-3',
+          leadId: 'mock-lead-1',
+          sourceCallActivityId: 'call-act-3',
+          scheduledAt: yesterdayThreePm,
+          status: FollowUpStatus.pending,
+          createdAt: currentNow.subtract(const Duration(days: 2)),
+          updatedAt: currentNow.subtract(const Duration(days: 2)),
+        ),
+      ],
+      initialEvents: [
+        FollowUpEvent(
+          id: 'follow-up-event-1',
+          followUpId: 'follow-up-1',
+          type: FollowUpEventType.created,
+          performedByUserId: 'agent-1',
+          createdAt: currentNow.subtract(const Duration(hours: 3)),
+          newScheduledAt: todayTwoPm,
+        ),
+        FollowUpEvent(
+          id: 'follow-up-event-2',
+          followUpId: 'follow-up-2',
+          type: FollowUpEventType.created,
+          performedByUserId: 'agent-1',
+          createdAt: currentNow.subtract(const Duration(hours: 1)),
+          newScheduledAt: tomorrowElevenAm,
+        ),
+        FollowUpEvent(
+          id: 'follow-up-event-3',
+          followUpId: 'follow-up-3',
+          type: FollowUpEventType.created,
+          performedByUserId: 'agent-1',
+          createdAt: currentNow.subtract(const Duration(days: 2)),
+          newScheduledAt: yesterdayThreePm,
+        ),
+      ],
+    );
+  }
+
   /// Direct inspection of all follow-ups for test assertions.
   List<LeadFollowUp> get recordedFollowUps => List.unmodifiable(_followUps);
 

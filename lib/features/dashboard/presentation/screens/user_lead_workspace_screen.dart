@@ -8,6 +8,7 @@ import '../../../auth/domain/policies/crm_permissions.dart';
 import '../../../auth/domain/repositories/user_lead_link_repository.dart';
 import '../../../auth/presentation/mappers/crm_permission_presentation.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
+import '../../../calling/data/repositories/mock_lead_follow_up_repository.dart';
 import '../../../calling/domain/repositories/lead_call_activity_repository.dart';
 import '../../../calling/domain/repositories/lead_follow_up_repository.dart';
 import '../../../leads/domain/entities/lead.dart';
@@ -47,6 +48,9 @@ class UserLeadWorkspaceScreen extends StatelessWidget {
       return const AccessRestrictedScreen();
     }
 
+    final followUpRepo =
+        leadFollowUpRepository ?? MockLeadFollowUpRepository.seeded();
+
     return BlocProvider(
       create: (_) => UserAssignedLeadsCubit(
         user: user,
@@ -58,7 +62,7 @@ class UserLeadWorkspaceScreen extends StatelessWidget {
         linkRepository: linkRepository,
         leadRepository: leadRepository,
         callActivityRepository: callActivityRepository,
-        leadFollowUpRepository: leadFollowUpRepository,
+        leadFollowUpRepository: followUpRepo,
       ),
     );
   }

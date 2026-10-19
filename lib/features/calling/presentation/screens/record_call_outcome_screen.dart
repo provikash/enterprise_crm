@@ -348,6 +348,7 @@ class _RecordCallOutcomeFormState extends State<_RecordCallOutcomeForm> {
                           key: const Key('record_call_outcome_dropdown'),
                           initialValue: _selectedOutcome,
                           isExpanded: true,
+                          menuMaxHeight: 280,
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             hintText: 'Select call outcome',

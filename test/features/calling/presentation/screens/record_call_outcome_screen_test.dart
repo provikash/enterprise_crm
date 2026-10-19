@@ -93,13 +93,25 @@ void main() {
       await tester.pumpAndSettle();
 
       for (final outcome in CallOutcome.values) {
-        expect(find.text(formatCallOutcome(outcome)).last, findsOneWidget);
+        final itemFinder = find.text(formatCallOutcome(outcome));
+        await tester.scrollUntilVisible(
+          itemFinder,
+          50.0,
+          scrollable: find.byType(Scrollable).last,
+        );
+        expect(itemFinder, findsWidgets);
       }
 
       // Select 'Visit Scheduled'
-      await tester.tap(
-        find.text(formatCallOutcome(CallOutcome.visitScheduled)).last,
+      final visitFinder = find.text(
+        formatCallOutcome(CallOutcome.visitScheduled),
       );
+      await tester.scrollUntilVisible(
+        visitFinder,
+        -50.0,
+        scrollable: find.byType(Scrollable).last,
+      );
+      await tester.tap(visitFinder.last);
       await tester.pumpAndSettle();
 
       expect(
@@ -174,9 +186,17 @@ void main() {
         // Select outcome 'Sales Done'
         await tester.tap(find.byKey(const Key('record_call_outcome_dropdown')));
         await tester.pumpAndSettle();
-        await tester.tap(
-          find.text(formatCallOutcome(CallOutcome.salesDone)).last,
+        final salesDoneFinder = find.text(
+          formatCallOutcome(CallOutcome.salesDone),
         );
+        await tester.scrollUntilVisible(
+          salesDoneFinder,
+          50.0,
+          scrollable: find.byType(Scrollable).last,
+        );
+        await tester.ensureVisible(salesDoneFinder.last);
+        await tester.pumpAndSettle();
+        await tester.tap(salesDoneFinder.last);
         await tester.pumpAndSettle();
 
         // Submit

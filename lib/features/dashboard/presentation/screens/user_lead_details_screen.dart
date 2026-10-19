@@ -5,6 +5,7 @@ import '../../../auth/domain/repositories/user_lead_link_repository.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../../calling/domain/entities/lead_call_activity.dart';
 import '../../../calling/domain/policies/user_calling_policy.dart';
+import '../../../calling/data/repositories/mock_lead_follow_up_repository.dart';
 import '../../../calling/domain/repositories/lead_call_activity_repository.dart';
 import '../../../calling/domain/repositories/lead_follow_up_repository.dart';
 import '../../../calling/presentation/bloc/lead_call_history_cubit.dart';
@@ -50,13 +51,15 @@ class UserLeadDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasCallingAccess = UserCallingPolicy.canUseCalling(user);
+    final followUpRepo =
+        leadFollowUpRepository ?? MockLeadFollowUpRepository.seeded();
 
     Widget view = _UserLeadDetailsView(
       user: user,
       linkRepository: linkRepository,
       leadRepository: leadRepository,
       callActivityRepository: callActivityRepository,
-      leadFollowUpRepository: leadFollowUpRepository,
+      leadFollowUpRepository: followUpRepo,
       hasCallingAccess: hasCallingAccess,
     );
 
@@ -80,24 +83,22 @@ class UserLeadDetailsScreen extends StatelessWidget {
         );
       }
 
-      if (leadFollowUpRepository != null) {
-        if (followUpHistoryCubit != null) {
-          view = BlocProvider<LeadFollowUpHistoryCubit>.value(
-            value: followUpHistoryCubit!,
-            child: view,
-          );
-        } else {
-          view = BlocProvider<LeadFollowUpHistoryCubit>(
-            create: (_) => LeadFollowUpHistoryCubit(
-              user: user,
-              leadId: leadId,
-              linkRepository: linkRepository,
-              leadRepository: leadRepository,
-              followUpRepository: leadFollowUpRepository!,
-            )..loadHistory(),
-            child: view,
-          );
-        }
+      if (followUpHistoryCubit != null) {
+        view = BlocProvider<LeadFollowUpHistoryCubit>.value(
+          value: followUpHistoryCubit!,
+          child: view,
+        );
+      } else {
+        view = BlocProvider<LeadFollowUpHistoryCubit>(
+          create: (_) => LeadFollowUpHistoryCubit(
+            user: user,
+            leadId: leadId,
+            linkRepository: linkRepository,
+            leadRepository: leadRepository,
+            followUpRepository: followUpRepo,
+          )..loadHistory(),
+          child: view,
+        );
       }
     }
 
