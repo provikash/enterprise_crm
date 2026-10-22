@@ -105,7 +105,7 @@ void main() {
     LeadFormCubit? cubit,
     void Function(Lead lead)? onLeadCreated,
     VoidCallback? onCancel,
-    Size size = const Size(800, 600),
+    Size size = const Size(800, 1000),
   }) {
     return MaterialApp(
       home: MediaQuery(
@@ -124,6 +124,13 @@ void main() {
     );
   }
 
+  Future<void> tapVisible(WidgetTester tester, Finder finder) async {
+    await tester.ensureVisible(finder);
+    await tester.pumpAndSettle();
+    await tester.tap(finder);
+    await tester.pumpAndSettle();
+  }
+
   group('AddLeadScreen - Rendering', () {
     testWidgets('renders all supported fields and initial controls', (
       tester,
@@ -132,12 +139,18 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Add Lead'), findsOneWidget);
-      expect(find.text('Basic Information'), findsOneWidget);
-      expect(find.text('Lead Name'), findsOneWidget);
+      expect(find.text('Primary Information'), findsOneWidget);
+      expect(find.text('Contact Person Name'), findsOneWidget);
+      expect(find.text('Business Name'), findsOneWidget);
       expect(find.text('Contact Information'), findsOneWidget);
-      expect(find.text('Phone'), findsOneWidget);
-      expect(find.text('Email'), findsOneWidget);
-      expect(find.text('Manual'), findsOneWidget);
+      expect(find.text('Phone Number'), findsOneWidget);
+      expect(find.text('Email ID'), findsOneWidget);
+      expect(find.text('Location Information'), findsOneWidget);
+      expect(find.text('City'), findsOneWidget);
+      expect(find.text('State'), findsOneWidget);
+      expect(find.text('Lead Source'), findsOneWidget);
+      expect(find.text('Source'), findsOneWidget);
+      expect(find.text('Manual Entry'), findsWidgets);
       expect(find.text('Cancel'), findsOneWidget);
       expect(find.text('Create Lead'), findsOneWidget);
     });
@@ -154,8 +167,7 @@ void main() {
         await tester.pumpAndSettle();
 
         // Tap Create Lead without typing anything
-        await tester.tap(find.text('Create Lead'));
-        await tester.pumpAndSettle();
+        await tapVisible(tester, find.text('Create Lead'));
 
         // No form validation errors
         expect(find.text('Please enter'), findsNothing);
@@ -165,8 +177,11 @@ void main() {
         expect(repository.createLeadCallCount, 1);
         expect(repository.lastCreateInput, isNotNull);
         expect(repository.lastCreateInput!.draft.name, isNull);
+        expect(repository.lastCreateInput!.draft.businessName, isNull);
         expect(repository.lastCreateInput!.draft.phone, isNull);
         expect(repository.lastCreateInput!.draft.email, isNull);
+        expect(repository.lastCreateInput!.draft.city, isNull);
+        expect(repository.lastCreateInput!.draft.state, isNull);
         expect(
           repository.lastCreateInput!.draft.source,
           equals(LeadSource.manual),
@@ -183,22 +198,20 @@ void main() {
 
       // Enter invalid email
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Email'),
+        find.widgetWithText(TextFormField, 'Email ID'),
         'invalid-email-string',
       );
-      await tester.tap(find.text('Create Lead'));
-      await tester.pumpAndSettle();
+      await tapVisible(tester, find.text('Create Lead'));
 
       expect(find.text('Enter a valid email address'), findsOneWidget);
       expect(repository.createLeadCallCount, 0);
 
       // Correct email
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Email'),
+        find.widgetWithText(TextFormField, 'Email ID'),
         'valid@example.com',
       );
-      await tester.tap(find.text('Create Lead'));
-      await tester.pumpAndSettle();
+      await tapVisible(tester, find.text('Create Lead'));
 
       expect(find.text('Enter a valid email address'), findsNothing);
       expect(repository.createLeadCallCount, 1);
@@ -216,32 +229,73 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Lead Name'),
+        find.widgetWithText(TextFormField, 'Contact Person Name'),
         '   Rajesh Sharma   ',
       );
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Phone'),
+        find.widgetWithText(TextFormField, 'Business Name'),
+        '   Sharma Logistics   ',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Phone Number'),
         '  +91 9876543210  ',
       );
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Email'),
+        find.widgetWithText(TextFormField, 'Email ID'),
         '  rajesh@example.com  ',
       );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'City'),
+        '  Mumbai  ',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'State'),
+        '  Maharashtra  ',
+      );
 
-      await tester.tap(find.text('Create Lead'));
-      await tester.pumpAndSettle();
+      await tapVisible(tester, find.text('Create Lead'));
 
       expect(repository.createLeadCallCount, 1);
       final draft = repository.lastCreateInput!.draft;
       expect(draft.name, 'Rajesh Sharma');
+      expect(draft.contactPersonName, 'Rajesh Sharma');
+      expect(draft.businessName, 'Sharma Logistics');
       expect(draft.phone, '+91 9876543210');
       expect(draft.email, 'rajesh@example.com');
+      expect(draft.city, 'Mumbai');
+      expect(draft.state, 'Maharashtra');
       expect(draft.source, LeadSource.manual);
       expect(draft.status, isNull);
 
       expect(capturedLead, isNotNull);
       expect(capturedLead!.name, 'Rajesh Sharma');
       expect(capturedLead!.source, LeadSource.manual);
+    });
+
+    testWidgets('allows selecting non-manual source from dropdown', (
+      tester,
+    ) async {
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
+
+      // Open dropdown
+      await tapVisible(tester, find.byKey(const Key('add_lead_source_dropdown')));
+
+      // Select Meta Campaign
+      await tester.tap(find.text('Meta Campaign').last);
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Contact Person Name'),
+        'Meta User',
+      );
+
+      await tapVisible(tester, find.text('Create Lead'));
+
+      expect(repository.createLeadCallCount, 1);
+      final draft = repository.lastCreateInput!.draft;
+      expect(draft.name, 'Meta User');
+      expect(draft.source, LeadSource.metaCampaign);
     });
   });
 
@@ -256,11 +310,13 @@ void main() {
       await tester.pumpAndSettle();
 
       await tester.enterText(
-        find.widgetWithText(TextFormField, 'Lead Name'),
+        find.widgetWithText(TextFormField, 'Contact Person Name'),
         'Pooja Verma',
       );
 
-      // First tap to trigger submission
+      // Scroll to button and first tap
+      await tester.ensureVisible(find.text('Create Lead'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Create Lead'));
       await tester.pump(); // Enter submitting state
 
@@ -298,16 +354,15 @@ void main() {
         await tester.pumpAndSettle();
 
         await tester.enterText(
-          find.widgetWithText(TextFormField, 'Lead Name'),
+          find.widgetWithText(TextFormField, 'Contact Person Name'),
           'Failed Lead Name',
         );
         await tester.enterText(
-          find.widgetWithText(TextFormField, 'Phone'),
+          find.widgetWithText(TextFormField, 'Phone Number'),
           '+91 9000000000',
         );
 
-        await tester.tap(find.text('Create Lead'));
-        await tester.pumpAndSettle();
+        await tapVisible(tester, find.text('Create Lead'));
 
         // Failure feedback displayed in banner
         expect(find.text('Creation failed on server'), findsWidgets);
@@ -318,8 +373,7 @@ void main() {
 
         // Fix failure condition and retry
         repository.shouldThrowOnCreate = false;
-        await tester.tap(find.text('Create Lead'));
-        await tester.pumpAndSettle();
+        await tapVisible(tester, find.text('Create Lead'));
 
         expect(repository.createLeadCallCount, 2);
         expect(find.text('Lead created successfully'), findsOneWidget);
@@ -337,8 +391,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text('Cancel'));
-      await tester.pumpAndSettle();
+      await tapVisible(tester, find.text('Cancel'));
 
       expect(cancelCalled, isTrue);
     });
@@ -373,9 +426,14 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Add Lead'), findsOneWidget);
-      expect(find.text('Lead Name'), findsOneWidget);
-      expect(find.text('Phone'), findsOneWidget);
-      expect(find.text('Email'), findsOneWidget);
+      expect(find.text('Contact Person Name'), findsOneWidget);
+      expect(find.text('Business Name'), findsOneWidget);
+      expect(find.text('Phone Number'), findsOneWidget);
+      expect(find.text('Email ID'), findsOneWidget);
+      expect(find.text('City'), findsOneWidget);
+      expect(find.text('State'), findsOneWidget);
+      expect(find.text('Lead Source'), findsOneWidget);
+      expect(find.text('Source'), findsOneWidget);
       expect(find.text('Create Lead'), findsOneWidget);
     });
 
@@ -392,9 +450,118 @@ void main() {
 
       expect(tester.takeException(), isNull);
       expect(find.text('Add Lead'), findsOneWidget);
-      expect(find.text('Basic Information'), findsOneWidget);
+      expect(find.text('Primary Information'), findsOneWidget);
       expect(find.text('Contact Information'), findsOneWidget);
+      expect(find.text('Location Information'), findsOneWidget);
+      expect(find.text('Lead Source'), findsOneWidget);
       expect(find.text('Create Lead'), findsOneWidget);
     });
   });
+
+  group('AddLeadScreen - Mobile Phone Validation', () {
+    testWidgets('shows validation error for invalid mobile numbers (less than 10 digits or letters)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Phone Number'),
+        '12345',
+      );
+      await tapVisible(tester, find.text('Create Lead'));
+
+      expect(
+        find.text('Enter a valid mobile number (10-15 digits)'),
+        findsOneWidget,
+      );
+      expect(repository.createLeadCallCount, 0);
+
+      // Alphabetic characters
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Phone Number'),
+        '98765abcde',
+      );
+      await tapVisible(tester, find.text('Create Lead'));
+
+      expect(
+        find.text('Enter a valid mobile number (10-15 digits)'),
+        findsOneWidget,
+      );
+      expect(repository.createLeadCallCount, 0);
+
+      // Valid 10-digit mobile number
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Phone Number'),
+        '9876543210',
+      );
+      await tapVisible(tester, find.text('Create Lead'));
+
+      expect(
+        find.text('Enter a valid mobile number (10-15 digits)'),
+        findsNothing,
+      );
+      expect(repository.createLeadCallCount, 1);
+      expect(repository.lastCreateInput!.draft.phone, '9876543210');
+    });
+  });
+
+  group('AddLeadScreen - Hybrid Dropdown Search & Custom Manual Entry', () {
+    testWidgets('allows manual custom text for unlisted City, State, and Source', (
+      tester,
+    ) async {
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'Contact Person Name'),
+        'Aarav Patel',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'City'),
+        'Custom City Unlisted',
+      );
+      await tester.enterText(
+        find.widgetWithText(TextFormField, 'State'),
+        'Custom State Unlisted',
+      );
+      await tester.enterText(
+        find.byKey(const Key('add_lead_source_dropdown')),
+        'Partner Referral Channel',
+      );
+
+      await tapVisible(tester, find.text('Create Lead'));
+
+      expect(repository.createLeadCallCount, 1);
+      final draft = repository.lastCreateInput!.draft;
+      expect(draft.name, 'Aarav Patel');
+      expect(draft.city, 'Custom City Unlisted');
+      expect(draft.state, 'Custom State Unlisted');
+      expect(draft.source, LeadSource.manual);
+      expect(draft.metadata?['source_detail'], 'Partner Referral Channel');
+    });
+
+    testWidgets('tapping dropdown displays options and filters dynamically on search', (
+      tester,
+    ) async {
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
+
+      // Open source dropdown
+      await tapVisible(tester, find.byKey(const Key('add_lead_source_dropdown')));
+      expect(find.text('Web Portal'), findsWidgets);
+      expect(find.text('Meta Campaign'), findsWidgets);
+
+      // Select Web Portal
+      await tester.tap(find.text('Web Portal').last);
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('add_lead_source_badge')), findsOneWidget);
+
+      await tapVisible(tester, find.text('Create Lead'));
+      expect(repository.createLeadCallCount, 1);
+      expect(repository.lastCreateInput!.draft.source, LeadSource.portal);
+    });
+  });
 }
+

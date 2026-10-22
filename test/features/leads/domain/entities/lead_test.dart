@@ -100,6 +100,8 @@ void main() {
         LeadSource.manual,
         LeadSource.excel,
         LeadSource.csv,
+        LeadSource.portal,
+        LeadSource.metaCampaign,
       ]);
     });
 

@@ -95,6 +95,9 @@ class _FakeLeadRepository implements LeadRepository {
         case LeadSource.csv:
           csv++;
           break;
+        case LeadSource.portal:
+        case LeadSource.metaCampaign:
+          break;
       }
     }
     return LeadSummary(

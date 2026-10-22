@@ -4,9 +4,12 @@ import '../../domain/entities/lead_assignment_request.dart';
 import '../../domain/entities/lead_draft.dart';
 import '../../domain/entities/lead_export.dart';
 import '../../domain/entities/lead_import.dart';
+import '../../domain/entities/lead_ingestion_result.dart';
 import '../../domain/entities/lead_page.dart';
 import '../../domain/entities/lead_query.dart';
 import '../../domain/entities/lead_summary.dart';
+import '../../domain/entities/meta_leadgen_payload.dart';
+import '../../domain/entities/portal_lead_payload.dart';
 import '../../domain/repositories/lead_repository.dart';
 import '../datasources/mock_lead_data_source.dart';
 import '../services/lead_export_serializer.dart';
@@ -76,5 +79,13 @@ class MockLeadRepository implements LeadRepository {
   @override
   Future<LeadExportResult> exportLeads(LeadExportRequest request) {
     return _dataSource.exportLeads(request);
+  }
+
+  Future<LeadIngestionResult> ingestPortalLead(PortalLeadPayload payload) {
+    return _dataSource.ingestPortalLead(payload);
+  }
+
+  Future<LeadIngestionResult> ingestMetaLead(MetaLeadgenPayload payload) {
+    return _dataSource.ingestMetaLead(payload);
   }
 }

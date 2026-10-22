@@ -175,6 +175,48 @@ void main() {
       expect(applied!.searchText, equals('Alice'));
     });
 
+    testWidgets('applies Web Portal source filter correctly', (tester) async {
+      LeadQuery? applied;
+      await tester.pumpWidget(
+        buildFilterSheetWidget(onApply: (q) => applied = q),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('filter_source_portal')));
+      await tester.pumpAndSettle();
+
+      final applyButton = find.byKey(const Key('filter_apply_button'));
+      await tester.ensureVisible(applyButton);
+      await tester.tap(applyButton);
+      await tester.pumpAndSettle();
+
+      expect(applied, isNotNull);
+      expect(applied!.source, equals(LeadSource.portal));
+      expect(applied!.page, equals(1));
+    });
+
+    testWidgets('applies Meta Campaign source filter correctly', (
+      tester,
+    ) async {
+      LeadQuery? applied;
+      await tester.pumpWidget(
+        buildFilterSheetWidget(onApply: (q) => applied = q),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('filter_source_meta_campaign')));
+      await tester.pumpAndSettle();
+
+      final applyButton = find.byKey(const Key('filter_apply_button'));
+      await tester.ensureVisible(applyButton);
+      await tester.tap(applyButton);
+      await tester.pumpAndSettle();
+
+      expect(applied, isNotNull);
+      expect(applied!.source, equals(LeadSource.metaCampaign));
+      expect(applied!.page, equals(1));
+    });
+
     testWidgets('applies assignment state correctly', (tester) async {
       LeadQuery? applied;
       await tester.pumpWidget(

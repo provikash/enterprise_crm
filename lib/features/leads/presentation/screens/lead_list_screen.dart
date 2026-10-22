@@ -19,6 +19,7 @@ import '../widgets/lead_filter_sheet.dart';
 import '../widgets/lead_list_card.dart';
 import '../widgets/lead_pagination_controls.dart';
 import '../services/lead_import_file_picker.dart';
+import '../widgets/inbound_lead_simulator_dialog.dart';
 import 'lead_import_workflow_screen.dart';
 
 class LeadListScreen extends StatelessWidget {
@@ -519,6 +520,34 @@ class _LeadListViewState extends State<_LeadListView> {
     }
   }
 
+  Future<void> _openSimulator(BuildContext context) async {
+    LeadRepository? repo = widget.repository;
+    if (repo == null) {
+      try {
+        repo = context.read<LeadRepository>();
+      } catch (_) {}
+    }
+    if (repo == null) {
+      _showComingSoon(context, 'Simulate Inbound Lead');
+      return;
+    }
+
+    final lead = await InboundLeadSimulatorDialog.show(
+      context,
+      repository: repo,
+    );
+    if (!mounted) return;
+    if (lead != null) {
+      this.context.read<LeadListCubit>().refreshLeads();
+      ScaffoldMessenger.of(this.context).showSnackBar(
+        SnackBar(
+          content: Text('Lead #${lead.id} created via inbound ingestion!'),
+          backgroundColor: Colors.teal.shade700,
+        ),
+      );
+    }
+  }
+
   LeadQuery _getQueryFromState(LeadListState state) {
     return switch (state) {
       LeadListInitial() => context.read<LeadListCubit>().currentQuery,
@@ -671,6 +700,19 @@ class _LeadListViewState extends State<_LeadListView> {
                       tooltip: 'Export Leads',
                       onPressed: _openExportDialog,
                     ),
+                    if (MediaQuery.sizeOf(context).width >= 360)
+                      IconButton(
+                        key: const Key('lead_list_simulate_button'),
+                        visualDensity: VisualDensity.compact,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
+                        icon: const Icon(Icons.hub_outlined),
+                        tooltip: 'Simulate Inbound Lead',
+                        onPressed: () => _openSimulator(context),
+                      ),
                     Padding(
                       padding: const EdgeInsets.only(left: 2, right: 4),
                       child: FilledButton.icon(

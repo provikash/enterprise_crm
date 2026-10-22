@@ -27,6 +27,7 @@ import 'package:enterprise_crm/features/leads/presentation/widgets/bulk_assign_l
 import 'package:enterprise_crm/features/leads/presentation/widgets/lead_data_table.dart';
 import 'package:enterprise_crm/features/leads/presentation/widgets/lead_filter_sheet.dart';
 import 'package:enterprise_crm/features/leads/presentation/widgets/lead_list_card.dart';
+import 'package:enterprise_crm/features/leads/presentation/widgets/inbound_lead_simulator_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -2021,6 +2022,26 @@ void main() {
 
       expect(find.byKey(const Key('lead_list_import_button')), findsOneWidget);
     });
+
+    testWidgets(
+      'AppBar simulate button is rendered and tapping it opens InboundLeadSimulatorDialog',
+      (tester) async {
+        repository.leads = [const Lead(id: '1', name: 'Lead 1')];
+        final cubit = LeadListCubit(repository);
+        await cubit.loadLeads();
+
+        await tester.pumpWidget(buildTestWidget(cubit: cubit));
+        await tester.pumpAndSettle();
+
+        final simulateBtn = find.byKey(const Key('lead_list_simulate_button'));
+        expect(simulateBtn, findsOneWidget);
+
+        await tester.tap(simulateBtn);
+        await tester.pumpAndSettle();
+
+        expect(find.byType(InboundLeadSimulatorDialog), findsOneWidget);
+      },
+    );
 
     testWidgets('tapping AppBar import button opens LeadImportWorkflowScreen', (
       tester,

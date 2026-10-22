@@ -4,12 +4,15 @@ import '../../domain/entities/lead_assignment_request.dart';
 import '../../domain/entities/lead_draft.dart';
 import '../../domain/entities/lead_export.dart';
 import '../../domain/entities/lead_import.dart';
+import '../../domain/entities/lead_ingestion_result.dart';
 import '../../domain/entities/lead_page.dart';
 import '../../domain/entities/lead_query.dart';
 import '../../domain/entities/lead_sort.dart';
 import '../../domain/entities/lead_source.dart';
 import '../../domain/entities/lead_status.dart';
 import '../../domain/entities/lead_summary.dart';
+import '../../domain/entities/meta_leadgen_payload.dart';
+import '../../domain/entities/portal_lead_payload.dart';
 import '../services/lead_export_serializer.dart';
 
 class MockLeadDataSource {
@@ -283,6 +286,8 @@ class MockLeadDataSource {
     int manual = 0;
     int excel = 0;
     int csv = 0;
+    int portal = 0;
+    int metaCampaign = 0;
 
     for (final lead in _leads) {
       if (lead.isAssigned) {
@@ -301,6 +306,12 @@ class MockLeadDataSource {
         case LeadSource.csv:
           csv++;
           break;
+        case LeadSource.portal:
+          portal++;
+          break;
+        case LeadSource.metaCampaign:
+          metaCampaign++;
+          break;
       }
     }
 
@@ -311,6 +322,8 @@ class MockLeadDataSource {
       manualLeads: manual,
       excelLeads: excel,
       csvLeads: csv,
+      portalLeads: portal,
+      metaCampaignLeads: metaCampaign,
     );
   }
 
@@ -326,21 +339,89 @@ class MockLeadDataSource {
   Future<Lead> createLead(CreateLeadInput input) async {
     final now = DateTime.now();
     _idCounter++;
-    final newId = 'mock-lead-$_idCounter';
+    final newId = 'LEAD-$_idCounter';
 
     final created = Lead(
       id: newId,
       name: input.draft.name,
+      businessName: input.draft.businessName,
       phone: input.draft.phone,
       email: input.draft.email,
+      city: input.draft.city,
+      state: input.draft.state,
       status: input.draft.status,
       source: input.draft.source ?? LeadSource.manual,
       createdAt: now,
       updatedAt: now,
+      metadata: input.draft.metadata,
     );
 
     _leads.add(created);
     return created;
+  }
+
+  Future<LeadIngestionResult> ingestPortalLead(PortalLeadPayload payload) async {
+    if (!payload.isValid) {
+      return const LeadIngestionResult.failure(
+        source: LeadSource.portal,
+        errorMessage:
+            'Invalid portal lead: At least one contact field (name, phone, email, or business name) is required.',
+      );
+    }
+
+    try {
+      final draft = payload.toLeadDraft();
+      final created = await createLead(CreateLeadInput(draft: draft));
+      return LeadIngestionResult.success(
+        lead: created,
+        externalReferenceId: payload.formId,
+      );
+    } catch (e) {
+      return LeadIngestionResult.failure(
+        source: LeadSource.portal,
+        errorMessage: 'Portal ingestion failed: $e',
+        externalReferenceId: payload.formId,
+      );
+    }
+  }
+
+  Future<LeadIngestionResult> ingestMetaLead(MetaLeadgenPayload payload) async {
+    if (!payload.isValid) {
+      return LeadIngestionResult.failure(
+        source: LeadSource.metaCampaign,
+        errorMessage:
+            'Invalid Meta lead: leadgen_id and at least one contact field are required.',
+        externalReferenceId: payload.leadgenId,
+      );
+    }
+
+    // Deduplication guard: check if lead with same leadgenId already exists
+    final isDuplicate = _leads.any(
+      (l) => l.metadata?['leadgenId'] == payload.leadgenId.trim(),
+    );
+    if (isDuplicate) {
+      return LeadIngestionResult.failure(
+        source: LeadSource.metaCampaign,
+        errorMessage:
+            'Duplicate Meta Lead: Lead with leadgen_id ${payload.leadgenId} has already been ingested.',
+        externalReferenceId: payload.leadgenId,
+      );
+    }
+
+    try {
+      final draft = payload.toLeadDraft();
+      final created = await createLead(CreateLeadInput(draft: draft));
+      return LeadIngestionResult.success(
+        lead: created,
+        externalReferenceId: payload.leadgenId,
+      );
+    } catch (e) {
+      return LeadIngestionResult.failure(
+        source: LeadSource.metaCampaign,
+        errorMessage: 'Meta lead ingestion failed: $e',
+        externalReferenceId: payload.leadgenId,
+      );
+    }
   }
 
   Future<Lead> updateLead(UpdateLeadInput input) async {
@@ -352,8 +433,11 @@ class MockLeadDataSource {
     final existing = _leads[index];
     final updated = existing.copyWith(
       name: input.draft.name ?? existing.name,
+      businessName: input.draft.businessName ?? existing.businessName,
       phone: input.draft.phone ?? existing.phone,
       email: input.draft.email ?? existing.email,
+      city: input.draft.city ?? existing.city,
+      state: input.draft.state ?? existing.state,
       status: input.draft.status ?? existing.status,
       source: input.draft.source ?? existing.source,
       updatedAt: DateTime.now(),

@@ -226,7 +226,7 @@ void main() {
         ),
       );
 
-      expect(created.id, startsWith('mock-lead-'));
+      expect(created.id, startsWith('LEAD-'));
       expect(created.name, 'New Mock Lead');
 
       final fetched = await repository.getLeadById(created.id);

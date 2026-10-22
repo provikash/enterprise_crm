@@ -487,6 +487,12 @@ class _EditLeadViewState extends State<_EditLeadView> {
       enabled: !isSubmitting,
       textInputAction: TextInputAction.next,
       keyboardType: TextInputType.phone,
+      validator: (value) {
+        if (!isValidOptionalLeadPhone(value)) {
+          return 'Enter a valid mobile number (10-15 digits)';
+        }
+        return null;
+      },
       decoration: const InputDecoration(
         labelText: 'Phone',
         hintText: 'e.g. +91 9876543210',

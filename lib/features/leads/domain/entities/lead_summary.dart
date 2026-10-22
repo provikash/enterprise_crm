@@ -5,6 +5,8 @@ class LeadSummary {
   final int manualLeads;
   final int excelLeads;
   final int csvLeads;
+  final int portalLeads;
+  final int metaCampaignLeads;
 
   const LeadSummary({
     required this.totalLeads,
@@ -13,6 +15,8 @@ class LeadSummary {
     required this.manualLeads,
     required this.excelLeads,
     required this.csvLeads,
+    this.portalLeads = 0,
+    this.metaCampaignLeads = 0,
   });
 
   bool get isEmpty => totalLeads == 0;
@@ -27,7 +31,9 @@ class LeadSummary {
           unassignedLeads == other.unassignedLeads &&
           manualLeads == other.manualLeads &&
           excelLeads == other.excelLeads &&
-          csvLeads == other.csvLeads;
+          csvLeads == other.csvLeads &&
+          portalLeads == other.portalLeads &&
+          metaCampaignLeads == other.metaCampaignLeads;
 
   @override
   int get hashCode => Object.hash(
@@ -37,9 +43,11 @@ class LeadSummary {
     manualLeads,
     excelLeads,
     csvLeads,
+    portalLeads,
+    metaCampaignLeads,
   );
 
   @override
   String toString() =>
-      'LeadSummary(total: $totalLeads, assigned: $assignedLeads, unassigned: $unassignedLeads, manual: $manualLeads, excel: $excelLeads, csv: $csvLeads)';
+      'LeadSummary(total: $totalLeads, assigned: $assignedLeads, unassigned: $unassignedLeads, manual: $manualLeads, excel: $excelLeads, csv: $csvLeads, portal: $portalLeads, meta: $metaCampaignLeads)';
 }

@@ -6,7 +6,10 @@ import '../../domain/entities/lead_source.dart';
 import '../../domain/repositories/lead_repository.dart';
 import '../bloc/lead_form_cubit.dart';
 import '../bloc/lead_form_state.dart';
+import '../utils/lead_display_formatters.dart';
 import '../utils/lead_field_validators.dart';
+import '../utils/lead_location_and_source_presets.dart';
+import '../widgets/hybrid_dropdown_field.dart';
 
 class AddLeadScreen extends StatelessWidget {
   final LeadFormCubit? cubit;
@@ -54,15 +57,24 @@ class _AddLeadView extends StatefulWidget {
 
 class _AddLeadViewState extends State<_AddLeadView> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _contactPersonNameController = TextEditingController();
+  final _businessNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
+  final _cityController = TextEditingController();
+  final _stateController = TextEditingController();
+  final _sourceController = TextEditingController(text: 'Manual Entry');
+  LeadSource _selectedSource = LeadSource.manual;
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _contactPersonNameController.dispose();
+    _businessNameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
+    _cityController.dispose();
+    _stateController.dispose();
+    _sourceController.dispose();
     super.dispose();
   }
 
@@ -84,18 +96,52 @@ class _AddLeadViewState extends State<_AddLeadView> {
       return;
     }
 
-    final name = _nameController.text.trim();
+    final name = _contactPersonNameController.text.trim();
+    final businessName = _businessNameController.text.trim();
     final phone = _phoneController.text.trim();
     final email = _emailController.text.trim();
+    final city = _cityController.text.trim();
+    final stateVal = _stateController.text.trim();
+    final sourceText = _sourceController.text.trim();
+
+    final resolvedSource = resolveLeadSource(
+      sourceText.isNotEmpty ? sourceText : _selectedSource.displayName,
+    );
+
+    final metadata = <String, String>{};
+    if (sourceText.isNotEmpty &&
+        sourceText.toLowerCase() != resolvedSource.displayName.toLowerCase() &&
+        sourceText.toLowerCase() != resolvedSource.name.toLowerCase()) {
+      metadata['source_detail'] = sourceText;
+    }
 
     final draft = LeadDraft(
       name: name.isEmpty ? null : name,
+      businessName: businessName.isEmpty ? null : businessName,
       phone: phone.isEmpty ? null : phone,
       email: email.isEmpty ? null : email,
-      source: LeadSource.manual,
+      city: city.isEmpty ? null : city,
+      state: stateVal.isEmpty ? null : stateVal,
+      source: resolvedSource,
+      metadata: metadata.isEmpty ? null : metadata,
     );
 
     cubit.createLead(draft);
+  }
+
+  IconData _sourceIcon(LeadSource source) {
+    switch (source) {
+      case LeadSource.manual:
+        return Icons.edit_note;
+      case LeadSource.excel:
+        return Icons.table_chart_outlined;
+      case LeadSource.csv:
+        return Icons.description_outlined;
+      case LeadSource.portal:
+        return Icons.language_outlined;
+      case LeadSource.metaCampaign:
+        return Icons.campaign_outlined;
+    }
   }
 
   @override
@@ -167,45 +213,74 @@ class _AddLeadViewState extends State<_AddLeadView> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               // Form Header
-                              Row(
+                              Wrap(
+                                alignment: WrapAlignment.spaceBetween,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                spacing: 8,
+                                runSpacing: 8,
                                 children: [
-                                  CircleAvatar(
-                                    backgroundColor:
-                                        colorScheme.primaryContainer,
-                                    foregroundColor:
-                                        colorScheme.onPrimaryContainer,
-                                    child: const Icon(
-                                      Icons.person_add_outlined,
+                                  ConstrainedBox(
+                                    constraints: BoxConstraints(
+                                      maxWidth: constraints.maxWidth > 80
+                                          ? constraints.maxWidth - 48
+                                          : 200,
                                     ),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        Text(
-                                          'New Lead',
-                                          style: theme.textTheme.titleMedium
-                                              ?.copyWith(
-                                                fontWeight: FontWeight.bold,
-                                              ),
+                                        CircleAvatar(
+                                          backgroundColor:
+                                              colorScheme.primaryContainer,
+                                          foregroundColor:
+                                              colorScheme.onPrimaryContainer,
+                                          child: const Icon(
+                                            Icons.person_add_outlined,
+                                          ),
                                         ),
-                                        Text(
-                                          'Manual lead entry',
-                                          style: theme.textTheme.bodySmall
-                                              ?.copyWith(
-                                                color: colorScheme
-                                                    .onSurfaceVariant,
+                                        const SizedBox(width: 12),
+                                        Flexible(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'New Lead',
+                                                style: theme
+                                                    .textTheme
+                                                    .titleMedium
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
                                               ),
+                                              Text(
+                                                'Lead registration',
+                                                style: theme
+                                                    .textTheme
+                                                    .bodySmall
+                                                    ?.copyWith(
+                                                      color: colorScheme
+                                                          .onSurfaceVariant,
+                                                    ),
+                                                maxLines: 1,
+                                                overflow:
+                                                    TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
                                         ),
                                       ],
                                     ),
                                   ),
                                   Chip(
-                                    label: const Text('Manual'),
-                                    avatar: const Icon(
-                                      Icons.edit_note,
+                                    key: const Key('add_lead_source_badge'),
+                                    label: Text(
+                                      _sourceController.text.trim().isNotEmpty
+                                          ? _sourceController.text.trim()
+                                          : formatLeadSource(_selectedSource),
+                                    ),
+                                    avatar: Icon(
+                                      _sourceIcon(_selectedSource),
                                       size: 16,
                                     ),
                                     visualDensity: VisualDensity.compact,
@@ -250,27 +325,37 @@ class _AddLeadViewState extends State<_AddLeadView> {
                                 const SizedBox(height: 16),
                               ],
 
-                              // Section: Basic Information
+                              // Section: Primary Information
                               Text(
-                                'Basic Information',
+                                'Primary Information',
                                 style: theme.textTheme.titleSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: colorScheme.primary,
                                 ),
                               ),
                               const SizedBox(height: 12),
-                              TextFormField(
-                                controller: _nameController,
-                                enabled: !isSubmitting,
-                                textInputAction: TextInputAction.next,
-                                keyboardType: TextInputType.name,
-                                decoration: const InputDecoration(
-                                  labelText: 'Lead Name',
-                                  hintText: 'e.g. John Doe',
-                                  prefixIcon: Icon(Icons.person_outline),
-                                  border: OutlineInputBorder(),
+                              if (isWide) ...[
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: _buildContactPersonField(
+                                        isSubmitting,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: _buildBusinessNameField(
+                                        isSubmitting,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              ),
+                              ] else ...[
+                                _buildContactPersonField(isSubmitting),
+                                const SizedBox(height: 16),
+                                _buildBusinessNameField(isSubmitting),
+                              ],
                               const SizedBox(height: 20),
 
                               // Section: Contact Information
@@ -300,6 +385,47 @@ class _AddLeadViewState extends State<_AddLeadView> {
                                 const SizedBox(height: 16),
                                 _buildEmailField(isSubmitting),
                               ],
+                              const SizedBox(height: 20),
+
+                              // Section: Location Information
+                              Text(
+                                'Location Information',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              if (isWide) ...[
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: _buildCityField(isSubmitting),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: _buildStateField(isSubmitting),
+                                    ),
+                                  ],
+                                ),
+                              ] else ...[
+                                _buildCityField(isSubmitting),
+                                const SizedBox(height: 16),
+                                _buildStateField(isSubmitting),
+                              ],
+                              const SizedBox(height: 20),
+
+                              // Section: Lead Source
+                              Text(
+                                'Lead Source',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              _buildSourceDropdown(isSubmitting),
                               const SizedBox(height: 28),
 
                               // Form Actions
@@ -335,39 +461,30 @@ class _AddLeadViewState extends State<_AddLeadView> {
                                   ],
                                 ),
                               ] else ...[
-                                Row(
+                                Column(
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: [
-                                    Expanded(
-                                      child: OutlinedButton(
-                                        onPressed: isSubmitting
-                                            ? null
-                                            : _handleCancel,
-                                        child: const Text('Cancel'),
-                                      ),
+                                    FilledButton(
+                                      onPressed: isSubmitting ? null : _submit,
+                                      child: isSubmitting
+                                          ? const SizedBox(
+                                              width: 16,
+                                              height: 16,
+                                              child:
+                                                  CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    color: Colors.white,
+                                                  ),
+                                            )
+                                          : const Text('Create Lead'),
                                     ),
-                                    const SizedBox(width: 12),
-                                    Expanded(
-                                      child: FilledButton.icon(
-                                        onPressed: isSubmitting
-                                            ? null
-                                            : _submit,
-                                        icon: isSubmitting
-                                            ? const SizedBox(
-                                                width: 16,
-                                                height: 16,
-                                                child:
-                                                    CircularProgressIndicator(
-                                                      strokeWidth: 2,
-                                                      color: Colors.white,
-                                                    ),
-                                              )
-                                            : const Icon(Icons.add, size: 18),
-                                        label: Text(
-                                          isSubmitting
-                                              ? 'Creating...'
-                                              : 'Create Lead',
-                                        ),
-                                      ),
+                                    const SizedBox(height: 10),
+                                    OutlinedButton(
+                                      onPressed: isSubmitting
+                                          ? null
+                                          : _handleCancel,
+                                      child: const Text('Cancel'),
                                     ),
                                   ],
                                 ),
@@ -387,14 +504,53 @@ class _AddLeadViewState extends State<_AddLeadView> {
     );
   }
 
+  Widget _buildContactPersonField(bool isSubmitting) {
+    return TextFormField(
+      key: const Key('add_lead_contact_person_name_field'),
+      controller: _contactPersonNameController,
+      enabled: !isSubmitting,
+      textInputAction: TextInputAction.next,
+      keyboardType: TextInputType.name,
+      decoration: const InputDecoration(
+        labelText: 'Contact Person Name',
+        hintText: 'e.g. John Doe',
+        prefixIcon: Icon(Icons.person_outline),
+        border: OutlineInputBorder(),
+      ),
+    );
+  }
+
+  Widget _buildBusinessNameField(bool isSubmitting) {
+    return TextFormField(
+      key: const Key('add_lead_business_name_field'),
+      controller: _businessNameController,
+      enabled: !isSubmitting,
+      textInputAction: TextInputAction.next,
+      keyboardType: TextInputType.text,
+      decoration: const InputDecoration(
+        labelText: 'Business Name',
+        hintText: 'e.g. Acme Enterprises',
+        prefixIcon: Icon(Icons.business_outlined),
+        border: OutlineInputBorder(),
+      ),
+    );
+  }
+
   Widget _buildPhoneField(bool isSubmitting) {
     return TextFormField(
+      key: const Key('add_lead_phone_field'),
       controller: _phoneController,
       enabled: !isSubmitting,
       textInputAction: TextInputAction.next,
       keyboardType: TextInputType.phone,
+      validator: (value) {
+        if (!isValidOptionalLeadPhone(value)) {
+          return 'Enter a valid mobile number (10-15 digits)';
+        }
+        return null;
+      },
       decoration: const InputDecoration(
-        labelText: 'Phone',
+        labelText: 'Phone Number',
         hintText: 'e.g. +91 9876543210',
         prefixIcon: Icon(Icons.phone_outlined),
         border: OutlineInputBorder(),
@@ -404,9 +560,10 @@ class _AddLeadViewState extends State<_AddLeadView> {
 
   Widget _buildEmailField(bool isSubmitting) {
     return TextFormField(
+      key: const Key('add_lead_email_field'),
       controller: _emailController,
       enabled: !isSubmitting,
-      textInputAction: TextInputAction.done,
+      textInputAction: TextInputAction.next,
       keyboardType: TextInputType.emailAddress,
       validator: (value) {
         if (!isValidOptionalLeadEmail(value)) {
@@ -415,11 +572,57 @@ class _AddLeadViewState extends State<_AddLeadView> {
         return null;
       },
       decoration: const InputDecoration(
-        labelText: 'Email',
+        labelText: 'Email ID',
         hintText: 'e.g. name@example.com',
         prefixIcon: Icon(Icons.email_outlined),
         border: OutlineInputBorder(),
       ),
+    );
+  }
+
+  Widget _buildCityField(bool isSubmitting) {
+    return HybridDropdownField(
+      fieldKey: const Key('add_lead_city_field'),
+      controller: _cityController,
+      options: defaultCitySuggestions,
+      labelText: 'City',
+      hintText: 'e.g. Mumbai or type custom',
+      prefixIcon: const Icon(Icons.location_city_outlined),
+      enabled: !isSubmitting,
+      textInputAction: TextInputAction.next,
+      keyboardType: TextInputType.streetAddress,
+    );
+  }
+
+  Widget _buildStateField(bool isSubmitting) {
+    return HybridDropdownField(
+      fieldKey: const Key('add_lead_state_field'),
+      controller: _stateController,
+      options: defaultStateSuggestions,
+      labelText: 'State',
+      hintText: 'e.g. Maharashtra or type custom',
+      prefixIcon: const Icon(Icons.map_outlined),
+      enabled: !isSubmitting,
+      textInputAction: TextInputAction.next,
+      keyboardType: TextInputType.text,
+    );
+  }
+
+  Widget _buildSourceDropdown(bool isSubmitting) {
+    return HybridDropdownField(
+      fieldKey: const Key('add_lead_source_dropdown'),
+      controller: _sourceController,
+      options: defaultSourceSuggestions,
+      labelText: 'Source',
+      hintText: 'e.g. Manual Entry, Meta Campaign or type custom',
+      prefixIcon: Icon(_sourceIcon(_selectedSource)),
+      enabled: !isSubmitting,
+      textInputAction: TextInputAction.done,
+      onChanged: (val) {
+        setState(() {
+          _selectedSource = resolveLeadSource(val);
+        });
+      },
     );
   }
 }

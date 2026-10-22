@@ -41,6 +41,10 @@ String formatLeadSource(LeadSource source) {
       return 'Excel';
     case LeadSource.csv:
       return 'CSV';
+    case LeadSource.portal:
+      return 'Web Portal';
+    case LeadSource.metaCampaign:
+      return 'Meta Campaign';
   }
 }
 
@@ -51,4 +55,18 @@ String formatLeadDate(DateTime? dt) {
   final m = dt.month.toString().padLeft(2, '0');
   final d = dt.day.toString().padLeft(2, '0');
   return '$y-$m-$d';
+}
+
+/// Formats a DateTime into a consistent YYYY-MM-DD, hh:mm AM/PM string, or '—' if null.
+String formatLeadDateTime(DateTime? dt) {
+  if (dt == null) return '—';
+  final y = dt.year.toString().padLeft(4, '0');
+  final m = dt.month.toString().padLeft(2, '0');
+  final d = dt.day.toString().padLeft(2, '0');
+  final hour24 = dt.hour;
+  final hour12 = hour24 == 0 ? 12 : (hour24 > 12 ? hour24 - 12 : hour24);
+  final h = hour12.toString().padLeft(2, '0');
+  final min = dt.minute.toString().padLeft(2, '0');
+  final ampm = hour24 >= 12 ? 'PM' : 'AM';
+  return '$y-$m-$d, $h:$min $ampm';
 }

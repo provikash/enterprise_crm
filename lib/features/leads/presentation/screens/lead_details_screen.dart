@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../notifications/domain/services/notification_dispatcher.dart';
 import '../../domain/entities/lead.dart';
+import '../../domain/entities/lead_source.dart';
 import '../../domain/repositories/lead_repository.dart';
 import '../bloc/lead_assignment_cubit.dart';
 import '../bloc/lead_assignment_state.dart';
@@ -339,6 +340,47 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
             ? constraints.maxWidth - 72
             : 250.0;
 
+        final isDark = theme.brightness == Brightness.dark;
+        Color sourceBg;
+        Color sourceFg;
+        IconData sourceIcon;
+        switch (lead.source) {
+          case LeadSource.portal:
+            sourceBg = isDark
+                ? Colors.teal.shade900.withAlpha(120)
+                : Colors.teal.shade50;
+            sourceFg = isDark ? Colors.teal.shade200 : Colors.teal.shade800;
+            sourceIcon = Icons.language_outlined;
+            break;
+          case LeadSource.metaCampaign:
+            sourceBg = isDark
+                ? Colors.indigo.shade900.withAlpha(120)
+                : Colors.indigo.shade50;
+            sourceFg =
+                isDark ? Colors.indigo.shade200 : Colors.indigo.shade800;
+            sourceIcon = Icons.campaign_outlined;
+            break;
+          case LeadSource.excel:
+            sourceBg = isDark
+                ? Colors.green.shade900.withAlpha(120)
+                : Colors.green.shade50;
+            sourceFg = isDark ? Colors.green.shade200 : Colors.green.shade800;
+            sourceIcon = Icons.table_chart_outlined;
+            break;
+          case LeadSource.csv:
+            sourceBg = isDark
+                ? Colors.blue.shade900.withAlpha(120)
+                : Colors.blue.shade50;
+            sourceFg = isDark ? Colors.blue.shade200 : Colors.blue.shade800;
+            sourceIcon = Icons.insert_drive_file_outlined;
+            break;
+          case LeadSource.manual:
+            sourceBg = colorScheme.surfaceContainerHighest;
+            sourceFg = colorScheme.onSurfaceVariant;
+            sourceIcon = Icons.edit_note_outlined;
+            break;
+        }
+
         final headerCard = Card(
           elevation: 0,
           margin: EdgeInsets.zero,
@@ -388,9 +430,9 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
                   children: [
                     _DetailBadge(
                       label: formatLeadSource(lead.source),
-                      icon: Icons.source_outlined,
-                      backgroundColor: colorScheme.surfaceContainerHighest,
-                      foregroundColor: colorScheme.onSurfaceVariant,
+                      icon: sourceIcon,
+                      backgroundColor: sourceBg,
+                      foregroundColor: sourceFg,
                       maxWidth: maxBadgeWidth,
                     ),
                     _DetailBadge(
@@ -425,6 +467,8 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
           icon: Icons.badge_outlined,
           children: [
             _DetailRow(label: 'Lead Name', value: formatLeadName(lead.name)),
+            if (lead.businessName != null && lead.businessName!.trim().isNotEmpty)
+              _DetailRow(label: 'Business Name', value: lead.businessName!.trim()),
             _DetailRow(label: 'Lead ID', value: lead.id),
           ],
         );
@@ -443,8 +487,29 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
               value: formatLeadEmail(lead.email),
               icon: Icons.email_outlined,
             ),
+            if ((lead.city != null && lead.city!.trim().isNotEmpty) ||
+                (lead.state != null && lead.state!.trim().isNotEmpty))
+              _DetailRow(
+                label: 'Location',
+                value: [lead.city?.trim(), lead.state?.trim()]
+                    .where((e) => e != null && e.isNotEmpty)
+                    .join(', '),
+                icon: Icons.location_on_outlined,
+              ),
           ],
         );
+
+        final hasMetadata =
+            lead.metadata != null && lead.metadata!.isNotEmpty;
+        final metadataSection = hasMetadata
+            ? _DetailSection(
+                title: 'Attribution & Ingestion Details',
+                icon: lead.source == LeadSource.metaCampaign
+                    ? Icons.campaign_outlined
+                    : Icons.hub_outlined,
+                children: _buildMetadataRows(lead.metadata!),
+              )
+            : null;
 
         final leadInfoSection = _DetailSection(
           title: 'Lead Information',
@@ -497,11 +562,11 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
           children: [
             _DetailRow(
               label: 'Created At',
-              value: formatLeadDate(lead.createdAt),
+              value: formatLeadDateTime(lead.createdAt),
             ),
             _DetailRow(
               label: 'Updated At',
-              value: formatLeadDate(lead.updatedAt),
+              value: formatLeadDateTime(lead.updatedAt),
             ),
           ],
         );
@@ -517,6 +582,10 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
                 basicSection,
                 const SizedBox(height: 16),
                 contactSection,
+                if (metadataSection != null) ...[
+                  const SizedBox(height: 16),
+                  metadataSection,
+                ],
                 const SizedBox(height: 16),
                 leadInfoSection,
                 const SizedBox(height: 16),
@@ -556,6 +625,10 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
                         basicSection,
                         const SizedBox(height: 16),
                         contactSection,
+                        if (metadataSection != null) ...[
+                          const SizedBox(height: 16),
+                          metadataSection,
+                        ],
                         const SizedBox(height: 16),
                         leadInfoSection,
                       ],
@@ -578,6 +651,95 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
         );
       },
     );
+  }
+
+  List<Widget> _buildMetadataRows(Map<String, String> metadata) {
+    const keyLabels = <String, String>{
+      'channel': 'Channel',
+      'campaignName': 'Campaign Name',
+      'campaign_name': 'Campaign Name',
+      'campaignId': 'Campaign ID',
+      'campaign_id': 'Campaign ID',
+      'adName': 'Ad Name',
+      'ad_name': 'Ad Name',
+      'adId': 'Ad ID',
+      'ad_id': 'Ad ID',
+      'formId': 'Form ID',
+      'form_id': 'Form ID',
+      'leadgenId': 'Meta Lead ID',
+      'leadgen_id': 'Meta Lead ID',
+      'portalName': 'Portal Name',
+      'portal_name': 'Portal Name',
+      'portalUrl': 'Portal URL',
+      'portal_url': 'Portal URL',
+      'utmSource': 'UTM Source',
+      'utm_source': 'UTM Source',
+      'utmMedium': 'UTM Medium',
+      'utm_medium': 'UTM Medium',
+      'utmCampaign': 'UTM Campaign',
+      'utm_campaign': 'UTM Campaign',
+      'utmTerm': 'UTM Term',
+      'utm_term': 'UTM Term',
+      'utmContent': 'UTM Content',
+      'utm_content': 'UTM Content',
+      'submittedAt': 'Submission Time',
+      'submitted_at': 'Submission Time',
+      'createdTime': 'Meta Ingestion Time',
+      'created_time': 'Meta Ingestion Time',
+    };
+
+    final rows = <Widget>[];
+    for (final entry in metadata.entries) {
+      if (entry.value.trim().isEmpty) continue;
+      final label = keyLabels[entry.key] ?? _formatGenericKey(entry.key);
+      rows.add(
+        _DetailRow(
+          label: label,
+          value: entry.value.trim(),
+          icon: _getMetadataIcon(entry.key),
+        ),
+      );
+    }
+    return rows;
+  }
+
+  static String _formatGenericKey(String key) {
+    final spaced = key.replaceAllMapped(
+      RegExp(r'(?<=[a-z])[A-Z]'),
+      (m) => ' ${m.group(0)}',
+    );
+    return spaced
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((w) =>
+            w.isNotEmpty ? '${w[0].toUpperCase()}${w.substring(1)}' : '')
+        .join(' ');
+  }
+
+  static IconData? _getMetadataIcon(String key) {
+    final lower = key.toLowerCase().replaceAll('_', '');
+    switch (lower) {
+      case 'campaignname':
+      case 'utmcampaign':
+        return Icons.campaign_outlined;
+      case 'adname':
+        return Icons.ad_units_outlined;
+      case 'portalname':
+      case 'portalurl':
+        return Icons.link_outlined;
+      case 'utmsource':
+        return Icons.track_changes_outlined;
+      case 'leadgenid':
+      case 'formid':
+        return Icons.tag_outlined;
+      case 'channel':
+        return Icons.hub_outlined;
+      case 'submittedat':
+      case 'createdtime':
+        return Icons.schedule_outlined;
+      default:
+        return Icons.info_outline;
+    }
   }
 }
 

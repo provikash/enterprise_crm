@@ -3,18 +3,28 @@ import 'lead_status.dart';
 
 class LeadDraft {
   const LeadDraft({
-    this.name,
+    String? name,
+    String? contactPersonName,
+    this.businessName,
     this.phone,
     this.email,
+    this.city,
+    this.state,
     this.status,
     this.source,
-  });
+    this.metadata,
+  }) : name = contactPersonName ?? name;
 
   final String? name;
+  String? get contactPersonName => name;
+  final String? businessName;
   final String? phone;
   final String? email;
+  final String? city;
+  final String? state;
   final LeadStatus? status;
   final LeadSource? source;
+  final Map<String, String>? metadata;
 }
 
 class CreateLeadInput {

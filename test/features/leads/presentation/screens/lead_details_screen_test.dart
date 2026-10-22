@@ -259,8 +259,8 @@ void main() {
       expect(find.text('Assigned'), findsWidgets);
 
       // Record Information
-      expect(find.text('2026-09-01'), findsOneWidget);
-      expect(find.text('2026-09-02'), findsOneWidget);
+      expect(find.textContaining('2026-09-01'), findsOneWidget);
+      expect(find.textContaining('2026-09-02'), findsOneWidget);
 
       // Section titles
       expect(find.text('Basic Information'), findsOneWidget);
@@ -1572,6 +1572,108 @@ void main() {
 
           expect(editedLead, isNotNull);
           expect(editedLead!.id, 'lead-assigned');
+        },
+      );
+    });
+
+    group('Inbound Attribution & Metadata Details', () {
+      testWidgets(
+        'renders attribution section and formatted fields when metadata is present',
+        (tester) async {
+          final metaLead = Lead(
+            id: 'LEAD-901',
+            name: 'Meta Inbound Contact',
+            businessName: 'Acme Meta Corp',
+            phone: '+91 9876543210',
+            email: 'contact@acmemeta.com',
+            city: 'Mumbai',
+            state: 'Maharashtra',
+            source: LeadSource.metaCampaign,
+            status: const LeadStatus('New'),
+            metadata: const {
+              'campaignName': 'Diwali B2B Blast',
+              'adName': 'Festive Creative #1',
+              'formId': 'form_festive_001',
+              'leadgenId': 'lg_123456789',
+            },
+            createdAt: DateTime.parse('2026-10-01T10:00:00Z'),
+            updatedAt: DateTime.parse('2026-10-01T10:00:00Z'),
+          );
+          repository.leads = [metaLead];
+
+          await tester.pumpWidget(buildTestWidget(leadId: 'LEAD-901'));
+          await tester.pumpAndSettle();
+
+          expect(find.text('Attribution & Ingestion Details'), findsOneWidget);
+          expect(find.text('Campaign Name'), findsOneWidget);
+          expect(find.text('Diwali B2B Blast'), findsOneWidget);
+          expect(find.text('Ad Name'), findsOneWidget);
+          expect(find.text('Festive Creative #1'), findsOneWidget);
+          expect(find.text('Form ID'), findsOneWidget);
+          expect(find.text('form_festive_001'), findsOneWidget);
+          expect(find.text('Meta Lead ID'), findsOneWidget);
+          expect(find.text('lg_123456789'), findsOneWidget);
+
+          // Meta Campaign badge has campaign icon
+          expect(find.byIcon(Icons.campaign_outlined), findsWidgets);
+        },
+      );
+
+      testWidgets(
+        'renders portal attribution details and portal badge',
+        (tester) async {
+          final portalLead = Lead(
+            id: 'LEAD-902',
+            name: 'Web Inbound Contact',
+            phone: '+91 9123456780',
+            email: 'web@portal.com',
+            source: LeadSource.portal,
+            status: const LeadStatus('New'),
+            metadata: const {
+              'portalName': 'Enterprise Web Portal',
+              'portalUrl': 'https://crm.example.com/enquiry',
+              'utmSource': 'google_search',
+              'utmCampaign': 'summer_promo',
+            },
+            createdAt: DateTime.parse('2026-10-02T11:00:00Z'),
+            updatedAt: DateTime.parse('2026-10-02T11:00:00Z'),
+          );
+          repository.leads = [portalLead];
+
+          await tester.pumpWidget(buildTestWidget(leadId: 'LEAD-902'));
+          await tester.pumpAndSettle();
+
+          expect(find.text('Attribution & Ingestion Details'), findsOneWidget);
+          expect(find.text('Portal Name'), findsOneWidget);
+          expect(find.text('Enterprise Web Portal'), findsOneWidget);
+          expect(find.text('UTM Source'), findsOneWidget);
+          expect(find.text('google_search'), findsOneWidget);
+          expect(find.text('UTM Campaign'), findsOneWidget);
+          expect(find.text('summer_promo'), findsOneWidget);
+
+          // Web Portal badge has language/globe icon
+          expect(find.byIcon(Icons.language_outlined), findsOneWidget);
+        },
+      );
+
+      testWidgets(
+        'does not render attribution section when metadata is empty or null',
+        (tester) async {
+          final regularLead = Lead(
+            id: 'LEAD-903',
+            name: 'Standard Lead',
+            source: LeadSource.manual,
+            status: const LeadStatus('New'),
+            metadata: null,
+            createdAt: DateTime.parse('2026-10-03T12:00:00Z'),
+            updatedAt: DateTime.parse('2026-10-03T12:00:00Z'),
+          );
+          repository.leads = [regularLead];
+
+          await tester.pumpWidget(buildTestWidget(leadId: 'LEAD-903'));
+          await tester.pumpAndSettle();
+
+          expect(find.text('Attribution & Ingestion Details'), findsNothing);
         },
       );
     });

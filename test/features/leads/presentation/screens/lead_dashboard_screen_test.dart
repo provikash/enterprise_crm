@@ -129,6 +129,8 @@ class _FakeLeadRepository implements LeadRepository {
     int manual = 0;
     int excel = 0;
     int csv = 0;
+    int portal = 0;
+    int metaCampaign = 0;
     for (final l in leads) {
       if (l.isAssigned) {
         assigned++;
@@ -145,6 +147,12 @@ class _FakeLeadRepository implements LeadRepository {
         case LeadSource.csv:
           csv++;
           break;
+        case LeadSource.portal:
+          portal++;
+          break;
+        case LeadSource.metaCampaign:
+          metaCampaign++;
+          break;
       }
     }
     return LeadSummary(
@@ -154,6 +162,8 @@ class _FakeLeadRepository implements LeadRepository {
       manualLeads: manual,
       excelLeads: excel,
       csvLeads: csv,
+      portalLeads: portal,
+      metaCampaignLeads: metaCampaign,
     );
   }
 }
@@ -172,6 +182,7 @@ void main() {
     VoidCallback? onImportLeads,
     VoidCallback? onDistributeLeads,
     VoidCallback? onExportLeads,
+    VoidCallback? onSimulateLead,
     LeadImportFilePicker? filePicker,
     LeadExportFileSaver? fileSaver,
     ThemeData? theme,
@@ -189,6 +200,7 @@ void main() {
           onImportLeads: onImportLeads,
           onDistributeLeads: onDistributeLeads,
           onExportLeads: onExportLeads,
+          onSimulateLead: onSimulateLead,
           filePicker: filePicker,
           fileSaver: fileSaver,
         ),
@@ -224,11 +236,14 @@ void main() {
       expect(find.text('Manual Leads'), findsOneWidget);
       expect(find.text('Excel Leads'), findsOneWidget);
       expect(find.text('CSV Leads'), findsOneWidget);
+      expect(find.text('Portal Leads'), findsOneWidget);
+      expect(find.text('Meta Leads'), findsOneWidget);
 
       // Verify quick action buttons exist
       expect(find.text('View Leads'), findsNothing);
       expect(find.text('Add Lead'), findsOneWidget);
       expect(find.text('Import Leads'), findsOneWidget);
+      expect(find.text('Simulate Inbound'), findsOneWidget);
       expect(find.text('Distribute Leads'), findsOneWidget);
       expect(find.text('Export Leads'), findsOneWidget);
     });
@@ -303,9 +318,92 @@ void main() {
       );
       await tester.pumpAndSettle();
 
+      await tester.ensureVisible(find.text('Add Lead'));
       await tester.tap(find.text('Add Lead'));
       await tester.pumpAndSettle();
       expect(addTapped, isTrue);
+    });
+
+    testWidgets('tapping Portal Leads summary card navigates with portal source query', (
+      tester,
+    ) async {
+      LeadQuery? navigatedQuery;
+      repository.leads = [
+        const Lead(id: '1', source: LeadSource.portal),
+        const Lead(id: '2', source: LeadSource.portal),
+      ];
+      final cubit = LeadDashboardCubit(repository);
+      await cubit.loadDashboard();
+
+      await tester.pumpWidget(
+        buildTestWidget(
+          cubit: cubit,
+          onNavigateToLeads: (q) => navigatedQuery = q,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final portalCard = find.byKey(const Key('dashboard_card_portal_leads'));
+      expect(portalCard, findsOneWidget);
+      await tester.ensureVisible(portalCard);
+      await tester.tap(portalCard);
+      await tester.pumpAndSettle();
+
+      expect(navigatedQuery, isNotNull);
+      expect(navigatedQuery!.source, equals(LeadSource.portal));
+    });
+
+    testWidgets('tapping Meta Leads summary card navigates with metaCampaign source query', (
+      tester,
+    ) async {
+      LeadQuery? navigatedQuery;
+      repository.leads = [
+        const Lead(id: '1', source: LeadSource.metaCampaign),
+      ];
+      final cubit = LeadDashboardCubit(repository);
+      await cubit.loadDashboard();
+
+      await tester.pumpWidget(
+        buildTestWidget(
+          cubit: cubit,
+          onNavigateToLeads: (q) => navigatedQuery = q,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final metaCard = find.byKey(const Key('dashboard_card_meta_leads'));
+      expect(metaCard, findsOneWidget);
+      await tester.ensureVisible(metaCard);
+      await tester.tap(metaCard);
+      await tester.pumpAndSettle();
+
+      expect(navigatedQuery, isNotNull);
+      expect(navigatedQuery!.source, equals(LeadSource.metaCampaign));
+    });
+
+    testWidgets('simulate inbound quick action callback triggers when tapped', (
+      tester,
+    ) async {
+      bool simulateTapped = false;
+      repository.leads = [const Lead(id: '1', source: LeadSource.manual)];
+      final cubit = LeadDashboardCubit(repository);
+      await cubit.loadDashboard();
+
+      await tester.pumpWidget(
+        buildTestWidget(
+          cubit: cubit,
+          onSimulateLead: () => simulateTapped = true,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      final simulateButton = find.byKey(const Key('quick_action_simulate_lead'));
+      expect(simulateButton, findsOneWidget);
+      await tester.ensureVisible(simulateButton);
+      await tester.tap(simulateButton);
+      await tester.pumpAndSettle();
+
+      expect(simulateTapped, isTrue);
     });
 
     testWidgets(
@@ -318,6 +416,7 @@ void main() {
         await tester.pumpWidget(buildTestWidget(cubit: cubit));
         await tester.pumpAndSettle();
 
+        await tester.ensureVisible(find.text('Import Leads'));
         await tester.tap(find.text('Import Leads'));
         await tester.pumpAndSettle();
 

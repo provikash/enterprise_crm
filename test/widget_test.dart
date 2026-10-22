@@ -152,9 +152,9 @@ void main() {
         // AddLeadScreen is open
         expect(find.byType(AddLeadScreen), findsOneWidget);
 
-        // Fill in name
+        // Fill in contact person name
         await tester.enterText(
-          find.widgetWithText(TextFormField, 'Lead Name'),
+          find.widgetWithText(TextFormField, 'Contact Person Name'),
           'Beta Lead',
         );
         await tester.pumpAndSettle();

@@ -50,6 +50,8 @@ class DefaultLeadImportExecutionRequestBuilder
         fileType = LeadImportFileType.excel;
         break;
       case LeadSource.manual:
+      case LeadSource.portal:
+      case LeadSource.metaCampaign:
         throw const LeadImportExecutionPreparationException(
           'The selected import rows are no longer valid.',
         );
