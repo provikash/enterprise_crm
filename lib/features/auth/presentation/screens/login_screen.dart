@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../domain/repositories/auth_repository.dart';
 import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
+import '../widgets/email_otp_reset_dialog.dart';
 
 /// Authentication screen presenting the User ID, Password, and Login controls.
 class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+  final AuthRepository? authRepository;
+
+  const LoginScreen({super.key, this.authRepository});
 
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -24,6 +28,56 @@ class _LoginScreenState extends State<LoginScreen> {
     _userIdController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _openForgotPassword() async {
+    AuthRepository? repository = widget.authRepository;
+    if (repository == null) {
+      try {
+        repository = context.read<AuthCubit>().repository;
+      } catch (_) {
+        try {
+          repository = context.read<AuthRepository>();
+        } catch (_) {}
+      }
+    }
+
+    if (repository == null) return;
+
+    final resetUserId = await EmailOtpResetDialog.show(
+      context,
+      repository: repository,
+      initialIdentifier: _userIdController.text.trim(),
+    );
+
+    if (resetUserId != null && mounted) {
+      setState(() {
+        _userIdController.text = resetUserId;
+        _passwordController.clear();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          key: const Key('login_password_reset_success_snackbar'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: const Color(0xFF16A34A),
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          content: Row(
+            children: const [
+              Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+              SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Password updated successfully! Please sign in with your new password.',
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
   }
 
   void _submit() {
@@ -206,7 +260,32 @@ class _LoginScreenState extends State<LoginScreen> {
                               return null;
                             },
                           ),
-                          const SizedBox(height: 28),
+                          const SizedBox(height: 8),
+
+                          // Forgot Password trigger
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              key: const Key('login_forgot_password_button'),
+                              onPressed:
+                                  isAuthenticating ? null : _openForgotPassword,
+                              style: TextButton.styleFrom(
+                                visualDensity: VisualDensity.compact,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 2,
+                                ),
+                              ),
+                              child: Text(
+                                'Forgot Password?',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: colorScheme.primary,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
 
                           // Login Submit Button
                           SizedBox(

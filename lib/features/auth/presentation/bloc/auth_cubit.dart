@@ -15,6 +15,9 @@ class AuthCubit extends Cubit<AuthState> {
             : const AuthUnauthenticated(),
       );
 
+  /// Access to the underlying authentication repository for reset & recovery flows.
+  AuthRepository get repository => _repository;
+
   /// Authenticates with provided credentials.
   ///
   /// Protects against duplicate concurrent submission while in [AuthAuthenticating] state.

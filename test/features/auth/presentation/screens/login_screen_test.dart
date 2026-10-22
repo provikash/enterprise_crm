@@ -55,14 +55,14 @@ void main() {
         find.byKey(const Key('login_password_visibility_toggle')),
         findsOneWidget,
       );
+      expect(find.byKey(const Key('login_forgot_password_button')), findsOneWidget);
+      expect(find.text('Forgot Password?'), findsOneWidget);
       expect(find.byKey(const Key('login_submit_button')), findsOneWidget);
       expect(find.text('LOGIN'), findsOneWidget);
 
-      // Explicit absence of forbidden features
+      // Explicit absence of unneeded auth features
       expect(find.text('Sign Up'), findsNothing);
       expect(find.text('Create Account'), findsNothing);
-      expect(find.text('Forgot Password'), findsNothing);
-      expect(find.text('Reset Password'), findsNothing);
       expect(find.text('Google'), findsNothing);
     });
 
@@ -202,6 +202,98 @@ void main() {
 
       expect(find.text('Vinay Enterprise CRM'), findsOneWidget);
       expect(find.byKey(const Key('login_submit_button')), findsOneWidget);
+    });
+
+    testWidgets('tapping Forgot Password? opens EmailOtpResetDialog with prefilled User ID', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_buildLoginTestApp(cubit: cubit));
+      await tester.pumpAndSettle();
+
+      // Enter user ID on login screen
+      await tester.enterText(
+        find.byKey(const Key('login_user_id_field')),
+        'admin',
+      );
+      await tester.pumpAndSettle();
+
+      // Tap Forgot Password?
+      await tester.tap(find.byKey(const Key('login_forgot_password_button')));
+      await tester.pumpAndSettle();
+
+      // Dialog opens and has 'admin' pre-filled in identifier field
+      expect(find.byKey(const Key('email_otp_reset_dialog')), findsOneWidget);
+      final field = tester.widget<TextFormField>(
+        find.byKey(const Key('otp_identifier_field')),
+      );
+      expect(field.controller?.text, equals('admin'));
+
+      // Close dialog
+      await tester.tap(find.byKey(const Key('otp_close_dialog_button')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('email_otp_reset_dialog')), findsNothing);
+    });
+
+    testWidgets('completing reset in dialog displays success SnackBar on LoginScreen', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_buildLoginTestApp(cubit: cubit));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('login_forgot_password_button')));
+      await tester.pumpAndSettle();
+
+      // Step 1: Send Code for user
+      await tester.enterText(
+        find.byKey(const Key('otp_identifier_field')),
+        'user',
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('otp_send_code_button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Step 2: Enter code "123456"
+      const code = '123456';
+      for (int i = 0; i < 6; i++) {
+        await tester.enterText(find.byKey(Key('otp_digit_$i')), code[i]);
+      }
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      await tester.tap(find.byKey(const Key('otp_verify_code_button')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 300));
+
+      // Step 3: Enter new password
+      await tester.enterText(
+        find.byKey(const Key('otp_new_password_field')),
+        'UpdatedPass123!',
+      );
+      await tester.enterText(
+        find.byKey(const Key('otp_confirm_password_field')),
+        'UpdatedPass123!',
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+
+      await tester.tap(find.byKey(const Key('otp_submit_new_password_button')));
+      await tester.pumpAndSettle();
+
+      // Verify LoginScreen is back and shows the green success snackbar
+      expect(find.byKey(const Key('email_otp_reset_dialog')), findsNothing);
+      expect(
+        find.byKey(const Key('login_password_reset_success_snackbar')),
+        findsOneWidget,
+      );
+      expect(find.text('Password updated successfully! Please sign in with your new password.'), findsOneWidget);
+
+      // Verify login user ID field is updated
+      final idField = tester.widget<TextFormField>(
+        find.byKey(const Key('login_user_id_field')),
+      );
+      expect(idField.controller?.text, equals('user'));
     });
   });
 }
