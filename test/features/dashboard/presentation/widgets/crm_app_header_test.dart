@@ -43,6 +43,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
+        expect(find.text('Vinay Enterprise CRM'), findsNothing);
         expect(find.text('Enterprise CRM'), findsNothing);
         expect(find.byIcon(Icons.business_center), findsNothing);
       },

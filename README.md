@@ -1,4 +1,4 @@
-# Enterprise CRM
+# Vinay Enterprise CRM
 
 An industrial-grade, multi-platform enterprise operations suite built with **Flutter**, delivering a responsive, zero-compromise experience across **Modern Web**, **Android**, and **Desktop**.
 
@@ -6,7 +6,7 @@ An industrial-grade, multi-platform enterprise operations suite built with **Flu
 
 ## Architectural Overview
 
-Enterprise CRM unifies core organizational operations into a single cohesive portal. It replaces fragmented spreadsheets and disparate third-party tools with an integrated system enforcing role-based security, comprehensive audit trails, and multi-format document workflows.
+Vinay Enterprise CRM unifies core organizational operations into a single cohesive portal. It replaces fragmented spreadsheets and disparate third-party tools with an integrated system enforcing role-based security, comprehensive audit trails, and multi-format document workflows.
 
 ```text
                +-------------------------------------------------+

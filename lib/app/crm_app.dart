@@ -346,7 +346,7 @@ class _CrmAppState extends State<CrmApp> {
       builder: (context, themeMode, _) {
         return MaterialApp(
           navigatorKey: _navigatorKey,
-          title: 'Enterprise CRM',
+          title: 'Vinay Enterprise CRM',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light,
           darkTheme: AppTheme.dark,

@@ -44,7 +44,7 @@ void main() {
       await tester.pumpWidget(_buildLoginTestApp(cubit: cubit));
       await tester.pumpAndSettle();
 
-      expect(find.text('Enterprise CRM'), findsOneWidget);
+      expect(find.text('Vinay Enterprise CRM'), findsOneWidget);
       expect(
         find.text('Sign in to access your business workspace'),
         findsOneWidget,
@@ -200,7 +200,7 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('Enterprise CRM'), findsOneWidget);
+      expect(find.text('Vinay Enterprise CRM'), findsOneWidget);
       expect(find.byKey(const Key('login_submit_button')), findsOneWidget);
     });
   });

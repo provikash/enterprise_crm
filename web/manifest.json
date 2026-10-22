@@ -1,6 +1,6 @@
 {
-    "name": "enterprise_crm",
-    "short_name": "enterprise_crm",
+    "name": "Vinay Enterprise CRM",
+    "short_name": "Vinay CRM",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

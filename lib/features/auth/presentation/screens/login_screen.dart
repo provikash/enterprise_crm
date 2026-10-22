@@ -94,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 20),
                           Text(
-                            'Enterprise CRM',
+                            'Vinay Enterprise CRM',
                             style: theme.textTheme.headlineMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.2,

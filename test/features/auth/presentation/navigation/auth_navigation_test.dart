@@ -57,7 +57,7 @@ void main() {
 
         // Verified: app starts at LoginScreen
         expect(find.byType(LoginScreen), findsOneWidget);
-        expect(find.text('Enterprise CRM'), findsOneWidget);
+        expect(find.text('Vinay Enterprise CRM'), findsOneWidget);
         expect(find.byKey(const Key('login_user_id_field')), findsOneWidget);
 
         // Verified: LeadDashboardScreen is NOT directly rendered

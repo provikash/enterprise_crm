@@ -70,6 +70,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Header: CRM branding removed, Standard User appears only once
+      expect(find.text('Vinay Enterprise CRM'), findsNothing);
       expect(find.text('Enterprise CRM'), findsNothing);
       expect(find.text('Standard User'), findsOneWidget);
       expect(find.byKey(const Key('crm_header_logout_button')), findsOneWidget);
