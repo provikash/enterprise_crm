@@ -133,16 +133,25 @@ class _LoginScreenState extends State<LoginScreen> {
                         children: [
                           // Branding Icon & Title
                           Center(
-                            child: Container(
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: colorScheme.primaryContainer,
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(
-                                Icons.business_center,
-                                size: 36,
-                                color: colorScheme.onPrimaryContainer,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(16),
+                              child: Image.asset(
+                                'assets/images/app_logo.png',
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) => Container(
+                                  padding: const EdgeInsets.all(14),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.primaryContainer,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.business_center,
+                                    size: 36,
+                                    color: colorScheme.onPrimaryContainer,
+                                  ),
+                                ),
                               ),
                             ),
                           ),
