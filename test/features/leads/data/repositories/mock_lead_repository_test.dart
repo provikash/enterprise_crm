@@ -40,7 +40,14 @@ String _cellToString(CellValue? cellValue) {
 }
 
 List<List<String>> _decodeCsv(Uint8List bytes) {
-  final csvString = utf8.decode(bytes);
+  var rawBytes = bytes;
+  if (rawBytes.length >= 3 &&
+      rawBytes[0] == 0xEF &&
+      rawBytes[1] == 0xBB &&
+      rawBytes[2] == 0xBF) {
+    rawBytes = rawBytes.sublist(3);
+  }
+  final csvString = utf8.decode(rawBytes);
   const decoder = CsvDecoder(
     dynamicTyping: false,
     parseHeaders: false,
@@ -442,7 +449,7 @@ void main() {
       );
       expect(rows.length, greaterThan(1));
       for (var i = 1; i < rows.length; i++) {
-        expect(rows[i][4], 'csv');
+        expect(rows[i][5], 'csv');
       }
     });
 
@@ -458,7 +465,7 @@ void main() {
       );
       expect(rows.length, greaterThan(1));
       for (var i = 1; i < rows.length; i++) {
-        expect(rows[i][3], 'Sample New');
+        expect(rows[i][4], 'Sample New');
       }
     });
 
@@ -474,7 +481,7 @@ void main() {
       );
       expect(assignedRows.length, greaterThan(1));
       for (var i = 1; i < assignedRows.length; i++) {
-        expect(assignedRows[i][5], isNotEmpty);
+        expect(assignedRows[i][13], isNotEmpty);
       }
 
       final unassignedResult = await repository.exportLeads(
@@ -488,7 +495,7 @@ void main() {
       );
       expect(unassignedRows.length, greaterThan(1));
       for (var i = 1; i < unassignedRows.length; i++) {
-        expect(unassignedRows[i][5], isEmpty);
+        expect(unassignedRows[i][13], isEmpty);
       }
     });
 
@@ -506,7 +513,7 @@ void main() {
         );
         expect(rows.length, greaterThan(1));
         for (var i = 1; i < rows.length; i++) {
-          expect(rows[i][5], 'Mock Agent One');
+          expect(rows[i][13], 'Mock Agent One');
         }
         final csvString = utf8.decode(
           (result.fileReference as LeadExportContent).bytes,
@@ -535,8 +542,8 @@ void main() {
       );
       expect(rows.length, greaterThan(1));
       for (var i = 1; i < rows.length; i++) {
-        expect(rows[i][4], 'manual');
-        expect(rows[i][5], isNotEmpty);
+        expect(rows[i][5], 'manual');
+        expect(rows[i][13], isNotEmpty);
       }
     });
 
@@ -637,7 +644,7 @@ void main() {
         );
         expect(rows.length, 2);
         expect(rows[1][0], 'Aarav Sharma');
-        expect(rows[1][5], 'Mock Agent Two');
+        expect(rows[1][13], 'Mock Agent Two');
         final raw = utf8.decode(
           (result.fileReference as LeadExportContent).bytes,
         );
@@ -1383,10 +1390,10 @@ void main() {
     );
 
     test(
-      'rejects structured import when CSV request has Excel draft',
+      'successfully imports structured import when drafts have specific sources',
       () async {
         final drafts = [
-          const LeadDraft(name: 'Mismatch', source: LeadSource.excel),
+          const LeadDraft(name: 'Portal Lead', source: LeadSource.portal),
         ];
         final request = LeadImportRequest.fromDrafts(
           fileName: 'leads.csv',
@@ -1394,15 +1401,16 @@ void main() {
           drafts: drafts,
         );
 
-        expect(() => repository.importLeads(request), throwsArgumentError);
+        final result = await repository.importLeads(request);
+        expect(result.importedRows, equals(1));
       },
     );
 
     test(
-      'rejects structured import when Excel request has Manual draft',
+      'successfully imports structured import with new sources like Meta Campaign',
       () async {
         final drafts = [
-          const LeadDraft(name: 'Manual Mismatch', source: LeadSource.manual),
+          const LeadDraft(name: 'Ad Lead', source: LeadSource.metaCampaign),
         ];
         final request = LeadImportRequest.fromDrafts(
           fileName: 'leads.xlsx',
@@ -1410,7 +1418,8 @@ void main() {
           drafts: drafts,
         );
 
-        expect(() => repository.importLeads(request), throwsArgumentError);
+        final result = await repository.importLeads(request);
+        expect(result.importedRows, equals(1));
       },
     );
 

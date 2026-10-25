@@ -1,6 +1,5 @@
-import 'dart:typed_data';
-
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/lead_export.dart';
 import 'lead_export_serializer.dart';
@@ -84,10 +83,12 @@ class DefaultLeadExportFileSaver implements LeadExportFileSaver {
   const DefaultLeadExportFileSaver({
     ExportSavePicker? picker,
     this.dialogTitle = 'Save Lead Export',
+    this.isWeb = kIsWeb,
   }) : _picker = picker ?? const FilePickerExportSavePicker();
 
   final ExportSavePicker _picker;
   final String dialogTitle;
+  final bool isWeb;
 
   @override
   Future<LeadExportSaveResult> save(LeadExportResult result) async {
@@ -106,6 +107,12 @@ class DefaultLeadExportFileSaver implements LeadExportFileSaver {
       extension: fileRef.extension,
       dialogTitle: dialogTitle,
     );
+
+    if (isWeb) {
+      // In web browsers, FilePicker.saveFile triggers the browser download anchor
+      // and returns null; consider download successfully initiated.
+      return const LeadExportSaveResult.saved();
+    }
 
     if (uri == null) {
       return const LeadExportSaveResult.cancelled();

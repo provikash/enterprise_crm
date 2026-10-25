@@ -95,8 +95,20 @@ class DefaultLeadImportPreviewBuilder implements LeadImportPreviewBuilder {
     final analysisColSet = analysisColIndices.toSet();
     final mappedIndicesList = <int>[
       if (mapping.nameColumnIndex != null) mapping.nameColumnIndex!,
+      if (mapping.businessNameColumnIndex != null)
+        mapping.businessNameColumnIndex!,
       if (mapping.phoneColumnIndex != null) mapping.phoneColumnIndex!,
       if (mapping.emailColumnIndex != null) mapping.emailColumnIndex!,
+      if (mapping.cityColumnIndex != null) mapping.cityColumnIndex!,
+      if (mapping.stateColumnIndex != null) mapping.stateColumnIndex!,
+      if (mapping.countryColumnIndex != null) mapping.countryColumnIndex!,
+      if (mapping.sourceColumnIndex != null) mapping.sourceColumnIndex!,
+      if (mapping.priorityColumnIndex != null) mapping.priorityColumnIndex!,
+      if (mapping.requirementColumnIndex != null)
+        mapping.requirementColumnIndex!,
+      if (mapping.estimatedValueColumnIndex != null)
+        mapping.estimatedValueColumnIndex!,
+      if (mapping.notesColumnIndex != null) mapping.notesColumnIndex!,
     ];
 
     // Ensure no duplicate source column mappings
@@ -125,21 +137,65 @@ class DefaultLeadImportPreviewBuilder implements LeadImportPreviewBuilder {
       }
 
       final name = extractMapped(mapping.nameColumnIndex);
+      final businessName = extractMapped(mapping.businessNameColumnIndex);
       final phone = extractMapped(mapping.phoneColumnIndex);
       final email = extractMapped(mapping.emailColumnIndex);
+      final city = extractMapped(mapping.cityColumnIndex);
+      final state = extractMapped(mapping.stateColumnIndex);
+      final country = extractMapped(mapping.countryColumnIndex);
+      final mappedSource = extractMapped(mapping.sourceColumnIndex);
+      final source = (mappedSource != null && mappedSource.isNotEmpty)
+          ? mappedSource
+          : mapping.defaultSource?.displayName;
+      final priority = extractMapped(mapping.priorityColumnIndex);
+      final requirement = extractMapped(mapping.requirementColumnIndex);
+      final estimatedValue = extractMapped(mapping.estimatedValueColumnIndex);
+      final notes = extractMapped(mapping.notesColumnIndex);
 
       final hasName = name != null && name.isNotEmpty;
+      final hasBusiness = businessName != null && businessName.isNotEmpty;
       final hasPhone = phone != null && phone.isNotEmpty;
       final hasEmail = email != null && email.isNotEmpty;
+      final hasCity = city != null && city.isNotEmpty;
+      final hasState = state != null && state.isNotEmpty;
+      final hasCountry = country != null && country.isNotEmpty;
+      final hasSource = mappedSource != null && mappedSource.isNotEmpty;
+      final hasPriority = priority != null && priority.isNotEmpty;
+      final hasRequirement = requirement != null && requirement.isNotEmpty;
+      final hasEstimatedValue =
+          estimatedValue != null && estimatedValue.isNotEmpty;
+      final hasNotes = notes != null && notes.isNotEmpty;
 
-      if (!hasName && !hasPhone && !hasEmail) {
+      final hasAnyContent = hasName ||
+          hasBusiness ||
+          hasPhone ||
+          hasEmail ||
+          hasCity ||
+          hasState ||
+          hasCountry ||
+          hasSource ||
+          hasPriority ||
+          hasRequirement ||
+          hasEstimatedValue ||
+          hasNotes;
+
+      if (!hasAnyContent) {
         // Blank row: none of the mapped fields have content
         previewRows.add(
           LeadImportPreviewRow(
             sourceRowIndex: i,
             name: name,
+            businessName: businessName,
             phone: phone,
             email: email,
+            city: city,
+            state: state,
+            country: country,
+            source: source,
+            priority: priority,
+            requirement: requirement,
+            estimatedValue: estimatedValue,
+            notes: notes,
             status: LeadImportPreviewRowStatus.blank,
             issues: const [
               LeadImportPreviewIssue(
@@ -171,8 +227,17 @@ class DefaultLeadImportPreviewBuilder implements LeadImportPreviewBuilder {
           LeadImportPreviewRow(
             sourceRowIndex: i,
             name: name,
+            businessName: businessName,
             phone: phone,
             email: email,
+            city: city,
+            state: state,
+            country: country,
+            source: source,
+            priority: priority,
+            requirement: requirement,
+            estimatedValue: estimatedValue,
+            notes: notes,
             status: isRowValid
                 ? LeadImportPreviewRowStatus.valid
                 : LeadImportPreviewRowStatus.invalid,

@@ -40,8 +40,17 @@ class LeadImportPreviewRow {
   const LeadImportPreviewRow({
     required this.sourceRowIndex,
     this.name,
+    this.businessName,
     this.phone,
     this.email,
+    this.city,
+    this.state,
+    this.country,
+    this.source,
+    this.priority,
+    this.requirement,
+    this.estimatedValue,
+    this.notes,
     required this.status,
     this.issues = const [],
   });
@@ -56,6 +65,9 @@ class LeadImportPreviewRow {
   /// empty string if mapped but cell is blank.
   final String? name;
 
+  /// Candidate Lead business/company name. Null if [LeadImportTargetField.businessName] is unmapped.
+  final String? businessName;
+
   /// Candidate Lead phone. Null if [LeadImportTargetField.phone] is unmapped;
   /// empty string if mapped but cell is blank.
   final String? phone;
@@ -63,6 +75,30 @@ class LeadImportPreviewRow {
   /// Candidate Lead email. Null if [LeadImportTargetField.email] is unmapped;
   /// empty string if mapped but cell is blank.
   final String? email;
+
+  /// Candidate Lead city. Null if [LeadImportTargetField.city] is unmapped.
+  final String? city;
+
+  /// Candidate Lead state. Null if [LeadImportTargetField.state] is unmapped.
+  final String? state;
+
+  /// Candidate Lead country. Null if [LeadImportTargetField.country] is unmapped.
+  final String? country;
+
+  /// Candidate Lead source string. Null if [LeadImportTargetField.source] is unmapped.
+  final String? source;
+
+  /// Candidate Lead priority. Null if [LeadImportTargetField.priority] is unmapped.
+  final String? priority;
+
+  /// Candidate Lead requirement. Null if [LeadImportTargetField.requirement] is unmapped.
+  final String? requirement;
+
+  /// Candidate Lead estimated value. Null if [LeadImportTargetField.estimatedValue] is unmapped.
+  final String? estimatedValue;
+
+  /// Candidate Lead notes. Null if [LeadImportTargetField.notes] is unmapped.
+  final String? notes;
 
   final LeadImportPreviewRowStatus status;
   final List<LeadImportPreviewIssue> issues;
@@ -74,14 +110,38 @@ class LeadImportPreviewRow {
           runtimeType == other.runtimeType &&
           sourceRowIndex == other.sourceRowIndex &&
           name == other.name &&
+          businessName == other.businessName &&
           phone == other.phone &&
           email == other.email &&
+          city == other.city &&
+          state == other.state &&
+          country == other.country &&
+          source == other.source &&
+          priority == other.priority &&
+          requirement == other.requirement &&
+          estimatedValue == other.estimatedValue &&
+          notes == other.notes &&
           status == other.status &&
           _areIssuesEqual(issues, other.issues);
 
   @override
-  int get hashCode =>
-      Object.hash(sourceRowIndex, name, phone, email, status, issues.length);
+  int get hashCode => Object.hash(
+    sourceRowIndex,
+    name,
+    businessName,
+    phone,
+    email,
+    city,
+    state,
+    country,
+    source,
+    priority,
+    requirement,
+    estimatedValue,
+    notes,
+    status,
+    issues.length,
+  );
 
   static bool _areIssuesEqual(
     List<LeadImportPreviewIssue> a,
@@ -97,7 +157,7 @@ class LeadImportPreviewRow {
 
   @override
   String toString() =>
-      'LeadImportPreviewRow(row: $displayRowNumber, name: "$name", phone: "$phone", email: "$email", status: $status)';
+      'LeadImportPreviewRow(row: $displayRowNumber, name: "$name", business: "$businessName", phone: "$phone", email: "$email", city: "$city", state: "$state", country: "$country", source: "$source", priority: "$priority", status: $status)';
 }
 
 /// Result of evaluating candidate data rows against mapped Lead fields.

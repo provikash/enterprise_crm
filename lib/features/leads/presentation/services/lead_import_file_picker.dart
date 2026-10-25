@@ -42,7 +42,7 @@ class DefaultLeadImportFilePicker implements LeadImportFilePicker {
   Future<LeadImportSelectedFile?> pickFile() async {
     final platformFile = await FilePicker.pickFile(
       type: FileType.custom,
-      allowedExtensions: const ['csv', 'xlsx'],
+      allowedExtensions: const ['csv', 'xlsx', 'xls'],
     );
 
     if (platformFile == null) return null;
@@ -53,11 +53,11 @@ class DefaultLeadImportFilePicker implements LeadImportFilePicker {
     LeadSource source;
     if (normalizedExt == 'csv') {
       source = LeadSource.csv;
-    } else if (normalizedExt == 'xlsx') {
+    } else if (normalizedExt == 'xlsx' || normalizedExt == 'xls') {
       source = LeadSource.excel;
     } else {
       throw const LeadImportFileException(
-        'Unsupported file type. Please select a .csv or .xlsx file.',
+        'Unsupported file type. Please select a .csv, .xlsx, or .xls file.',
       );
     }
 

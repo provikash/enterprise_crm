@@ -478,6 +478,14 @@ class _LeadImportPreviewView extends StatelessWidget {
                 style: theme.textTheme.bodySmall,
               ),
             ),
+          if (row.businessName != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 1.0),
+              child: Text(
+                'Business: ${row.businessName!.isEmpty ? '—' : row.businessName!}',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
           if (row.phone != null)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 1.0),
@@ -491,6 +499,54 @@ class _LeadImportPreviewView extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 1.0),
               child: Text(
                 'Email: ${row.email!.isEmpty ? '—' : row.email!}',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          if (row.city != null || row.state != null || row.country != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 1.0),
+              child: Text(
+                'Location: ${[row.city, row.state, row.country].where((e) => e != null && e.isNotEmpty).join(", ")}',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          if (row.source != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 1.0),
+              child: Text(
+                'Source: ${row.source!.isEmpty ? '—' : row.source!}',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          if (row.priority != null && row.priority!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 1.0),
+              child: Text(
+                'Priority: ${row.priority!}',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          if (row.requirement != null && row.requirement!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 1.0),
+              child: Text(
+                'Requirement: ${row.requirement!}',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          if (row.estimatedValue != null && row.estimatedValue!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 1.0),
+              child: Text(
+                'Estimated Value: ${row.estimatedValue!}',
+                style: theme.textTheme.bodySmall,
+              ),
+            ),
+          if (row.notes != null && row.notes!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 1.0),
+              child: Text(
+                'Notes: ${row.notes!}',
                 style: theme.textTheme.bodySmall,
               ),
             ),

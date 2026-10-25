@@ -156,6 +156,28 @@ void main() {
     );
 
     test(
+      'returns saved status on Web when picker returns null (browser download triggered)',
+      () async {
+        final webSaver = DefaultLeadExportFileSaver(picker: picker, isWeb: true);
+        picker.returnUri = null;
+        final exportResult = LeadExportResult(
+          fileName: 'leads_export.csv',
+          fileReference: LeadExportContent(
+            bytes: Uint8List.fromList([1, 2, 3]),
+            extension: 'csv',
+            mimeType: 'text/csv',
+          ),
+        );
+
+        final saveResult = await webSaver.save(exportResult);
+
+        expect(picker.callCount, 1);
+        expect(saveResult.isSaved, isTrue);
+        expect(saveResult.status, LeadExportSaveStatus.saved);
+      },
+    );
+
+    test(
       'propagates platform exception naturally when picker throws',
       () async {
         picker.throwException = Exception('Platform picker failure');

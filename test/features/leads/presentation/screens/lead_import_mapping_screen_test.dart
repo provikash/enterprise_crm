@@ -97,13 +97,17 @@ void main() {
           findsOneWidget,
         );
 
-        // Three field labels
+        // Field labels
         expect(find.text('Lead Name'), findsOneWidget);
+        expect(find.text('Business / Company Name'), findsOneWidget);
         expect(find.text('Phone'), findsOneWidget);
         expect(find.text('Email'), findsOneWidget);
+        expect(find.text('City'), findsOneWidget);
+        expect(find.text('State'), findsOneWidget);
+        expect(find.text('Lead Source'), findsOneWidget);
 
-        // All 3 dropdowns exist and show 'Not mapped'
-        expect(find.text('Not mapped'), findsNWidgets(3));
+        // All 12 dropdowns exist and show 'Not mapped'
+        expect(find.text('Not mapped'), findsNWidgets(12));
 
         // Validation reminder
         expect(
@@ -167,9 +171,10 @@ void main() {
         expect(find.text('Column 2 — Mobile Phone'), findsOneWidget);
 
         // 2. Map Email to Column 2 — Mobile Phone
-        await tester.tap(
-          find.byKey(const Key('lead_import_field_email_dropdown')),
-        );
+        final emailFinder =
+            find.byKey(const Key('lead_import_field_email_dropdown'));
+        await tester.ensureVisible(emailFinder);
+        await tester.tap(emailFinder);
         await tester.pumpAndSettle();
 
         await tester.tap(find.text('Column 2 — Mobile Phone').last);
@@ -177,7 +182,7 @@ void main() {
 
         // Phone is automatically reset to 'Not mapped', Email is now Column 2
         expect(find.text('Column 2 — Mobile Phone'), findsOneWidget);
-        expect(find.text('Not mapped'), findsNWidgets(2)); // Name and Phone
+        expect(find.text('Not mapped'), findsNWidgets(11));
       },
     );
 
@@ -252,9 +257,10 @@ void main() {
         );
 
         // Tap Phone dropdown
-        await tester.tap(
-          find.byKey(const Key('lead_import_field_phone_dropdown')),
-        );
+        final phoneFinder =
+            find.byKey(const Key('lead_import_field_phone_dropdown'));
+        await tester.ensureVisible(phoneFinder);
+        await tester.tap(phoneFinder);
         await tester.pumpAndSettle();
 
         // Both options exist distinctly
@@ -297,9 +303,10 @@ void main() {
       await tester.pumpWidget(buildTestWidget(analysis: blankHeaderAnalysis));
       await tester.pumpAndSettle();
 
-      await tester.tap(
-        find.byKey(const Key('lead_import_field_email_dropdown')),
-      );
+      final emailFinder =
+          find.byKey(const Key('lead_import_field_email_dropdown'));
+      await tester.ensureVisible(emailFinder);
+      await tester.tap(emailFinder);
       await tester.pumpAndSettle();
 
       expect(find.text('Column 2 — Column 2'), findsWidgets);
@@ -372,17 +379,19 @@ void main() {
       await tester.tap(find.text('Column 1 — Customer Name').last);
       await tester.pumpAndSettle();
 
-      await tester.tap(
-        find.byKey(const Key('lead_import_field_email_dropdown')),
-      );
+      final emailFinder =
+          find.byKey(const Key('lead_import_field_email_dropdown'));
+      await tester.ensureVisible(emailFinder);
+      await tester.tap(emailFinder);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Column 3 — Email Address').last);
       await tester.pumpAndSettle();
 
       // Tap Continue
-      await tester.tap(
-        find.byKey(const Key('lead_import_mapping_continue_button')),
-      );
+      final continueFinder =
+          find.byKey(const Key('lead_import_mapping_continue_button'));
+      await tester.ensureVisible(continueFinder);
+      await tester.tap(continueFinder);
       await tester.pumpAndSettle();
 
       expect(receivedMapping, isNotNull);
@@ -484,5 +493,20 @@ void main() {
         },
       );
     }
+
+    testWidgets('tapping Auto-detect maps matching columns automatically', (
+      tester,
+    ) async {
+      await tester.pumpWidget(buildTestWidget());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('lead_import_auto_detect_button')));
+      await tester.pumpAndSettle();
+
+      // Customer Name, Mobile Phone, Email Address are auto-mapped
+      expect(find.text('Column 1 — Customer Name'), findsOneWidget);
+      expect(find.text('Column 2 — Mobile Phone'), findsOneWidget);
+      expect(find.text('Column 3 — Email Address'), findsOneWidget);
+    });
   });
 }

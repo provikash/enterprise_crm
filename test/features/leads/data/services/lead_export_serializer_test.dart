@@ -38,7 +38,14 @@ void main() {
 
   // Helper to decode CSV bytes to List<List<String>>
   List<List<String>> decodeCsv(Uint8List bytes) {
-    final csvString = utf8.decode(bytes);
+    var rawBytes = bytes;
+    if (rawBytes.length >= 3 &&
+        rawBytes[0] == 0xEF &&
+        rawBytes[1] == 0xBB &&
+        rawBytes[2] == 0xBF) {
+      rawBytes = rawBytes.sublist(3);
+    }
+    final csvString = utf8.decode(rawBytes);
     const decoder = CsvDecoder(
       dynamicTyping: false,
       parseHeaders: false,
@@ -72,8 +79,16 @@ void main() {
         'Name',
         'Phone',
         'Email',
+        'Business Name',
         'Status',
         'Source',
+        'Priority',
+        'Country',
+        'State',
+        'City',
+        'Requirement',
+        'Estimated Value',
+        'Notes',
         'Assigned To',
         'Created At',
         'Updated At',
@@ -154,8 +169,16 @@ void main() {
           'Alice Johnson',
           '+919876543210',
           'alice@example.com',
+          '',
           'custom-in-progress',
           'manual',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
+          '',
           'Bob Agent',
           '2026-03-15T10:30:00.000Z',
           '2026-03-16T14:45:00.000Z',
@@ -211,8 +234,16 @@ void main() {
           '', // Name
           '', // Phone
           '', // Email
+          '', // Business Name
           '', // Status
           'csv', // Source
+          '', // Priority
+          '', // Country
+          '', // State
+          '', // City
+          '', // Requirement
+          '', // Estimated Value
+          '', // Notes
           '', // Assigned To
           '', // Created At
           '', // Updated At
@@ -248,9 +279,9 @@ void main() {
         expect(rows.length, 2);
         expect(rows[1][0], 'Smith, "The Agent"\nConsultant');
         expect(rows[1][2], 'agent"smith"@test.com, alternate@test.com');
-        expect(rows[1][3], 'En révision / 待处理 🚀');
-        expect(rows[1][4], 'excel');
-        expect(rows[1][5], 'Dr. René François Müller');
+        expect(rows[1][4], 'En révision / 待处理 🚀');
+        expect(rows[1][5], 'excel');
+        expect(rows[1][13], 'Dr. René François Müller');
       },
     );
 
@@ -300,8 +331,16 @@ void main() {
         'Bob Builder',
         '+447911123456',
         'bob@builder.org',
+        '',
         'contract-sent',
         'excel',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
         'Sarah Connor',
         '2026-01-10T12:00:00.000Z',
         '2026-01-12T16:30:00.000Z',
@@ -345,7 +384,24 @@ void main() {
       final rows = decodeXlsx(content.bytes);
 
       expect(rows.length, 2);
-      expect(rows[1], ['', '', '', '', 'manual', '', '', '']);
+      expect(rows[1], [
+        '',
+        '',
+        '',
+        '',
+        '',
+        'manual',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+        '',
+      ]);
       for (final cell in rows[1]) {
         expect(cell, isNot(contains('null')));
         expect(cell, isNot(contains('N/A')));
@@ -371,9 +427,9 @@ void main() {
 
       expect(rows[1][0], '山田 太郎 / José García');
       expect(rows[1][1], '+81 3 1234 5678');
-      expect(rows[1][3], '商談中 (In Negotiation) 💼');
-      expect(rows[1][4], 'csv');
-      expect(rows[1][5], 'María Hernández');
+      expect(rows[1][4], '商談中 (In Negotiation) 💼');
+      expect(rows[1][5], 'csv');
+      expect(rows[1][13], 'María Hernández');
     });
 
     test('preserves input row ordering in XLSX without sorting', () {
@@ -481,4 +537,86 @@ void main() {
       );
     },
   );
+
+  group('DefaultLeadExportSerializer - PDF Export', () {
+    test('returns correct MIME type and file extension for PDF', () {
+      final content = serializer.serialize(
+        leads: [],
+        format: LeadExportFormat.pdf,
+      );
+      expect(content.extension, equals('pdf'));
+      expect(content.mimeType, equals('application/pdf'));
+      expect(content.bytes, isNotEmpty);
+    });
+
+    test('serializes empty lead list to a valid PDF document', () {
+      final content = serializer.serialize(
+        leads: [],
+        format: LeadExportFormat.pdf,
+      );
+      final pdfString = String.fromCharCodes(content.bytes);
+      expect(pdfString.startsWith('%PDF-1.4'), isTrue);
+      expect(pdfString.contains('ENTERPRISE CRM - LEADS DIRECTORY'), isTrue);
+      expect(pdfString.contains('No leads to display.'), isTrue);
+      expect(pdfString.contains('xref'), isTrue);
+      expect(pdfString.contains('trailer'), isTrue);
+      expect(pdfString.trimRight().endsWith('%%EOF'), isTrue);
+    });
+
+    test('serializes multiple leads into styled PDF table and escapes properly', () {
+      final testLeads = [
+        Lead(
+          id: 'lead-1',
+          name: 'Jane Doe',
+          phone: '+1 555-0199',
+          email: 'jane.doe@example.com',
+          businessName: 'Doe Enterprises',
+          status: const LeadStatus('Contacted'),
+          source: LeadSource.excel,
+          city: 'Austin',
+          state: 'TX',
+          metadata: {
+            'priority': 'High',
+            'requirement': 'CRM Software',
+          },
+          createdAt: DateTime(2026, 10, 24),
+        ),
+      ];
+
+      final content = serializer.serialize(
+        leads: testLeads,
+        format: LeadExportFormat.pdf,
+      );
+      final pdfString = String.fromCharCodes(content.bytes);
+      expect(pdfString.startsWith('%PDF-1.4'), isTrue);
+      expect(pdfString.contains('Jane Doe'), isTrue);
+      expect(pdfString.contains('jane.doe@example.com'), isTrue);
+      expect(pdfString.contains('Doe Enterprises'), isTrue);
+      expect(pdfString.contains('CRM Software'), isTrue);
+      expect(pdfString.trimRight().endsWith('%%EOF'), isTrue);
+    });
+
+    test('handles multi-page pagination when leads exceed rows per page', () {
+      final manyLeads = List.generate(
+        50,
+        (i) => Lead(
+          id: 'lead-$i',
+          name: 'Lead Number $i',
+          phone: '555-00$i',
+          email: 'lead$i@test.com',
+          source: LeadSource.csv,
+        ),
+      );
+
+      final content = serializer.serialize(
+        leads: manyLeads,
+        format: LeadExportFormat.pdf,
+      );
+      final pdfString = String.fromCharCodes(content.bytes);
+      expect(pdfString.contains('/Count 3'), isTrue); // 50 / 24 = 3 pages
+      expect(pdfString.contains('Page 1 of 3'), isTrue);
+      expect(pdfString.contains('Page 3 of 3'), isTrue);
+      expect(pdfString.trimRight().endsWith('%%EOF'), isTrue);
+    });
+  });
 }

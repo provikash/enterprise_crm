@@ -455,6 +455,50 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
                           : colorScheme.onSurfaceVariant,
                       maxWidth: maxBadgeWidth,
                     ),
+                    if (lead.metadata?['priority'] != null &&
+                        lead.metadata!['priority']!.trim().isNotEmpty) ...[
+                      _DetailBadge(
+                        label: lead.metadata!['priority']!.trim(),
+                        icon: Icons.flag,
+                        backgroundColor: lead.metadata!['priority']!
+                                .toLowerCase()
+                                .contains('hot')
+                            ? (isDark
+                                ? Colors.red.shade900.withAlpha(120)
+                                : Colors.red.shade50)
+                            : (lead.metadata!['priority']!
+                                    .toLowerCase()
+                                    .contains('warm')
+                                ? (isDark
+                                    ? Colors.orange.shade900.withAlpha(120)
+                                    : Colors.orange.shade50)
+                                : colorScheme.surfaceContainerHighest),
+                        foregroundColor: lead.metadata!['priority']!
+                                .toLowerCase()
+                                .contains('hot')
+                            ? (isDark
+                                ? Colors.red.shade200
+                                : Colors.red.shade800)
+                            : (lead.metadata!['priority']!
+                                    .toLowerCase()
+                                    .contains('warm')
+                                ? (isDark
+                                    ? Colors.orange.shade200
+                                    : Colors.orange.shade800)
+                                : colorScheme.onSurfaceVariant),
+                        maxWidth: maxBadgeWidth,
+                      ),
+                    ],
+                    if (lead.metadata?['source_detail'] != null &&
+                        lead.metadata!['source_detail']!.trim().isNotEmpty) ...[
+                      _DetailBadge(
+                        label: lead.metadata!['source_detail']!.trim(),
+                        icon: Icons.explore_outlined,
+                        backgroundColor: colorScheme.surfaceContainerHighest,
+                        foregroundColor: colorScheme.onSurfaceVariant,
+                        maxWidth: maxBadgeWidth,
+                      ),
+                    ],
                   ],
                 ),
               ],
@@ -488,10 +532,16 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
               icon: Icons.email_outlined,
             ),
             if ((lead.city != null && lead.city!.trim().isNotEmpty) ||
-                (lead.state != null && lead.state!.trim().isNotEmpty))
+                (lead.state != null && lead.state!.trim().isNotEmpty) ||
+                (lead.metadata?['country'] != null &&
+                    lead.metadata!['country']!.trim().isNotEmpty))
               _DetailRow(
                 label: 'Location',
-                value: [lead.city?.trim(), lead.state?.trim()]
+                value: [
+                  lead.city?.trim(),
+                  lead.state?.trim(),
+                  lead.metadata?['country']?.trim(),
+                ]
                     .where((e) => e != null && e.isNotEmpty)
                     .join(', '),
                 icon: Icons.location_on_outlined,
@@ -666,6 +716,9 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
       'ad_id': 'Ad ID',
       'formId': 'Form ID',
       'form_id': 'Form ID',
+      'platform': 'Ad Platform',
+      'leadId': 'Ad Lead ID',
+      'lead_id': 'Ad Lead ID',
       'leadgenId': 'Meta Lead ID',
       'leadgen_id': 'Meta Lead ID',
       'portalName': 'Portal Name',
@@ -686,6 +739,14 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
       'submitted_at': 'Submission Time',
       'createdTime': 'Meta Ingestion Time',
       'created_time': 'Meta Ingestion Time',
+      'source_detail': 'Source Detail',
+      'sourceDetail': 'Source Detail',
+      'priority': 'Lead Priority',
+      'requirement': 'Requirement / Interest',
+      'estimated_value': 'Estimated Value / Budget',
+      'estimatedValue': 'Estimated Value / Budget',
+      'notes': 'Notes / Remarks',
+      'country': 'Country',
     };
 
     final rows = <Widget>[];
@@ -737,6 +798,18 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
       case 'submittedat':
       case 'createdtime':
         return Icons.schedule_outlined;
+      case 'notes':
+        return Icons.notes_outlined;
+      case 'requirement':
+        return Icons.shopping_bag_outlined;
+      case 'estimatedvalue':
+        return Icons.payments_outlined;
+      case 'priority':
+        return Icons.flag_outlined;
+      case 'sourcedetail':
+        return Icons.explore_outlined;
+      case 'country':
+        return Icons.public_outlined;
       default:
         return Icons.info_outline;
     }

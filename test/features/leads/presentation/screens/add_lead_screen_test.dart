@@ -99,27 +99,31 @@ void main() {
 
   setUp(() {
     repository = _FakeLeadRepository();
+    final view =
+        TestWidgetsFlutterBinding.instance.platformDispatcher.views.single;
+    view.physicalSize = const Size(800, 1000);
+    view.devicePixelRatio = 1.0;
+  });
+
+  tearDown(() {
+    final view =
+        TestWidgetsFlutterBinding.instance.platformDispatcher.views.single;
+    view.resetPhysicalSize();
+    view.resetDevicePixelRatio();
   });
 
   Widget buildTestWidget({
     LeadFormCubit? cubit,
     void Function(Lead lead)? onLeadCreated,
     VoidCallback? onCancel,
-    Size size = const Size(800, 1000),
+    Size? size,
   }) {
     return MaterialApp(
-      home: MediaQuery(
-        data: MediaQueryData(size: size),
-        child: SizedBox(
-          width: size.width,
-          height: size.height,
-          child: AddLeadScreen(
-            cubit: cubit,
-            repository: cubit == null ? repository : null,
-            onLeadCreated: onLeadCreated,
-            onCancel: onCancel,
-          ),
-        ),
+      home: AddLeadScreen(
+        cubit: cubit,
+        repository: cubit == null ? repository : null,
+        onLeadCreated: onLeadCreated,
+        onCancel: onCancel,
       ),
     );
   }
@@ -281,8 +285,8 @@ void main() {
       // Open dropdown
       await tapVisible(tester, find.byKey(const Key('add_lead_source_dropdown')));
 
-      // Select Meta Campaign
-      await tester.tap(find.text('Meta Campaign').last);
+      // Select Ad Funnels
+      await tapVisible(tester, find.text('Ad Funnels').last);
       await tester.pumpAndSettle();
 
       await tester.enterText(
@@ -550,7 +554,7 @@ void main() {
       // Open source dropdown
       await tapVisible(tester, find.byKey(const Key('add_lead_source_dropdown')));
       expect(find.text('Web Portal'), findsWidgets);
-      expect(find.text('Meta Campaign'), findsWidgets);
+      expect(find.text('Ad Funnels'), findsWidgets);
 
       // Select Web Portal
       await tester.tap(find.text('Web Portal').last);

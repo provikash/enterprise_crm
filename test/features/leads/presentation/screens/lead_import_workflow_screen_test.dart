@@ -908,5 +908,17 @@ void main() {
         }
       },
     );
+
+    testWidgets(
+      'does not render inbound simulator button in file selection screen',
+      (tester) async {
+        await tester.pumpWidget(buildTestApp());
+        await tester.pumpAndSettle();
+
+        final simulateBtn =
+            find.byKey(const Key('lead_import_inbound_simulator_button'));
+        expect(simulateBtn, findsNothing);
+      },
+    );
   });
 }

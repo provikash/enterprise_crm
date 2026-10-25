@@ -64,6 +64,10 @@ class _AddLeadViewState extends State<_AddLeadView> {
   final _cityController = TextEditingController();
   final _stateController = TextEditingController();
   final _sourceController = TextEditingController(text: 'Manual Entry');
+  final _priorityController = TextEditingController();
+  final _requirementController = TextEditingController();
+  final _estimatedValueController = TextEditingController();
+  final _notesController = TextEditingController();
   LeadSource _selectedSource = LeadSource.manual;
 
   @override
@@ -75,6 +79,10 @@ class _AddLeadViewState extends State<_AddLeadView> {
     _cityController.dispose();
     _stateController.dispose();
     _sourceController.dispose();
+    _priorityController.dispose();
+    _requirementController.dispose();
+    _estimatedValueController.dispose();
+    _notesController.dispose();
     super.dispose();
   }
 
@@ -103,6 +111,10 @@ class _AddLeadViewState extends State<_AddLeadView> {
     final city = _cityController.text.trim();
     final stateVal = _stateController.text.trim();
     final sourceText = _sourceController.text.trim();
+    final priorityText = _priorityController.text.trim();
+    final requirementText = _requirementController.text.trim();
+    final estimatedValueText = _estimatedValueController.text.trim();
+    final notesText = _notesController.text.trim();
 
     final resolvedSource = resolveLeadSource(
       sourceText.isNotEmpty ? sourceText : _selectedSource.displayName,
@@ -113,6 +125,18 @@ class _AddLeadViewState extends State<_AddLeadView> {
         sourceText.toLowerCase() != resolvedSource.displayName.toLowerCase() &&
         sourceText.toLowerCase() != resolvedSource.name.toLowerCase()) {
       metadata['source_detail'] = sourceText;
+    }
+    if (priorityText.isNotEmpty) {
+      metadata['priority'] = priorityText;
+    }
+    if (requirementText.isNotEmpty) {
+      metadata['requirement'] = requirementText;
+    }
+    if (estimatedValueText.isNotEmpty) {
+      metadata['estimated_value'] = estimatedValueText;
+    }
+    if (notesText.isNotEmpty) {
+      metadata['notes'] = notesText;
     }
 
     final draft = LeadDraft(
@@ -426,6 +450,41 @@ class _AddLeadViewState extends State<_AddLeadView> {
                               ),
                               const SizedBox(height: 12),
                               _buildSourceDropdown(isSubmitting),
+                              const SizedBox(height: 20),
+
+                              // Section: Additional Details
+                              Text(
+                                'Additional Details',
+                                style: theme.textTheme.titleSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colorScheme.primary,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              if (isWide) ...[
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: _buildPriorityField(isSubmitting),
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: _buildEstimatedValueField(
+                                        isSubmitting,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ] else ...[
+                                _buildPriorityField(isSubmitting),
+                                const SizedBox(height: 16),
+                                _buildEstimatedValueField(isSubmitting),
+                              ],
+                              const SizedBox(height: 16),
+                              _buildRequirementField(isSubmitting),
+                              const SizedBox(height: 16),
+                              _buildNotesField(isSubmitting),
                               const SizedBox(height: 28),
 
                               // Form Actions
@@ -614,15 +673,75 @@ class _AddLeadViewState extends State<_AddLeadView> {
       controller: _sourceController,
       options: defaultSourceSuggestions,
       labelText: 'Source',
-      hintText: 'e.g. Manual Entry, Meta Campaign or type custom',
+      hintText: 'e.g. Manual Entry, Ad Funnels or type custom',
       prefixIcon: Icon(_sourceIcon(_selectedSource)),
       enabled: !isSubmitting,
-      textInputAction: TextInputAction.done,
+      textInputAction: TextInputAction.next,
       onChanged: (val) {
         setState(() {
           _selectedSource = resolveLeadSource(val);
         });
       },
+    );
+  }
+
+  Widget _buildPriorityField(bool isSubmitting) {
+    return HybridDropdownField(
+      fieldKey: const Key('add_lead_priority_field'),
+      controller: _priorityController,
+      options: defaultPrioritySuggestions,
+      labelText: 'Lead Priority',
+      hintText: 'e.g. Hot 🔥 or type custom',
+      prefixIcon: const Icon(Icons.flag_outlined),
+      enabled: !isSubmitting,
+      textInputAction: TextInputAction.next,
+    );
+  }
+
+  Widget _buildEstimatedValueField(bool isSubmitting) {
+    return TextFormField(
+      key: const Key('add_lead_estimated_value_field'),
+      controller: _estimatedValueController,
+      enabled: !isSubmitting,
+      textInputAction: TextInputAction.next,
+      keyboardType: TextInputType.text,
+      decoration: const InputDecoration(
+        labelText: 'Estimated Value / Budget',
+        hintText: 'e.g. ₹50,000 or \$5,000',
+        prefixIcon: Icon(Icons.payments_outlined),
+        border: OutlineInputBorder(),
+      ),
+    );
+  }
+
+  Widget _buildRequirementField(bool isSubmitting) {
+    return HybridDropdownField(
+      fieldKey: const Key('add_lead_requirement_field'),
+      controller: _requirementController,
+      options: defaultRequirementSuggestions,
+      labelText: 'Requirement / Product Interest',
+      hintText: 'e.g. Wholesale Inquiry, Enterprise Plan or custom',
+      prefixIcon: const Icon(Icons.shopping_bag_outlined),
+      enabled: !isSubmitting,
+      textInputAction: TextInputAction.next,
+    );
+  }
+
+  Widget _buildNotesField(bool isSubmitting) {
+    return TextFormField(
+      key: const Key('add_lead_notes_field'),
+      controller: _notesController,
+      enabled: !isSubmitting,
+      maxLines: 3,
+      textInputAction: TextInputAction.done,
+      keyboardType: TextInputType.multiline,
+      decoration: const InputDecoration(
+        labelText: 'Notes / Remarks',
+        hintText: 'e.g. Customer requested a catalog; follow up next week',
+        prefixIcon: Icon(Icons.notes_outlined),
+        border: OutlineInputBorder(),
+        alignLabelWithHint: true,
+      ),
     );
   }
 }

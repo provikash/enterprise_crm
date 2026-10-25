@@ -27,7 +27,6 @@ import 'package:enterprise_crm/features/leads/presentation/widgets/bulk_assign_l
 import 'package:enterprise_crm/features/leads/presentation/widgets/lead_data_table.dart';
 import 'package:enterprise_crm/features/leads/presentation/widgets/lead_filter_sheet.dart';
 import 'package:enterprise_crm/features/leads/presentation/widgets/lead_list_card.dart';
-import 'package:enterprise_crm/features/leads/presentation/widgets/inbound_lead_simulator_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -2024,7 +2023,7 @@ void main() {
     });
 
     testWidgets(
-      'AppBar simulate button is rendered and tapping it opens InboundLeadSimulatorDialog',
+      'AppBar simulate button is not rendered',
       (tester) async {
         repository.leads = [const Lead(id: '1', name: 'Lead 1')];
         final cubit = LeadListCubit(repository);
@@ -2033,13 +2032,7 @@ void main() {
         await tester.pumpWidget(buildTestWidget(cubit: cubit));
         await tester.pumpAndSettle();
 
-        final simulateBtn = find.byKey(const Key('lead_list_simulate_button'));
-        expect(simulateBtn, findsOneWidget);
-
-        await tester.tap(simulateBtn);
-        await tester.pumpAndSettle();
-
-        expect(find.byType(InboundLeadSimulatorDialog), findsOneWidget);
+        expect(find.byKey(const Key('lead_list_simulate_button')), findsNothing);
       },
     );
 
@@ -2162,16 +2155,18 @@ void main() {
         await tester.tap(find.text('Column 1 — Name').last);
         await tester.pumpAndSettle();
 
-        await tester.tap(
-          find.byKey(const Key('lead_import_field_email_dropdown')),
-        );
+        final emailDropdown =
+            find.byKey(const Key('lead_import_field_email_dropdown'));
+        await tester.ensureVisible(emailDropdown);
+        await tester.tap(emailDropdown);
         await tester.pumpAndSettle();
         await tester.tap(find.text('Column 2 — Email').last);
         await tester.pumpAndSettle();
 
-        await tester.tap(
-          find.byKey(const Key('lead_import_mapping_continue_button')),
-        );
+        final continueBtn =
+            find.byKey(const Key('lead_import_mapping_continue_button'));
+        await tester.ensureVisible(continueBtn);
+        await tester.tap(continueBtn);
         await tester.pumpAndSettle();
 
         // Preview -> Continue

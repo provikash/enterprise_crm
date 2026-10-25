@@ -132,7 +132,7 @@ void main() {
   }
 
   group('InboundLeadSimulatorDialog', () {
-    testWidgets('renders dialog header and initial Meta Campaign tab', (
+    testWidgets('renders dialog header and initial Ad Funnels tab', (
       tester,
     ) async {
       await tester.pumpWidget(buildDialogWidget());
@@ -141,15 +141,15 @@ void main() {
 
       expect(find.byKey(const Key('inbound_lead_simulator_dialog')), findsOneWidget);
       expect(find.text('Simulate Inbound Lead'), findsOneWidget);
-      expect(find.text('Meta Campaign'), findsOneWidget);
+      expect(find.text('Ad Funnels'), findsOneWidget);
       expect(find.text('Web Portal'), findsOneWidget);
 
-      // Meta fields present by default
+      // Ad Funnel fields present by default
       expect(find.byKey(const Key('meta_name_input')), findsOneWidget);
       expect(find.byKey(const Key('meta_campaign_name_input')), findsOneWidget);
       expect(find.byKey(const Key('meta_ad_name_input')), findsOneWidget);
       expect(find.byKey(const Key('simulator_submit_button')), findsOneWidget);
-      expect(find.text('Ingest Meta Lead'), findsOneWidget);
+      expect(find.text('Ingest Ad Funnel Lead'), findsOneWidget);
     });
 
     testWidgets('successfully ingests Meta Campaign lead', (tester) async {

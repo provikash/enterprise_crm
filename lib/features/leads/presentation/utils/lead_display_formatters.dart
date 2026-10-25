@@ -44,7 +44,7 @@ String formatLeadSource(LeadSource source) {
     case LeadSource.portal:
       return 'Web Portal';
     case LeadSource.metaCampaign:
-      return 'Meta Campaign';
+      return 'Ad Funnels';
   }
 }
 

@@ -1,6 +1,6 @@
 import 'lead_query.dart';
 
-enum LeadExportFormat { excel, csv }
+enum LeadExportFormat { excel, csv, pdf }
 
 class LeadExportRequest {
   const LeadExportRequest({

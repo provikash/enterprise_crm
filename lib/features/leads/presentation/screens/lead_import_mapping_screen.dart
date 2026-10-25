@@ -78,14 +78,17 @@ class _LeadImportMappingView extends StatelessWidget {
                   (i) => i.severity == LeadImportStructureIssueSeverity.warning,
                 );
 
-                return SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24.0,
-                    vertical: 20.0,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
+                return Column(
+                  children: [
+                    Expanded(
+                      child: SingleChildScrollView(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24.0,
+                          vertical: 20.0,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
                       // File & Sheet Summary Card
                       Container(
                         key: const Key('lead_import_mapping_file_card'),
@@ -158,11 +161,24 @@ class _LeadImportMappingView extends StatelessWidget {
                       const SizedBox(height: 20),
 
                       // Section Title & Guidance
-                      Text(
-                        'Choose which spreadsheet column should fill each Lead field.',
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurfaceVariant,
-                        ),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Choose which spreadsheet column should fill each Lead field.',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          TextButton.icon(
+                            key: const Key('lead_import_auto_detect_button'),
+                            onPressed: () => cubit.autoDetect(),
+                            icon: const Icon(Icons.auto_fix_high, size: 18),
+                            label: const Text('Auto-detect'),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 20),
 
@@ -279,43 +295,217 @@ class _LeadImportMappingView extends StatelessWidget {
                         columns: analysis.columns,
                         onChanged: (colIndex) => cubit.mapEmailTo(colIndex),
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
 
-                      // Minimum Mapping Validation Note
-                      if (!mapping.hasAnyMapping && !analysis.hasBlockingErrors)
+                      _buildFieldMapping(
+                        context: context,
+                        label: 'Business / Company Name',
+                        fieldKey: const Key(
+                          'lead_import_field_business_name_dropdown',
+                        ),
+                        currentValue: mapping.businessNameColumnIndex,
+                        columns: analysis.columns,
+                        onChanged:
+                            (colIndex) => cubit.mapBusinessNameTo(colIndex),
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildFieldMapping(
+                        context: context,
+                        label: 'City',
+                        fieldKey: const Key('lead_import_field_city_dropdown'),
+                        currentValue: mapping.cityColumnIndex,
+                        columns: analysis.columns,
+                        onChanged: (colIndex) => cubit.mapCityTo(colIndex),
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildFieldMapping(
+                        context: context,
+                        label: 'State',
+                        fieldKey: const Key('lead_import_field_state_dropdown'),
+                        currentValue: mapping.stateColumnIndex,
+                        columns: analysis.columns,
+                        onChanged: (colIndex) => cubit.mapStateTo(colIndex),
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildFieldMapping(
+                        context: context,
+                        label: 'Country',
+                        fieldKey: const Key(
+                          'lead_import_field_country_dropdown',
+                        ),
+                        currentValue: mapping.countryColumnIndex,
+                        columns: analysis.columns,
+                        onChanged: (colIndex) => cubit.mapCountryTo(colIndex),
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildFieldMapping(
+                        context: context,
+                        label: 'Lead Source',
+                        fieldKey: const Key(
+                          'lead_import_field_source_dropdown',
+                        ),
+                        currentValue: mapping.sourceColumnIndex,
+                        columns: analysis.columns,
+                        onChanged: (colIndex) => cubit.mapSourceTo(colIndex),
+                      ),
+                      if (mapping.sourceColumnIndex == null) ...[
+                        const SizedBox(height: 6),
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 12.0),
-                          child: Text(
-                            'Map at least one Lead field to continue.',
-                            key: const Key(
-                              'lead_import_mapping_validation_text',
-                            ),
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                              fontWeight: FontWeight.w500,
-                            ),
+                          padding: const EdgeInsets.only(left: 4.0),
+                          child: Wrap(
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            spacing: 8,
+                            runSpacing: 4,
+                            children: [
+                              Text(
+                                'Default Source: ',
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              DropdownButton<LeadSource>(
+                                key: const Key(
+                                  'lead_import_default_source_dropdown',
+                                ),
+                                value: mapping.defaultSource ??
+                                    (analysis.source == LeadSource.excel
+                                        ? LeadSource.excel
+                                        : LeadSource.csv),
+                                underline: const SizedBox(),
+                                isDense: true,
+                                items: LeadSource.values.map((s) {
+                                  return DropdownMenuItem(
+                                    value: s,
+                                    child: Text(
+                                      s.displayName,
+                                      style:
+                                          theme.textTheme.bodySmall?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  );
+                                }).toList(),
+                                onChanged: (source) {
+                                  if (source != null) {
+                                    cubit.setDefaultSource(source);
+                                  }
+                                },
+                              ),
+                            ],
                           ),
                         ),
+                      ],
+                      const SizedBox(height: 16),
 
-                      // Continue Button
-                      FilledButton(
-                        key: const Key('lead_import_mapping_continue_button'),
-                        onPressed: state.canContinue
-                            ? () => onContinue?.call(mapping)
-                            : null,
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                      _buildFieldMapping(
+                        context: context,
+                        label: 'Priority',
+                        fieldKey: const Key(
+                          'lead_import_field_priority_dropdown',
                         ),
-                        child: const Text(
-                          'Continue',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                        currentValue: mapping.priorityColumnIndex,
+                        columns: analysis.columns,
+                        onChanged: (colIndex) => cubit.mapPriorityTo(colIndex),
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildFieldMapping(
+                        context: context,
+                        label: 'Requirement / Inquired Product',
+                        fieldKey: const Key(
+                          'lead_import_field_requirement_dropdown',
+                        ),
+                        currentValue: mapping.requirementColumnIndex,
+                        columns: analysis.columns,
+                        onChanged:
+                            (colIndex) => cubit.mapRequirementTo(colIndex),
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildFieldMapping(
+                        context: context,
+                        label: 'Estimated Value',
+                        fieldKey: const Key(
+                          'lead_import_field_estimated_value_dropdown',
+                        ),
+                        currentValue: mapping.estimatedValueColumnIndex,
+                        columns: analysis.columns,
+                        onChanged:
+                            (colIndex) => cubit.mapEstimatedValueTo(colIndex),
+                      ),
+                      const SizedBox(height: 16),
+
+                      _buildFieldMapping(
+                        context: context,
+                        label: 'Notes / Remarks',
+                        fieldKey: const Key('lead_import_field_notes_dropdown'),
+                        currentValue: mapping.notesColumnIndex,
+                        columns: analysis.columns,
+                        onChanged: (colIndex) => cubit.mapNotesTo(colIndex),
+                      ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+                      decoration: BoxDecoration(
+                        color: theme.scaffoldBackgroundColor,
+                        border: Border(
+                          top: BorderSide(
+                            color: colorScheme.outlineVariant,
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          if (!mapping.hasAnyMapping &&
+                              !analysis.hasBlockingErrors)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: Text(
+                                'Map at least one Lead field to continue.',
+                                key: const Key(
+                                  'lead_import_mapping_validation_text',
+                                ),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: colorScheme.onSurfaceVariant,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          FilledButton(
+                            key: const Key(
+                              'lead_import_mapping_continue_button',
+                            ),
+                            onPressed: state.canContinue
+                                ? () => onContinue?.call(mapping)
+                                : null,
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 16,
+                              ),
+                            ),
+                            child: const Text(
+                              'Continue',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 );
               },
             ),

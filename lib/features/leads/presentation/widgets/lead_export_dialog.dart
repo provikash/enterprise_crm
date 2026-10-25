@@ -113,9 +113,10 @@ class _LeadExportDialogContent extends StatelessWidget {
             ),
             content: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 420),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
                     contextExplanation,
@@ -157,6 +158,15 @@ class _LeadExportDialogContent extends StatelessWidget {
                           visualDensity: VisualDensity.compact,
                           contentPadding: EdgeInsets.zero,
                         ),
+                        RadioListTile<LeadExportFormat>(
+                          key: const Key('lead_export_format_pdf'),
+                          value: LeadExportFormat.pdf,
+                          title: const Text('PDF (.pdf)'),
+                          enabled: !isBusy,
+                          dense: true,
+                          visualDensity: VisualDensity.compact,
+                          contentPadding: EdgeInsets.zero,
+                        ),
                       ],
                     ),
                   ),
@@ -193,6 +203,7 @@ class _LeadExportDialogContent extends StatelessWidget {
                 ],
               ),
             ),
+          ),
             actions: [
               TextButton(
                 key: const Key('lead_export_dialog_cancel_button'),

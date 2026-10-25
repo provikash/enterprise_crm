@@ -182,7 +182,6 @@ void main() {
     VoidCallback? onImportLeads,
     VoidCallback? onDistributeLeads,
     VoidCallback? onExportLeads,
-    VoidCallback? onSimulateLead,
     LeadImportFilePicker? filePicker,
     LeadExportFileSaver? fileSaver,
     ThemeData? theme,
@@ -200,7 +199,6 @@ void main() {
           onImportLeads: onImportLeads,
           onDistributeLeads: onDistributeLeads,
           onExportLeads: onExportLeads,
-          onSimulateLead: onSimulateLead,
           filePicker: filePicker,
           fileSaver: fileSaver,
         ),
@@ -237,13 +235,13 @@ void main() {
       expect(find.text('Excel Leads'), findsOneWidget);
       expect(find.text('CSV Leads'), findsOneWidget);
       expect(find.text('Portal Leads'), findsOneWidget);
-      expect(find.text('Meta Leads'), findsOneWidget);
+      expect(find.text('Ad Funnels'), findsOneWidget);
 
       // Verify quick action buttons exist
       expect(find.text('View Leads'), findsNothing);
       expect(find.text('Add Lead'), findsOneWidget);
       expect(find.text('Import Leads'), findsOneWidget);
-      expect(find.text('Simulate Inbound'), findsOneWidget);
+      expect(find.text('Simulate Inbound'), findsNothing);
       expect(find.text('Distribute Leads'), findsOneWidget);
       expect(find.text('Export Leads'), findsOneWidget);
     });
@@ -381,29 +379,17 @@ void main() {
       expect(navigatedQuery!.source, equals(LeadSource.metaCampaign));
     });
 
-    testWidgets('simulate inbound quick action callback triggers when tapped', (
+    testWidgets('simulate inbound quick action is not rendered on dashboard', (
       tester,
     ) async {
-      bool simulateTapped = false;
       repository.leads = [const Lead(id: '1', source: LeadSource.manual)];
       final cubit = LeadDashboardCubit(repository);
       await cubit.loadDashboard();
 
-      await tester.pumpWidget(
-        buildTestWidget(
-          cubit: cubit,
-          onSimulateLead: () => simulateTapped = true,
-        ),
-      );
+      await tester.pumpWidget(buildTestWidget(cubit: cubit));
       await tester.pumpAndSettle();
 
-      final simulateButton = find.byKey(const Key('quick_action_simulate_lead'));
-      expect(simulateButton, findsOneWidget);
-      await tester.ensureVisible(simulateButton);
-      await tester.tap(simulateButton);
-      await tester.pumpAndSettle();
-
-      expect(simulateTapped, isTrue);
+      expect(find.byKey(const Key('quick_action_simulate_lead')), findsNothing);
     });
 
     testWidgets(

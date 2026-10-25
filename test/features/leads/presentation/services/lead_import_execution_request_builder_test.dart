@@ -216,6 +216,41 @@ void main() {
     );
 
     test(
+      'stores custom row source in metadata source_detail and keeps excel/csv as primary source',
+      () {
+        final excelPreview = LeadImportPreview(
+          fileName: 'leads.xlsx',
+          source: LeadSource.excel,
+          sheetIndex: 0,
+          sheetName: 'Sheet1',
+          headerRowIndex: 0,
+          mapping: const LeadImportColumnMapping(
+            sheetIndex: 0,
+            headerRowIndex: 0,
+            nameColumnIndex: 0,
+            sourceColumnIndex: 1,
+          ),
+          rows: const [
+            LeadImportPreviewRow(
+              sourceRowIndex: 1,
+              name: 'John Doe',
+              source: 'Referral Campaign',
+              status: LeadImportPreviewRowStatus.valid,
+            ),
+          ],
+        );
+        final decision = LeadImportReviewDecision({1});
+        final request = builder.build(preview: excelPreview, decision: decision);
+
+        expect(request.drafts.first.source, equals(LeadSource.excel));
+        expect(
+          request.drafts.first.metadata?['source_detail'],
+          equals('Referral Campaign'),
+        );
+      },
+    );
+
+    test(
       'selected exact duplicate rows both remain converted without collapsing',
       () {
         final preview = LeadImportPreview(

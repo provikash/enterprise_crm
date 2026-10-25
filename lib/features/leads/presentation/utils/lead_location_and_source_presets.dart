@@ -153,20 +153,40 @@ const List<String> defaultStateSuggestions = [
 
 const List<String> defaultSourceSuggestions = [
   'Manual Entry',
+  'Ad Funnels',
+  'Google Ads',
+  'Meta Ads (Facebook & Instagram)',
+  'LinkedIn Ads',
+  'YouTube Ads',
   'Web Portal',
-  'Meta Campaign',
+  'Website Inquiry Form',
+  'Landing Page Webhook',
+  'WhatsApp Inbound / Campaign',
+  'Referral / Word of Mouth',
+  'Telecalling / Cold Call',
+  'Email Campaign',
+  'Trade Show / Expo',
+  'Walk-in / Direct Visit',
+  'Channel Partner / Affiliate',
   'Excel Import',
   'CSV Import',
-  'Google Ads',
-  'Website Form',
-  'Referral',
-  'LinkedIn',
-  'Cold Call',
-  'Trade Show / Event',
-  'Walk-in',
-  'Partner',
   'Direct Mail',
   'Other',
+];
+
+const List<String> defaultPrioritySuggestions = [
+  'Hot 🔥',
+  'Warm ☀️',
+  'Cold ❄️',
+];
+
+const List<String> defaultRequirementSuggestions = [
+  'Product Inquiry',
+  'Bulk Order / Wholesale',
+  'Enterprise Solution',
+  'Annual Maintenance Contract',
+  'Partnership / Dealership',
+  'Service Consultation',
 ];
 
 /// Resolves a typed or selected source string into a corresponding [LeadSource].
@@ -184,10 +204,22 @@ LeadSource resolveLeadSource(String? text) {
     }
   }
 
-  if (lower.contains('meta') || lower.contains('facebook') || lower.contains('instagram')) {
+  if (lower.contains('ad') ||
+      lower.contains('funnel') ||
+      lower.contains('meta') ||
+      lower.contains('facebook') ||
+      lower.contains('instagram') ||
+      lower.contains('google') ||
+      lower.contains('linkedin') ||
+      lower.contains('youtube')) {
     return LeadSource.metaCampaign;
   }
-  if (lower.contains('portal') || lower.contains('website') || lower.contains('web')) {
+  if (lower.contains('portal') ||
+      lower.contains('website') ||
+      lower.contains('web') ||
+      lower.contains('landing') ||
+      lower.contains('whatsapp') ||
+      lower.contains('form')) {
     return LeadSource.portal;
   }
   if (lower.contains('excel') || lower.contains('xlsx') || lower.contains('xls')) {

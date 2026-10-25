@@ -48,7 +48,9 @@ class MetaLeadgenIngestionService {
         const LeadQuery(source: LeadSource.metaCampaign),
       );
       final isDuplicate = existingPage.items.any(
-        (l) => l.metadata?['leadgenId'] == payload.leadgenId.trim(),
+        (l) =>
+            l.metadata?['leadgenId'] == payload.leadgenId.trim() ||
+            l.metadata?['leadId'] == payload.leadgenId.trim(),
       );
       if (isDuplicate) {
         return LeadIngestionResult.failure(
@@ -75,3 +77,6 @@ class MetaLeadgenIngestionService {
     }
   }
 }
+
+/// Generalized type alias for Ad Funnel integrations across Google Ads, Meta Ads, and Webhooks.
+typedef AdFunnelIngestionService = MetaLeadgenIngestionService;

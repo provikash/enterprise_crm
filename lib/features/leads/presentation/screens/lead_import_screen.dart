@@ -26,19 +26,28 @@ class LeadImportScreen extends StatelessWidget {
     if (cubit != null) {
       return BlocProvider.value(
         value: cubit!,
-        child: _LeadImportView(onContinue: onContinue, onCancel: onCancel),
+        child: _LeadImportView(
+          onContinue: onContinue,
+          onCancel: onCancel,
+        ),
       );
     }
 
     return BlocProvider(
       create: (_) => LeadImportCubit(filePicker),
-      child: _LeadImportView(onContinue: onContinue, onCancel: onCancel),
+      child: _LeadImportView(
+        onContinue: onContinue,
+        onCancel: onCancel,
+      ),
     );
   }
 }
 
 class _LeadImportView extends StatelessWidget {
-  const _LeadImportView({this.onContinue, this.onCancel});
+  const _LeadImportView({
+    this.onContinue,
+    this.onCancel,
+  });
 
   final ValueChanged<LeadImportSelectedFile>? onContinue;
   final VoidCallback? onCancel;

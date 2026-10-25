@@ -42,7 +42,6 @@ import '../features/hr/domain/repositories/employee_repository.dart';
 import '../features/inventory/domain/repositories/inventory_repository.dart';
 import '../features/leads/presentation/services/lead_import_file_picker.dart';
 import '../features/leads/presentation/widgets/lead_export_dialog.dart';
-import '../features/leads/presentation/widgets/inbound_lead_simulator_dialog.dart';
 import 'dart:async';
 import '../features/payroll/presentation/navigation/payroll_routes.dart';
 import '../features/payroll/configuration/domain/payroll_configuration_repository.dart';
@@ -744,23 +743,6 @@ class _CrmHomeScreenState extends State<CrmHomeScreen> {
     }
   }
 
-  void _openSimulator(BuildContext context) async {
-    final lead = await InboundLeadSimulatorDialog.show(
-      context,
-      repository: widget.repository,
-    );
-    if (!mounted) return;
-    if (lead != null) {
-      _dashboardCubit.loadDashboard();
-      ScaffoldMessenger.of(this.context).showSnackBar(
-        SnackBar(
-          content: Text('Lead #${lead.id} created via inbound ingestion!'),
-          backgroundColor: Colors.teal.shade700,
-        ),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return LeadDashboardScreen(
@@ -771,7 +753,6 @@ class _CrmHomeScreenState extends State<CrmHomeScreen> {
       onNavigateToLeads: (query) => _openLeadList(context, initialQuery: query),
       onAddLead: () => _openAddLead(context),
       onImportLeads: () => _openImportWorkflow(context),
-      onSimulateLead: () => _openSimulator(context),
       onDistributeLeads: () => _openDistributeLeads(context),
       onExportLeads: _openExportLeads,
       onLogout: widget.onLogout,

@@ -210,6 +210,22 @@ void main() {
       expect(radioGroup.groupValue, LeadExportFormat.csv);
     });
 
+    testWidgets('switching format updates selected option to PDF', (
+      tester,
+    ) async {
+      await tester.pumpWidget(buildTestDialog());
+      await tester.tap(find.text('Open Dialog'));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('lead_export_format_pdf')));
+      await tester.pumpAndSettle();
+
+      final radioGroup = tester.widget<RadioGroup<LeadExportFormat>>(
+        find.byType(RadioGroup<LeadExportFormat>),
+      );
+      expect(radioGroup.groupValue, LeadExportFormat.pdf);
+    });
+
     testWidgets('Cancel button dismisses dialog without export', (
       tester,
     ) async {

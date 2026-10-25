@@ -1,10 +1,12 @@
 import 'lead_draft.dart';
 import 'lead_source.dart';
 
-/// Represents an inbound lead submission from Meta (Facebook / Instagram) Lead Ads.
+/// Represents an inbound lead submission from any Ad Funnel (Meta Ads, Google Ads,
+/// LinkedIn Ads, TikTok, or generic webhook integrations).
 class MetaLeadgenPayload {
   final String leadgenId;
   final String formId;
+  final String platform;
   final String? pageId;
   final String? campaignId;
   final String? campaignName;
@@ -18,6 +20,7 @@ class MetaLeadgenPayload {
   const MetaLeadgenPayload({
     required this.leadgenId,
     required this.formId,
+    this.platform = 'Ad Funnels',
     this.pageId,
     this.campaignId,
     this.campaignName,
@@ -29,23 +32,28 @@ class MetaLeadgenPayload {
     this.fieldData = const {},
   });
 
+  /// Alias for leadgenId for multi-platform ad funnels.
+  String get leadId => leadgenId;
+
   /// Valid if leadgenId is not empty and at least one contact field is present
   bool get isValid {
     if (leadgenId.trim().isEmpty) return false;
-    final name = resolveField(['full_name', 'name', 'first_name']);
-    final phone = resolveField(['phone_number', 'phone', 'mobile']);
-    final email = resolveField(['email', 'email_address']);
-    final company = resolveField(['company_name', 'business_name', 'company']);
+    final name = resolveField(['full_name', 'name', 'first_name', 'contact_name', 'contact_person']);
+    final phone = resolveField(['phone_number', 'phone', 'mobile', 'mobile_number', 'contact_number']);
+    final email = resolveField(['email', 'email_address', 'work_email']);
+    final company = resolveField(['company_name', 'business_name', 'company', 'organization', 'firm']);
     return (name != null && name.isNotEmpty) ||
         (phone != null && phone.isNotEmpty) ||
         (email != null && email.isNotEmpty) ||
         (company != null && company.isNotEmpty);
   }
 
-  /// Helper to resolve a field by trying multiple candidate Meta question keys
+  /// Helper to resolve a field by trying multiple candidate question keys across ad networks
   String? resolveField(List<String> candidates) {
     for (final c in candidates) {
-      final val = fieldData[c] ?? fieldData[c.toLowerCase()];
+      final val = fieldData[c] ??
+          fieldData[c.toLowerCase()] ??
+          fieldData[c.toUpperCase()];
       if (val != null && val.trim().isNotEmpty) {
         return val.trim();
       }
@@ -53,16 +61,18 @@ class MetaLeadgenPayload {
     return null;
   }
 
-  /// Converts Meta Leadgen payload into a normalized [LeadDraft].
+  /// Converts Ad Funnel payload into a normalized [LeadDraft].
   LeadDraft toLeadDraft() {
-    final contactName = resolveField(['full_name', 'name', 'first_name']);
-    final businessName = resolveField(['company_name', 'business_name', 'company', 'organization']);
-    final phone = resolveField(['phone_number', 'phone', 'mobile_number', 'mobile']);
+    final contactName = resolveField(['full_name', 'name', 'first_name', 'contact_name', 'contact_person']);
+    final businessName = resolveField(['company_name', 'business_name', 'company', 'organization', 'firm']);
+    final phone = resolveField(['phone_number', 'phone', 'mobile_number', 'mobile', 'contact_number']);
     final email = resolveField(['email', 'email_address', 'work_email']);
-    final city = resolveField(['city', 'location_city']);
+    final city = resolveField(['city', 'location_city', 'town', 'district']);
     final state = resolveField(['state', 'province', 'region']);
 
     final meta = <String, String>{
+      'platform': platform.trim().isNotEmpty ? platform.trim() : 'Ad Funnels',
+      'leadId': leadgenId.trim(),
       'leadgenId': leadgenId.trim(),
       'formId': formId.trim(),
     };
@@ -102,17 +112,39 @@ class MetaLeadgenPayload {
 
   factory MetaLeadgenPayload.fromJson(Map<String, dynamic> json) {
     DateTime? parsedTime;
-    final rawTime = json['created_time'] ?? json['createdTime'];
+    final rawTime = json['created_time'] ?? json['createdTime'] ?? json['timestamp'];
     if (rawTime is String) {
       parsedTime = DateTime.tryParse(rawTime);
     } else if (rawTime is int) {
-      parsedTime = DateTime.fromMillisecondsSinceEpoch(rawTime * 1000);
+      parsedTime = DateTime.fromMillisecondsSinceEpoch(
+        rawTime > 10000000000 ? rawTime : rawTime * 1000,
+      );
     }
 
     final fields = <String, String>{};
+    String detectedPlatform = json['platform']?.toString() ?? '';
+
+    // 1. Google Ads Lead Form webhook format:
+    // {"lead_id": "...", "form_id": "...", "user_column_data": [{"column_id": "FULL_NAME", "string_value": "..."}]}
+    final userColumnData = json['user_column_data'] ?? json['userColumnData'];
+    if (userColumnData is List) {
+      if (detectedPlatform.isEmpty) detectedPlatform = 'Google Ads';
+      for (final col in userColumnData) {
+        if (col is Map) {
+          final colId = (col['column_id'] ?? col['columnId'] ?? '').toString().toLowerCase();
+          final val = (col['string_value'] ?? col['stringValue'] ?? col['value'] ?? '').toString();
+          if (colId.isNotEmpty) {
+            fields[colId] = val;
+          }
+        }
+      }
+    }
+
+    // 2. Standard Meta Webhook format:
+    // {"field_data": [{"name": "full_name", "values": ["Vinay Sharma"]}]}
     final rawFieldData = json['field_data'] ?? json['fieldData'];
     if (rawFieldData is List) {
-      // Standard Meta Webhook format: [{"name": "full_name", "values": ["Vinay Sharma"]}]
+      if (detectedPlatform.isEmpty) detectedPlatform = 'Meta Ads';
       for (final item in rawFieldData) {
         if (item is Map) {
           final name = item['name']?.toString() ?? '';
@@ -123,15 +155,59 @@ class MetaLeadgenPayload {
         }
       }
     } else if (rawFieldData is Map) {
-      // Flat simulated format: {"full_name": "Vinay Sharma", "email": "..."}
       for (final e in rawFieldData.entries) {
         fields[e.key.toString()] = e.value?.toString() ?? '';
       }
     }
 
+    // 3. LinkedIn Lead Gen webhook format:
+    // {"form_response": {"answers": [{"question_name": "...", "answer": "..."}]}}
+    final formResponse = json['form_response'] ?? json['formResponse'];
+    if (formResponse is Map && formResponse['answers'] is List) {
+      if (detectedPlatform.isEmpty) detectedPlatform = 'LinkedIn Ads';
+      for (final ans in formResponse['answers']) {
+        if (ans is Map) {
+          final qName = (ans['question_name'] ?? ans['questionName'] ?? ans['key'] ?? '').toString();
+          final ansVal = (ans['answer'] ?? ans['value'] ?? '').toString();
+          if (qName.isNotEmpty) fields[qName] = ansVal;
+        }
+      }
+    }
+
+    // 4. Flat / generic ad webhook format fallback:
+    // e.g. {"name": "...", "phone": "...", "email": "...", "company": "..."}
+    for (final e in json.entries) {
+      final k = e.key.toLowerCase();
+      if (!fields.containsKey(k) &&
+          e.value != null &&
+          e.value is! Map &&
+          e.value is! List) {
+        fields[k] = e.value.toString();
+      }
+    }
+
+    if (detectedPlatform.isEmpty) {
+      detectedPlatform = 'Ad Funnels';
+    }
+
+    final resolvedId = (json['lead_id'] ??
+            json['leadId'] ??
+            json['leadgen_id'] ??
+            json['leadgenId'] ??
+            json['id'] ??
+            '')
+        .toString();
+
+    final resolvedFormId = (json['form_id'] ??
+            json['formId'] ??
+            json['form_name'] ??
+            'ad_funnel_form')
+        .toString();
+
     return MetaLeadgenPayload(
-      leadgenId: (json['leadgen_id'] ?? json['leadgenId'] ?? json['id'] ?? '').toString(),
-      formId: (json['form_id'] ?? json['formId'] ?? '').toString(),
+      leadgenId: resolvedId,
+      formId: resolvedFormId,
+      platform: detectedPlatform,
       pageId: json['page_id']?.toString() ?? json['pageId']?.toString(),
       campaignId: json['campaign_id']?.toString() ?? json['campaignId']?.toString(),
       campaignName: json['campaign_name']?.toString() ?? json['campaignName']?.toString(),
@@ -146,6 +222,8 @@ class MetaLeadgenPayload {
 
   Map<String, dynamic> toJson() {
     return {
+      'platform': platform,
+      'lead_id': leadgenId,
       'leadgen_id': leadgenId,
       'form_id': formId,
       if (pageId != null) 'page_id': pageId,
@@ -160,3 +238,6 @@ class MetaLeadgenPayload {
     };
   }
 }
+
+/// Generalized type alias so instructors and integrations can use either name.
+typedef AdFunnelLeadPayload = MetaLeadgenPayload;

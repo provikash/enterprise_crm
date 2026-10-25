@@ -40,11 +40,12 @@ class InboundLeadSimulatorDialog extends StatefulWidget {
 
 class _InboundLeadSimulatorDialogState
     extends State<InboundLeadSimulatorDialog> {
-  int _selectedTab = 0; // 0 = Meta Campaign, 1 = Web Portal
+  int _selectedTab = 0; // 0 = Ad Funnels, 1 = Web Portal
   bool _isSubmitting = false;
   String? _errorMessage;
+  String _selectedPlatform = 'Meta Ads';
 
-  // Meta Campaign Form Controllers
+  // Ad Funnel Form Controllers
   final _metaNameController =
       TextEditingController(text: 'Suresh Raina');
   final _metaBusinessController =
@@ -118,15 +119,17 @@ class _InboundLeadSimulatorDialogState
 
     final metaService = MetaLeadgenIngestionService(repository: widget.repository);
     final timestamp = DateTime.now().millisecondsSinceEpoch;
+    final compactId = 'AF-${((timestamp % 9000) + 1000)}';
     final payload = MetaLeadgenPayload(
-      leadgenId: 'meta_lg_$timestamp',
+      leadgenId: compactId,
+      platform: _selectedPlatform,
       formId: _metaFormIdController.text.trim().isEmpty
-          ? 'meta_form_default'
+          ? 'form_ad_funnel'
           : _metaFormIdController.text.trim(),
       campaignName: _metaCampaignNameController.text.trim(),
-      campaignId: 'camp_${timestamp.toString().substring(6)}',
+      campaignId: 'camp_${timestamp.toString().substring(8)}',
       adName: _metaAdNameController.text.trim(),
-      adId: 'ad_${timestamp.toString().substring(7)}',
+      adId: 'ad_${timestamp.toString().substring(9)}',
       createdTime: DateTime.now(),
       fieldData: {
         'full_name': _metaNameController.text.trim(),
@@ -147,7 +150,7 @@ class _InboundLeadSimulatorDialogState
     } else {
       setState(() {
         _isSubmitting = false;
-        _errorMessage = result.errorMessage ?? 'Meta lead ingestion failed.';
+        _errorMessage = result.errorMessage ?? 'Ad funnel lead ingestion failed.';
       });
     }
   }
@@ -224,7 +227,7 @@ class _InboundLeadSimulatorDialogState
                           ),
                         ),
                         Text(
-                          'Simulate live leads from Meta Ads or Web Portal',
+                          'Simulate live leads from Ad Funnels or Web Portal',
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: colorScheme.onSurfaceVariant,
                           ),
@@ -249,7 +252,7 @@ class _InboundLeadSimulatorDialogState
                 segments: const [
                   ButtonSegment<int>(
                     value: 0,
-                    label: Text('Meta Campaign'),
+                    label: Text('Ad Funnels'),
                     icon: Icon(Icons.campaign_outlined),
                   ),
                   ButtonSegment<int>(
@@ -340,7 +343,7 @@ class _InboundLeadSimulatorDialogState
                       _isSubmitting
                           ? 'Ingesting...'
                           : (_selectedTab == 0
-                              ? 'Ingest Meta Lead'
+                              ? 'Ingest Ad Funnel Lead'
                               : 'Ingest Portal Lead'),
                     ),
                   ),
@@ -447,8 +450,53 @@ class _InboundLeadSimulatorDialogState
           ],
         ),
         const SizedBox(height: 16),
-        _buildSectionTitle('Meta Campaign Attribution', theme, colorScheme),
+        _buildSectionTitle('Ad Funnel Attribution', theme, colorScheme),
         const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          key: const Key('ad_funnel_platform_dropdown'),
+          initialValue: _selectedPlatform,
+          isExpanded: true,
+          decoration: const InputDecoration(
+            labelText: 'Ad Network / Funnel',
+            prefixIcon: Icon(Icons.hub_outlined),
+            border: OutlineInputBorder(),
+            isDense: true,
+          ),
+          items: const [
+            DropdownMenuItem(value: 'Meta Ads', child: Text('Meta Ads')),
+            DropdownMenuItem(value: 'Google Ads', child: Text('Google Ads')),
+            DropdownMenuItem(value: 'LinkedIn Ads', child: Text('LinkedIn Ads')),
+            DropdownMenuItem(value: 'YouTube Ads', child: Text('YouTube Ads')),
+            DropdownMenuItem(value: 'Custom Webhook', child: Text('Custom Webhook')),
+          ],
+          onChanged: _isSubmitting
+              ? null
+              : (val) {
+                  if (val != null) {
+                    setState(() {
+                      _selectedPlatform = val;
+                      if (val == 'Google Ads') {
+                        _metaCampaignNameController.text = 'B2B Search High-Intent';
+                        _metaAdNameController.text = 'Responsive Search Ad #1';
+                        _metaFormIdController.text = 'google_form_lead_01';
+                      } else if (val == 'Meta Ads') {
+                        _metaCampaignNameController.text = 'Diwali Festive B2B Acquisition';
+                        _metaAdNameController.text = 'Carousel Video Ad #2';
+                        _metaFormIdController.text = 'meta_form_festive_2026';
+                      } else if (val == 'LinkedIn Ads') {
+                        _metaCampaignNameController.text = 'Enterprise Decision Makers';
+                        _metaAdNameController.text = 'Sponsored InMail Lead Form';
+                        _metaFormIdController.text = 'li_lead_rfq';
+                      } else if (val == 'YouTube Ads') {
+                        _metaCampaignNameController.text = 'B2B Video Action Campaign';
+                        _metaAdNameController.text = 'TrueView In-Stream Ad #3';
+                        _metaFormIdController.text = 'yt_lead_form_01';
+                      }
+                    });
+                  }
+                },
+        ),
+        const SizedBox(height: 10),
         TextFormField(
           key: const Key('meta_campaign_name_input'),
           controller: _metaCampaignNameController,

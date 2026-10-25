@@ -3,7 +3,7 @@ enum LeadSource {
   excel('Excel Import'),
   csv('CSV Import'),
   portal('Web Portal'),
-  metaCampaign('Meta Campaign');
+  metaCampaign('Ad Funnels');
 
   const LeadSource(this.displayName);
 

@@ -18,11 +18,10 @@ class LeadIngestionResult {
   });
 
   LeadIngestionResult.success({
-    required Lead lead,
+    required this.lead,
     this.externalReferenceId,
   })  : isSuccess = true,
-        source = lead.source,
-        lead = lead,
+        source = lead?.source ?? LeadSource.manual,
         errorMessage = null;
 
   const LeadIngestionResult.failure({

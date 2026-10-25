@@ -383,6 +383,24 @@ class _UserLeadDetailsContent extends StatelessWidget {
                           value: formatLeadEmail(lead.email),
                           valueKey: const Key('user_lead_details_email'),
                         ),
+                        if ((lead.city != null && lead.city!.trim().isNotEmpty) ||
+                            (lead.state != null && lead.state!.trim().isNotEmpty) ||
+                            (lead.metadata?['country'] != null &&
+                                lead.metadata!['country']!.trim().isNotEmpty)) ...[
+                          const SizedBox(height: 8),
+                          _DetailRow(
+                            icon: Icons.location_on_outlined,
+                            label: 'Location',
+                            value: [
+                              lead.city?.trim(),
+                              lead.state?.trim(),
+                              lead.metadata?['country']?.trim(),
+                            ]
+                                .where((e) => e != null && e.isNotEmpty)
+                                .join(', '),
+                            valueKey: const Key('user_lead_details_location'),
+                          ),
+                        ],
                         const SizedBox(height: 20),
                         const Divider(height: 1),
                         const SizedBox(height: 20),
@@ -409,6 +427,56 @@ class _UserLeadDetailsContent extends StatelessWidget {
                           value: formatLeadSource(lead.source),
                           valueKey: const Key('user_lead_details_source'),
                         ),
+                        if (lead.metadata?['source_detail'] != null &&
+                            lead.metadata!['source_detail']!.trim().isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          _DetailRow(
+                            icon: Icons.explore_outlined,
+                            label: 'Source Detail',
+                            value: lead.metadata!['source_detail']!.trim(),
+                            valueKey: const Key('user_lead_details_source_detail'),
+                          ),
+                        ],
+                        if (lead.metadata?['priority'] != null &&
+                            lead.metadata!['priority']!.trim().isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          _DetailRow(
+                            icon: Icons.flag_outlined,
+                            label: 'Priority',
+                            value: lead.metadata!['priority']!.trim(),
+                            valueKey: const Key('user_lead_details_priority'),
+                          ),
+                        ],
+                        if (lead.metadata?['requirement'] != null &&
+                            lead.metadata!['requirement']!.trim().isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          _DetailRow(
+                            icon: Icons.shopping_bag_outlined,
+                            label: 'Requirement',
+                            value: lead.metadata!['requirement']!.trim(),
+                            valueKey: const Key('user_lead_details_requirement'),
+                          ),
+                        ],
+                        if (lead.metadata?['estimated_value'] != null &&
+                            lead.metadata!['estimated_value']!.trim().isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          _DetailRow(
+                            icon: Icons.payments_outlined,
+                            label: 'Estimated Value',
+                            value: lead.metadata!['estimated_value']!.trim(),
+                            valueKey: const Key('user_lead_details_estimated_value'),
+                          ),
+                        ],
+                        if (lead.metadata?['notes'] != null &&
+                            lead.metadata!['notes']!.trim().isNotEmpty) ...[
+                          const SizedBox(height: 8),
+                          _DetailRow(
+                            icon: Icons.notes_outlined,
+                            label: 'Notes',
+                            value: lead.metadata!['notes']!.trim(),
+                            valueKey: const Key('user_lead_details_notes'),
+                          ),
+                        ],
                         const SizedBox(height: 20),
                         const Divider(height: 1),
                         const SizedBox(height: 20),
@@ -425,14 +493,14 @@ class _UserLeadDetailsContent extends StatelessWidget {
                         _DetailRow(
                           icon: Icons.calendar_today_outlined,
                           label: 'Created',
-                          value: formatLeadDate(lead.createdAt),
+                          value: formatLeadDateTime(lead.createdAt),
                           valueKey: const Key('user_lead_details_created'),
                         ),
                         const SizedBox(height: 8),
                         _DetailRow(
                           icon: Icons.update_outlined,
                           label: 'Last Updated',
-                          value: formatLeadDate(lead.updatedAt),
+                          value: formatLeadDateTime(lead.updatedAt),
                           valueKey: const Key('user_lead_details_updated'),
                         ),
 

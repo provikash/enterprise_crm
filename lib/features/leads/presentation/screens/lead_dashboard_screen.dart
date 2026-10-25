@@ -7,7 +7,6 @@ import '../../domain/repositories/lead_repository.dart';
 import '../bloc/lead_dashboard_cubit.dart';
 import '../bloc/lead_dashboard_state.dart';
 import '../services/lead_import_file_picker.dart';
-import '../widgets/inbound_lead_simulator_dialog.dart';
 import '../widgets/lead_export_dialog.dart';
 import '../widgets/lead_quick_action.dart';
 import '../widgets/lead_summary_card.dart';
@@ -22,7 +21,6 @@ class LeadDashboardScreen extends StatelessWidget {
   final VoidCallback? onImportLeads;
   final VoidCallback? onDistributeLeads;
   final VoidCallback? onExportLeads;
-  final VoidCallback? onSimulateLead;
   final LeadImportFilePicker? filePicker;
   final LeadExportFileSaver? fileSaver;
   final VoidCallback? onLogout;
@@ -36,7 +34,6 @@ class LeadDashboardScreen extends StatelessWidget {
     this.onImportLeads,
     this.onDistributeLeads,
     this.onExportLeads,
-    this.onSimulateLead,
     this.filePicker,
     this.fileSaver,
     this.onLogout,
@@ -53,7 +50,6 @@ class LeadDashboardScreen extends StatelessWidget {
           onImportLeads: onImportLeads,
           onDistributeLeads: onDistributeLeads,
           onExportLeads: onExportLeads,
-          onSimulateLead: onSimulateLead,
           repository: repository,
           filePicker: filePicker,
           fileSaver: fileSaver,
@@ -71,7 +67,6 @@ class LeadDashboardScreen extends StatelessWidget {
           onImportLeads: onImportLeads,
           onDistributeLeads: onDistributeLeads,
           onExportLeads: onExportLeads,
-          onSimulateLead: onSimulateLead,
           repository: repository,
           filePicker: filePicker,
           fileSaver: fileSaver,
@@ -87,7 +82,6 @@ class LeadDashboardScreen extends StatelessWidget {
       onImportLeads: onImportLeads,
       onDistributeLeads: onDistributeLeads,
       onExportLeads: onExportLeads,
-      onSimulateLead: onSimulateLead,
       repository: repository,
       filePicker: filePicker,
       fileSaver: fileSaver,
@@ -102,7 +96,6 @@ class _LeadDashboardView extends StatelessWidget {
   final VoidCallback? onImportLeads;
   final VoidCallback? onDistributeLeads;
   final VoidCallback? onExportLeads;
-  final VoidCallback? onSimulateLead;
   final LeadRepository? repository;
   final LeadImportFilePicker? filePicker;
   final LeadExportFileSaver? fileSaver;
@@ -114,7 +107,6 @@ class _LeadDashboardView extends StatelessWidget {
     this.onImportLeads,
     this.onDistributeLeads,
     this.onExportLeads,
-    this.onSimulateLead,
     this.repository,
     this.filePicker,
     this.fileSaver,
@@ -241,38 +233,6 @@ class _LeadDashboardView extends StatelessWidget {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Lead export saved.')));
-    }
-  }
-
-  Future<void> _openSimulator(BuildContext context) async {
-    if (onSimulateLead != null) {
-      onSimulateLead!();
-      return;
-    }
-    LeadRepository? repo = repository;
-    if (repo == null) {
-      try {
-        repo = context.read<LeadRepository>();
-      } catch (_) {}
-    }
-    if (repo == null) {
-      _showComingSoon(context, 'Simulate Inbound Lead');
-      return;
-    }
-
-    final dashboardCubit = context.read<LeadDashboardCubit>();
-    final lead = await InboundLeadSimulatorDialog.show(
-      context,
-      repository: repo,
-    );
-    if (lead != null && context.mounted) {
-      dashboardCubit.loadDashboard();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Lead #${lead.id} created from external ingestion!'),
-          backgroundColor: Colors.teal.shade700,
-        ),
-      );
     }
   }
 
@@ -563,7 +523,7 @@ class _LeadDashboardView extends StatelessWidget {
                   ),
                   LeadSummaryCard(
                     key: const Key('dashboard_card_meta_leads'),
-                    title: 'Meta Leads',
+                    title: 'Ad Funnels',
                     count: metrics.metaCampaignLeads,
                     icon: Icons.campaign_outlined,
                     accentColor: Colors.indigo,
@@ -602,12 +562,6 @@ class _LeadDashboardView extends StatelessWidget {
                     icon: Icons.upload_file_outlined,
                     onPressed:
                         onImportLeads ?? () => _openImportWorkflow(context),
-                  ),
-                  LeadQuickAction(
-                    key: const Key('quick_action_simulate_lead'),
-                    label: 'Simulate Inbound',
-                    icon: Icons.hub_outlined,
-                    onPressed: () => _openSimulator(context),
                   ),
                   LeadQuickAction(
                     key: const Key('quick_action_distribute_leads'),

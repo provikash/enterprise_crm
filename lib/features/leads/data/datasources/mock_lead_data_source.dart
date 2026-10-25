@@ -498,20 +498,25 @@ class MockLeadDataSource {
 
   Future<LeadImportResult> importLeads(LeadImportRequest request) async {
     if (request.hasDraftPayload) {
-      final expectedSource = request.fileType == LeadImportFileType.csv
+      final defaultSource = request.fileType == LeadImportFileType.csv
           ? LeadSource.csv
           : LeadSource.excel;
 
       for (final draft in request.drafts) {
-        if (draft.source != expectedSource) {
-          throw ArgumentError(
-            'Draft source (${draft.source}) does not match request file type (${request.fileType}).',
-          );
-        }
-      }
-
-      for (final draft in request.drafts) {
-        await createLead(CreateLeadInput(draft: draft));
+        final effectiveDraft = draft.source == null
+            ? LeadDraft(
+                name: draft.name,
+                businessName: draft.businessName,
+                phone: draft.phone,
+                email: draft.email,
+                city: draft.city,
+                state: draft.state,
+                status: draft.status,
+                source: defaultSource,
+                metadata: draft.metadata,
+              )
+            : draft;
+        await createLead(CreateLeadInput(draft: effectiveDraft));
       }
       return LeadImportResult(
         totalRows: request.drafts.length,
@@ -537,7 +542,11 @@ class MockLeadDataSource {
       leads: matching,
       format: request.format,
     );
-    final extension = request.format == LeadExportFormat.excel ? 'xlsx' : 'csv';
+    final extension = switch (request.format) {
+      LeadExportFormat.excel => 'xlsx',
+      LeadExportFormat.csv => 'csv',
+      LeadExportFormat.pdf => 'pdf',
+    };
     return LeadExportResult(
       fileReference: content,
       fileName: 'leads_export.$extension',

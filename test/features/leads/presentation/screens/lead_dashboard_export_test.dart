@@ -119,7 +119,7 @@ void main() {
         expect(
           csvString,
           contains(
-            'Name,Phone,Email,Status,Source,Assigned To,Created At,Updated At',
+            'Name,Phone,Email,Business Name,Status,Source,Priority,Country,State,City,Requirement,Estimated Value,Notes,Assigned To,Created At,Updated At',
           ),
         );
         expect(csvString, contains('Aarav Sharma'));
