@@ -72,7 +72,8 @@ class CallingDashboardCubit extends Cubit<CallingDashboardState> {
     // Unauthorized users see an informational state without reading Lead or Activity repositories.
     final hasLeadViewAccess =
         AccessPolicy.canAccessModule(_user, CrmModule.leadManagement) &&
-        AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAssigned);
+        (AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAssigned) ||
+            AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAll));
 
     if (!hasLeadViewAccess) {
       emit(const CallingDashboardNoLeadAccess());

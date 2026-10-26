@@ -2,7 +2,10 @@ import 'package:enterprise_crm/features/auth/domain/entities/account_type.dart';
 import 'package:enterprise_crm/features/auth/domain/entities/crm_module.dart';
 import 'package:enterprise_crm/features/auth/domain/entities/current_user.dart';
 import 'package:enterprise_crm/features/auth/domain/policies/crm_permissions.dart';
+import 'package:enterprise_crm/features/calling/domain/entities/follow_up_status.dart';
+import 'package:enterprise_crm/features/calling/domain/entities/lead_follow_up.dart';
 import 'package:enterprise_crm/features/calling/domain/policies/user_calling_policy.dart';
+import 'package:enterprise_crm/features/calling/domain/policies/user_follow_up_policy.dart';
 import 'package:enterprise_crm/features/leads/domain/entities/lead.dart';
 import 'package:enterprise_crm/features/leads/domain/entities/lead_source.dart';
 import 'package:enterprise_crm/features/leads/domain/entities/lead_status.dart';
@@ -276,6 +279,110 @@ void main() {
         ),
         isFalse,
       );
+    });
+
+    test('authorizes user with callingHistoryView permission', () {
+      const user = CurrentUser(
+        id: 'usr-hist',
+        displayName: 'Auditor',
+        accountType: AccountType.user,
+        modules: {CrmModule.calling, CrmModule.leadManagement},
+        permissions: {
+          CrmPermissions.callingHistoryView,
+          CrmPermissions.leadViewAssigned,
+        },
+      );
+      expect(
+        UserCallingPolicy.canViewLeadHistory(
+          user: user,
+          lead: ownLead,
+          linkedAssigneeId: 'agent-1',
+        ),
+        isTrue,
+      );
+    });
+  });
+
+  group('UserCallingPolicy - Granular calling permissions', () {
+    test('canUseCalling returns true with callingView', () {
+      const user = CurrentUser(
+        id: 'usr-v',
+        displayName: 'Viewer',
+        accountType: AccountType.user,
+        modules: {CrmModule.calling},
+        permissions: {CrmPermissions.callingView},
+      );
+      expect(UserCallingPolicy.canUseCalling(user), isTrue);
+    });
+
+    test('canRecordActivityForLead returns true with callingRecordOutcome', () {
+      const user = CurrentUser(
+        id: 'usr-rec',
+        displayName: 'Recorder',
+        accountType: AccountType.user,
+        modules: {CrmModule.calling, CrmModule.leadManagement},
+        permissions: {
+          CrmPermissions.callingRecordOutcome,
+          CrmPermissions.leadViewAssigned,
+        },
+      );
+      expect(
+        UserCallingPolicy.canRecordActivityForLead(
+          user: user,
+          lead: ownLead,
+          linkedAssigneeId: 'agent-1',
+        ),
+        isTrue,
+      );
+    });
+  });
+
+  group('UserFollowUpPolicy', () {
+    final pendingFollowUp = LeadFollowUp(
+      id: 'fu-1',
+      leadId: ownLead.id,
+      sourceCallActivityId: 'act-1',
+      scheduledAt: DateTime(2026, 10, 1),
+      status: FollowUpStatus.pending,
+      createdAt: DateTime(2026, 9, 20),
+      updatedAt: DateTime(2026, 9, 20),
+    );
+
+    test('authorizes with callingFollowUpManage permission', () {
+      const user = CurrentUser(
+        id: 'usr-fu',
+        displayName: 'Followup Agent',
+        accountType: AccountType.user,
+        modules: {CrmModule.calling, CrmModule.leadManagement},
+        permissions: {
+          CrmPermissions.callingFollowUpManage,
+          CrmPermissions.leadViewAssigned,
+        },
+      );
+      expect(UserFollowUpPolicy.canManageFollowUps(user), isTrue);
+      expect(
+        UserFollowUpPolicy.canActOnFollowUp(
+          user: user,
+          lead: ownLead,
+          linkedAssigneeId: 'agent-1',
+          followUp: pendingFollowUp,
+        ),
+        isTrue,
+      );
+    });
+
+    test('denies follow up management when missing permission', () {
+      const user = CurrentUser(
+        id: 'usr-no-fu',
+        displayName: 'Viewer',
+        accountType: AccountType.user,
+        modules: {CrmModule.calling, CrmModule.leadManagement},
+        permissions: {
+          CrmPermissions.callingView,
+          CrmPermissions.leadViewAssigned,
+        },
+      );
+      expect(UserFollowUpPolicy.canManageFollowUps(user), isFalse);
     });
   });
 }

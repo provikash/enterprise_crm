@@ -44,7 +44,7 @@ class UserLeadEditCubit extends Cubit<UserLeadEditState> {
     }
 
     // 2. View permission guard
-    if (!AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAssigned)) {
+    if (!UserLeadUpdatePolicy.canViewAssignedLeads(_user)) {
       emit(
         const UserLeadEditAccessDenied(
           'lead.view_assigned permission not granted.',

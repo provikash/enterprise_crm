@@ -268,6 +268,8 @@ void main() {
       expect(find.text('Lead Information'), findsOneWidget);
       expect(find.text('Assignment'), findsOneWidget);
       expect(find.text('Record Information'), findsOneWidget);
+      expect(find.text('Access & Permissions'), findsOneWidget);
+      expect(find.byKey(const Key('lead_permissions_section')), findsOneWidget);
     });
 
     testWidgets('renders unassigned lead clearly', (tester) async {
@@ -459,11 +461,7 @@ void main() {
         );
         await tester.pumpAndSettle();
 
-        final err = tester.takeException();
-        if (err is FlutterError) {
-          print(err.toStringDeep());
-        }
-        expect(err, isNull);
+        expect(tester.takeException(), isNull);
       },
     );
 

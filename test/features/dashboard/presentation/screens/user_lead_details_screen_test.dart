@@ -146,6 +146,10 @@ void main() {
         // Edit button must be present
         expect(find.byKey(const Key('user_lead_edit_button')), findsOneWidget);
         expect(find.text('Edit Lead'), findsOneWidget);
+
+        // Access & Permissions section must be present
+        expect(find.byKey(const Key('lead_permissions_section')), findsOneWidget);
+        expect(find.text('Access & Permissions'), findsOneWidget);
       },
     );
 

@@ -27,15 +27,80 @@ abstract final class MockPermissionCatalog {
       displayName: 'View Assigned Leads',
     ),
     MockPermissionDefinition(
+      id: CrmPermissions.leadViewAll,
+      module: CrmModule.leadManagement,
+      displayName: 'View All Leads',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.leadCreate,
+      module: CrmModule.leadManagement,
+      displayName: 'Create Leads',
+    ),
+    MockPermissionDefinition(
       id: CrmPermissions.leadUpdate,
       module: CrmModule.leadManagement,
       displayName: 'Update Leads',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.leadDelete,
+      module: CrmModule.leadManagement,
+      displayName: 'Delete Leads',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.leadAssign,
+      module: CrmModule.leadManagement,
+      displayName: 'Assign Leads',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.leadImportCsv,
+      module: CrmModule.leadManagement,
+      displayName: 'Import Leads (CSV)',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.leadImportXlsx,
+      module: CrmModule.leadManagement,
+      displayName: 'Import Leads (Excel)',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.leadExportCsv,
+      module: CrmModule.leadManagement,
+      displayName: 'Export Leads (CSV)',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.leadExportXlsx,
+      module: CrmModule.leadManagement,
+      displayName: 'Export Leads (Excel)',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.leadExportPdf,
+      module: CrmModule.leadManagement,
+      displayName: 'Export Leads Register (PDF)',
     ),
     // Calling
     MockPermissionDefinition(
       id: CrmPermissions.callingUse,
       module: CrmModule.calling,
       displayName: 'Make and Log Calls',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.callingView,
+      module: CrmModule.calling,
+      displayName: 'View Calling Dashboard',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.callingRecordOutcome,
+      module: CrmModule.calling,
+      displayName: 'Record Call Outcomes',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.callingHistoryView,
+      module: CrmModule.calling,
+      displayName: 'View Call History',
+    ),
+    MockPermissionDefinition(
+      id: CrmPermissions.callingFollowUpManage,
+      module: CrmModule.calling,
+      displayName: 'Manage Scheduled Follow-ups',
     ),
     // HR / Payroll
     MockPermissionDefinition(

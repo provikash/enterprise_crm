@@ -18,6 +18,7 @@ import '../../../leads/domain/repositories/lead_comment_repository.dart';
 import '../../../leads/domain/repositories/lead_repository.dart';
 import '../../../leads/presentation/utils/lead_display_formatters.dart';
 import '../../../leads/presentation/widgets/lead_comments_section.dart';
+import '../../../leads/presentation/widgets/lead_permissions_section.dart';
 import '../bloc/user_lead_details_cubit.dart';
 import '../bloc/user_lead_details_state.dart';
 import 'user_edit_lead_screen.dart';
@@ -514,6 +515,13 @@ class _UserLeadDetailsContent extends StatelessWidget {
                           valueKey: const Key('user_lead_details_updated'),
                         ),
 
+                        // Access & Permissions Section
+                        const SizedBox(height: 24),
+                        LeadPermissionsSection(
+                          lead: lead,
+                          currentUser: user,
+                        ),
+
                         // Call History Section (only if user has Calling module + calling.use)
                         if (hasCallingAccess) ...[
                           const SizedBox(height: 28),
@@ -567,14 +575,14 @@ class _UserLeadDetailsContent extends StatelessWidget {
                             const SizedBox(height: 24),
                             const LeadFollowUpHistorySection(),
                           ],
-                          const SizedBox(height: 24),
-                          LeadCommentsSection(
-                            leadId: lead.id,
-                            currentUserName: user.displayName,
-                            currentUserId: user.id,
-                            repository: commentRepository,
-                          ),
                         ],
+                        const SizedBox(height: 24),
+                        LeadCommentsSection(
+                          leadId: lead.id,
+                          currentUserName: user.displayName,
+                          currentUserId: user.id,
+                          repository: commentRepository,
+                        ),
                       ],
                     ),
                   ),

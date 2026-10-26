@@ -113,10 +113,14 @@ class _LeadCommentsSectionState extends State<LeadCommentsSection> {
                     children: [
                       Icon(Icons.comment_outlined, size: 20, color: colorScheme.primary),
                       const SizedBox(width: 8),
-                      Text(
-                        'Comments & Notes',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
+                      Expanded(
+                        child: Text(
+                          'Comments & Notes',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),

@@ -44,7 +44,10 @@ class UserLeadDetailsCubit extends Cubit<UserLeadDetailsState> {
     }
 
     // 2. View permission guard
-    if (!AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAssigned)) {
+    final hasLeadView =
+        AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAssigned) ||
+        AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAll);
+    if (!hasLeadView) {
       emit(
         const UserLeadDetailsAccessDenied(
           'lead.view_assigned permission not granted.',

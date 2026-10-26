@@ -43,8 +43,11 @@ class LeadFollowUpHistoryCubit extends Cubit<LeadFollowUpHistoryState> {
       return;
     }
 
-    // 2. calling.use permission guard
-    if (!AccessPolicy.hasPermission(_user, CrmPermissions.callingUse)) {
+    // 2. calling.use / calling.followup.manage permission guard
+    final hasCallingPerm =
+        AccessPolicy.hasPermission(_user, CrmPermissions.callingUse) ||
+        AccessPolicy.hasPermission(_user, CrmPermissions.callingFollowUpManage);
+    if (!hasCallingPerm) {
       emit(
         const LeadFollowUpHistoryAccessDenied(
           'calling.use permission not granted.',
@@ -63,8 +66,11 @@ class LeadFollowUpHistoryCubit extends Cubit<LeadFollowUpHistoryState> {
       return;
     }
 
-    // 4. lead.view_assigned permission guard
-    if (!AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAssigned)) {
+    // 4. lead view permission guard
+    final hasLeadView =
+        AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAssigned) ||
+        AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAll);
+    if (!hasLeadView) {
       emit(
         const LeadFollowUpHistoryAccessDenied(
           'lead.view_assigned permission not granted.',

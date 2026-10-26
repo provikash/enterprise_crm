@@ -35,42 +35,53 @@ abstract final class UserLeadUpdatePolicy {
 
   /// Checks whether [user] has prerequisite permissions to view assigned leads.
   static bool canViewAssignedLeads(CurrentUser user) {
+    if (user.isAdmin) return true;
     return AccessPolicy.canAccessModule(user, CrmModule.leadManagement) &&
-        AccessPolicy.hasPermission(user, CrmPermissions.leadViewAssigned);
+        (AccessPolicy.hasPermission(user, CrmPermissions.leadViewAssigned) ||
+            AccessPolicy.hasPermission(user, CrmPermissions.leadViewAll));
   }
 
   /// Checks whether [user] has prerequisite permissions to edit assigned leads.
   ///
-  /// `lead.update` without `lead.view_assigned` or without module access is invalid.
+  /// `lead.update` without view permissions or without module access is invalid.
   static bool canEditAssignedLeads(CurrentUser user) {
+    if (user.isAdmin) return true;
     return canViewAssignedLeads(user) &&
         AccessPolicy.hasPermission(user, CrmPermissions.leadUpdate);
   }
 
   /// Checks whether [user] may view [lead].
   ///
-  /// Requires module access, `lead.view_assigned`, a valid [linkedAssigneeId],
-  /// and that the lead belongs to that assignee (`lead.assignedUserId == linkedAssigneeId`).
+  /// Requires module access and either `lead.view_all` or `lead.view_assigned`
+  /// with matching [linkedAssigneeId].
   static bool canViewLead({
     required CurrentUser user,
     required Lead lead,
     required String? linkedAssigneeId,
   }) {
+    if (user.isAdmin) return true;
     if (!canViewAssignedLeads(user)) return false;
+    if (AccessPolicy.hasPermission(user, CrmPermissions.leadViewAll)) {
+      return true;
+    }
     if (linkedAssigneeId == null || linkedAssigneeId.isEmpty) return false;
     return lead.assignedUserId == linkedAssigneeId;
   }
 
   /// Checks whether [user] may edit [lead].
   ///
-  /// Requires module access, `lead.view_assigned`, `lead.update`, a valid
-  /// [linkedAssigneeId], and that the lead belongs to that assignee.
+  /// Requires module access, `lead.update`, and either `lead.view_all`
+  /// or matching [linkedAssigneeId].
   static bool canEditLead({
     required CurrentUser user,
     required Lead lead,
     required String? linkedAssigneeId,
   }) {
+    if (user.isAdmin) return true;
     if (!canEditAssignedLeads(user)) return false;
+    if (AccessPolicy.hasPermission(user, CrmPermissions.leadViewAll)) {
+      return true;
+    }
     if (linkedAssigneeId == null || linkedAssigneeId.isEmpty) return false;
     return lead.assignedUserId == linkedAssigneeId;
   }

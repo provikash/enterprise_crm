@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/bloc/auth_cubit.dart';
 import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../../notifications/domain/services/notification_dispatcher.dart';
@@ -16,6 +17,7 @@ import '../bloc/lead_reassignment_state.dart';
 import '../utils/lead_display_formatters.dart';
 import '../widgets/lead_assignee_selector.dart';
 import '../widgets/lead_comments_section.dart';
+import '../widgets/lead_permissions_section.dart';
 import '../widgets/lead_reassignment_assignee_selector.dart';
 
 class LeadDetailsScreen extends StatelessWidget {
@@ -139,6 +141,16 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
       final authState = context.read<AuthCubit?>()?.state;
       if (authState is AuthAuthenticated) {
         return authState.user.id;
+      }
+    } catch (_) {}
+    return null;
+  }
+
+  CurrentUser? _resolveCurrentUser(BuildContext context) {
+    try {
+      final authState = context.read<AuthCubit?>()?.state;
+      if (authState is AuthAuthenticated) {
+        return authState.user;
       }
     } catch (_) {}
     return null;
@@ -652,6 +664,11 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
           ],
         );
 
+        final permissionSection = LeadPermissionsSection(
+          lead: lead,
+          currentUser: _resolveCurrentUser(context),
+        );
+
         final commentsSection = LeadCommentsSection(
           leadId: lead.id,
           currentUserName: _resolveAuthorName(context),
@@ -680,6 +697,8 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
                 assignmentSection,
                 const SizedBox(height: 16),
                 recordSection,
+                const SizedBox(height: 16),
+                permissionSection,
                 const SizedBox(height: 16),
                 commentsSection,
                 const SizedBox(height: 20),
@@ -731,6 +750,8 @@ class _LeadDetailsViewState extends State<_LeadDetailsView> {
                         assignmentSection,
                         const SizedBox(height: 16),
                         recordSection,
+                        const SizedBox(height: 16),
+                        permissionSection,
                         const SizedBox(height: 16),
                         commentsSection,
                       ],

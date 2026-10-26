@@ -11,20 +11,26 @@ abstract final class UserCallingPolicy {
   /// Returns whether [user] is authorized to access the Calling module.
   ///
   /// Administrators hold unrestricted access across all modules.
-  /// Standard users require [CrmModule.calling] assigned and [CrmPermissions.callingUse] granted.
+  /// Standard users require [CrmModule.calling] assigned and either
+  /// [CrmPermissions.callingUse] or [CrmPermissions.callingView] granted.
   static bool canUseCalling(CurrentUser user) {
     if (user.isAdmin) return true;
 
-    return AccessPolicy.canAccessModule(user, CrmModule.calling) &&
-        AccessPolicy.hasPermission(user, CrmPermissions.callingUse);
+    if (!AccessPolicy.canAccessModule(user, CrmModule.calling)) return false;
+
+    return AccessPolicy.hasPermission(user, CrmPermissions.callingUse) ||
+        AccessPolicy.hasPermission(user, CrmPermissions.callingView) ||
+        AccessPolicy.hasPermission(user, CrmPermissions.callingRecordOutcome) ||
+        AccessPolicy.hasPermission(user, CrmPermissions.callingHistoryView) ||
+        AccessPolicy.hasPermission(user, CrmPermissions.callingFollowUpManage);
   }
 
   /// Returns whether [user] is authorized to record a call outcome on [lead].
   ///
   /// Administrators hold unrestricted authority to record call outcomes on any lead.
   /// Standard users require:
-  /// 1. Calling module + `calling.use` permission.
-  /// 2. Lead Management module + `lead.view_assigned` permission.
+  /// 1. Calling module + (`calling.record_outcome` or `calling.use`).
+  /// 2. Lead Management module + (`lead.view_assigned` or `lead.view_all`).
   /// 3. Valid identity link mapping to a non-empty [linkedAssigneeId].
   /// 4. Strict ownership: [lead] is assigned to [linkedAssigneeId].
   ///
@@ -38,11 +44,25 @@ abstract final class UserCallingPolicy {
 
     if (user.isAdmin) return true;
 
+    final hasRecordPerm = AccessPolicy.hasPermission(
+          user,
+          CrmPermissions.callingRecordOutcome,
+        ) ||
+        AccessPolicy.hasPermission(user, CrmPermissions.callingUse);
+    if (!hasRecordPerm) {
+      return false;
+    }
+
     if (!AccessPolicy.canAccessModule(user, CrmModule.leadManagement)) {
       return false;
     }
 
-    if (!AccessPolicy.hasPermission(user, CrmPermissions.leadViewAssigned)) {
+    final hasLeadView = AccessPolicy.hasPermission(
+          user,
+          CrmPermissions.leadViewAssigned,
+        ) ||
+        AccessPolicy.hasPermission(user, CrmPermissions.leadViewAll);
+    if (!hasLeadView) {
       return false;
     }
 
@@ -61,18 +81,47 @@ abstract final class UserCallingPolicy {
   /// Returns whether [user] is authorized to view call history for [lead].
   ///
   /// Administrators have full authority. For standard users, exposes history
-  /// only when the user is authorized for Calling and strictly owns the lead.
+  /// only when the user is authorized for Calling, holds `calling.history.view`
+  /// or `calling.use`, has lead view access, and strictly owns the lead.
   static bool canViewLeadHistory({
     required CurrentUser user,
     required Lead lead,
     required String? linkedAssigneeId,
   }) {
     if (user.isAdmin) return true;
+    if (!canUseCalling(user)) return false;
 
-    return canRecordActivityForLead(
-      user: user,
-      lead: lead,
-      linkedAssigneeId: linkedAssigneeId,
-    );
+    final hasHistoryPerm = AccessPolicy.hasPermission(
+          user,
+          CrmPermissions.callingHistoryView,
+        ) ||
+        AccessPolicy.hasPermission(user, CrmPermissions.callingUse);
+    if (!hasHistoryPerm) {
+      return false;
+    }
+
+    if (!AccessPolicy.canAccessModule(user, CrmModule.leadManagement)) {
+      return false;
+    }
+
+    final hasLeadView = AccessPolicy.hasPermission(
+          user,
+          CrmPermissions.leadViewAssigned,
+        ) ||
+        AccessPolicy.hasPermission(user, CrmPermissions.leadViewAll);
+    if (!hasLeadView) {
+      return false;
+    }
+
+    final sanitizedLink = linkedAssigneeId?.trim();
+    if (sanitizedLink == null || sanitizedLink.isEmpty) {
+      return false;
+    }
+
+    if (!lead.isAssigned || lead.assignedUserId != sanitizedLink) {
+      return false;
+    }
+
+    return true;
   }
 }

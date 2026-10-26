@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../auth/domain/entities/current_user.dart';
+import '../../../auth/presentation/bloc/auth_cubit.dart';
+import '../../../auth/presentation/bloc/auth_state.dart';
 import '../../data/services/lead_export_file_saver.dart';
 import '../../domain/entities/lead_export.dart';
 import '../../domain/entities/lead_query.dart';
+import '../../domain/policies/lead_access_policy.dart';
 import '../../domain/repositories/lead_repository.dart';
 import '../bloc/lead_export_cubit.dart';
 import '../bloc/lead_export_state.dart';
@@ -15,8 +19,19 @@ Future<bool?> showLeadExportDialog({
   required LeadExportFileSaver fileSaver,
   required LeadQuery query,
   required String contextExplanation,
+  CurrentUser? user,
   LeadExportCubit? cubit,
 }) {
+  CurrentUser? effectiveUser = user;
+  if (effectiveUser == null) {
+    try {
+      final authState = context.read<AuthCubit?>()?.state;
+      if (authState is AuthAuthenticated) {
+        effectiveUser = authState.user;
+      }
+    } catch (_) {}
+  }
+
   return showDialog<bool>(
     context: context,
     barrierDismissible: false,
@@ -25,6 +40,7 @@ Future<bool?> showLeadExportDialog({
       fileSaver: fileSaver,
       query: query,
       contextExplanation: contextExplanation,
+      user: effectiveUser,
       cubit: cubit,
     ),
   );
@@ -36,6 +52,7 @@ class LeadExportDialog extends StatelessWidget {
   final LeadExportFileSaver fileSaver;
   final LeadQuery query;
   final String contextExplanation;
+  final CurrentUser? user;
   final LeadExportCubit? cubit;
 
   const LeadExportDialog({
@@ -44,6 +61,7 @@ class LeadExportDialog extends StatelessWidget {
     required this.fileSaver,
     required this.query,
     required this.contextExplanation,
+    this.user,
     this.cubit,
   });
 
@@ -55,16 +73,27 @@ class LeadExportDialog extends StatelessWidget {
         child: _LeadExportDialogContent(
           query: query,
           contextExplanation: contextExplanation,
+          user: user,
         ),
       );
     }
 
+    final initialFormat = (user != null &&
+            !LeadAccessPolicy.canExportXlsx(user) &&
+            LeadAccessPolicy.canExportCsv(user))
+        ? LeadExportFormat.csv
+        : LeadExportFormat.excel;
+
     return BlocProvider(
-      create: (_) =>
-          LeadExportCubit(repository: repository, fileSaver: fileSaver),
+      create: (_) => LeadExportCubit(
+        repository: repository,
+        fileSaver: fileSaver,
+        initialFormat: initialFormat,
+      ),
       child: _LeadExportDialogContent(
         query: query,
         contextExplanation: contextExplanation,
+        user: user,
       ),
     );
   }
@@ -73,16 +102,22 @@ class LeadExportDialog extends StatelessWidget {
 class _LeadExportDialogContent extends StatelessWidget {
   final LeadQuery query;
   final String contextExplanation;
+  final CurrentUser? user;
 
   const _LeadExportDialogContent({
     required this.query,
     required this.contextExplanation,
+    this.user,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+
+    final canExcel = user == null || LeadAccessPolicy.canExportXlsx(user);
+    final canCsv = user == null || LeadAccessPolicy.canExportCsv(user);
+    final canPdf = user == null || LeadAccessPolicy.canExportPdf(user);
 
     return BlocConsumer<LeadExportCubit, LeadExportState>(
       listener: (context, state) {
@@ -93,6 +128,12 @@ class _LeadExportDialogContent extends StatelessWidget {
       builder: (context, state) {
         final cubit = context.read<LeadExportCubit>();
         final isBusy = state.isBusy;
+
+        final canSubmitFormat = switch (state.selectedFormat) {
+          LeadExportFormat.excel => canExcel,
+          LeadExportFormat.csv => canCsv,
+          LeadExportFormat.pdf => canPdf,
+        };
 
         return PopScope(
           canPop: !isBusy,
@@ -144,7 +185,7 @@ class _LeadExportDialogContent extends StatelessWidget {
                           key: const Key('lead_export_format_excel'),
                           value: LeadExportFormat.excel,
                           title: const Text('Excel (.xlsx)'),
-                          enabled: !isBusy,
+                          enabled: !isBusy && canExcel,
                           dense: true,
                           visualDensity: VisualDensity.compact,
                           contentPadding: EdgeInsets.zero,
@@ -153,7 +194,7 @@ class _LeadExportDialogContent extends StatelessWidget {
                           key: const Key('lead_export_format_csv'),
                           value: LeadExportFormat.csv,
                           title: const Text('CSV (.csv)'),
-                          enabled: !isBusy,
+                          enabled: !isBusy && canCsv,
                           dense: true,
                           visualDensity: VisualDensity.compact,
                           contentPadding: EdgeInsets.zero,
@@ -162,7 +203,7 @@ class _LeadExportDialogContent extends StatelessWidget {
                           key: const Key('lead_export_format_pdf'),
                           value: LeadExportFormat.pdf,
                           title: const Text('PDF (.pdf)'),
-                          enabled: !isBusy,
+                          enabled: !isBusy && canPdf,
                           dense: true,
                           visualDensity: VisualDensity.compact,
                           contentPadding: EdgeInsets.zero,
@@ -214,7 +255,9 @@ class _LeadExportDialogContent extends StatelessWidget {
               ),
               FilledButton(
                 key: const Key('lead_export_dialog_submit_button'),
-                onPressed: isBusy ? null : () => cubit.export(query: query),
+                onPressed: (isBusy || !canSubmitFormat)
+                    ? null
+                    : () => cubit.export(query: query),
                 child: isBusy
                     ? Row(
                         mainAxisSize: MainAxisSize.min,

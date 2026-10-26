@@ -67,8 +67,11 @@ class RecordCallActivityCubit extends Cubit<RecordCallActivityState> {
       return;
     }
 
-    // 2. calling.use permission guard
-    if (!AccessPolicy.hasPermission(_user, CrmPermissions.callingUse)) {
+    // 2. calling.use / calling.record_outcome permission guard
+    final hasCallingPerm =
+        AccessPolicy.hasPermission(_user, CrmPermissions.callingUse) ||
+        AccessPolicy.hasPermission(_user, CrmPermissions.callingRecordOutcome);
+    if (!hasCallingPerm) {
       emit(
         const RecordCallActivityAccessDenied(
           'calling.use permission not granted.',
@@ -87,8 +90,11 @@ class RecordCallActivityCubit extends Cubit<RecordCallActivityState> {
       return;
     }
 
-    // 4. lead.view_assigned permission guard
-    if (!AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAssigned)) {
+    // 4. lead view permission guard
+    final hasLeadView =
+        AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAssigned) ||
+        AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAll);
+    if (!hasLeadView) {
       emit(
         const RecordCallActivityAccessDenied(
           'lead.view_assigned permission not granted.',
@@ -202,9 +208,17 @@ class RecordCallActivityCubit extends Cubit<RecordCallActivityState> {
     );
 
     // Save-time permission & module checks
+    final hasSaveCallingPerm =
+        AccessPolicy.hasPermission(_user, CrmPermissions.callingRecordOutcome) ||
+        AccessPolicy.hasPermission(_user, CrmPermissions.callingUse);
+    final hasSaveLeadView =
+        AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAssigned) ||
+        AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAll);
+
     if (!UserCallingPolicy.canUseCalling(_user) ||
         !AccessPolicy.canAccessModule(_user, CrmModule.leadManagement) ||
-        !AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAssigned)) {
+        !hasSaveCallingPerm ||
+        !hasSaveLeadView) {
       emit(
         const RecordCallActivityAccessDenied(
           'Calling or Lead permissions revoked.',

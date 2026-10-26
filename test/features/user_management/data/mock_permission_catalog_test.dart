@@ -209,5 +209,36 @@ void main() {
         expect(defined, contains(CrmPermissions.payrollPaymentRelease));
       },
     );
+
+    test('exposes all granular lead management permissions in catalog', () {
+      final defined = MockPermissionCatalog.definitions
+          .where((definition) => definition.module == CrmModule.leadManagement)
+          .map((definition) => definition.id)
+          .toSet();
+
+      final expected = CrmPermissions.permissionsFor(CrmModule.leadManagement);
+      expect(defined, equals(expected));
+      expect(defined, contains(CrmPermissions.leadViewAll));
+      expect(defined, contains(CrmPermissions.leadCreate));
+      expect(defined, contains(CrmPermissions.leadDelete));
+      expect(defined, contains(CrmPermissions.leadAssign));
+      expect(defined, contains(CrmPermissions.leadImportCsv));
+      expect(defined, contains(CrmPermissions.leadExportCsv));
+      expect(defined, contains(CrmPermissions.leadExportPdf));
+    });
+
+    test('exposes all granular calling permissions in catalog', () {
+      final defined = MockPermissionCatalog.definitions
+          .where((definition) => definition.module == CrmModule.calling)
+          .map((definition) => definition.id)
+          .toSet();
+
+      final expected = CrmPermissions.permissionsFor(CrmModule.calling);
+      expect(defined, equals(expected));
+      expect(defined, contains(CrmPermissions.callingView));
+      expect(defined, contains(CrmPermissions.callingRecordOutcome));
+      expect(defined, contains(CrmPermissions.callingHistoryView));
+      expect(defined, contains(CrmPermissions.callingFollowUpManage));
+    });
   });
 }

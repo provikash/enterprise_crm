@@ -7,10 +7,23 @@ import '../entities/crm_module.dart';
 abstract final class CrmPermissions {
   // Lead Management
   static const String leadViewAssigned = 'lead.view_assigned';
+  static const String leadViewAll = 'lead.view_all';
+  static const String leadCreate = 'lead.create';
   static const String leadUpdate = 'lead.update';
+  static const String leadDelete = 'lead.delete';
+  static const String leadAssign = 'lead.assign';
+  static const String leadImportCsv = 'lead.import.csv';
+  static const String leadImportXlsx = 'lead.import.xlsx';
+  static const String leadExportCsv = 'lead.export.csv';
+  static const String leadExportXlsx = 'lead.export.xlsx';
+  static const String leadExportPdf = 'lead.export.pdf';
 
   // Calling
   static const String callingUse = 'calling.use';
+  static const String callingView = 'calling.view';
+  static const String callingRecordOutcome = 'calling.record_outcome';
+  static const String callingHistoryView = 'calling.history.view';
+  static const String callingFollowUpManage = 'calling.followup.manage';
 
   // HR / Payroll
   static const String hrView = 'hr.view';
@@ -84,8 +97,21 @@ abstract final class CrmPermissions {
   /// Canonical mapping of permission identifiers to their owning CRM modules.
   static const Map<String, CrmModule> _moduleByPermission = {
     leadViewAssigned: CrmModule.leadManagement,
+    leadViewAll: CrmModule.leadManagement,
+    leadCreate: CrmModule.leadManagement,
     leadUpdate: CrmModule.leadManagement,
+    leadDelete: CrmModule.leadManagement,
+    leadAssign: CrmModule.leadManagement,
+    leadImportCsv: CrmModule.leadManagement,
+    leadImportXlsx: CrmModule.leadManagement,
+    leadExportCsv: CrmModule.leadManagement,
+    leadExportXlsx: CrmModule.leadManagement,
+    leadExportPdf: CrmModule.leadManagement,
     callingUse: CrmModule.calling,
+    callingView: CrmModule.calling,
+    callingRecordOutcome: CrmModule.calling,
+    callingHistoryView: CrmModule.calling,
+    callingFollowUpManage: CrmModule.calling,
     hrView: CrmModule.hrPayroll,
     hrEmployeeManage: CrmModule.hrPayroll,
     hrDocumentsView: CrmModule.hrPayroll,

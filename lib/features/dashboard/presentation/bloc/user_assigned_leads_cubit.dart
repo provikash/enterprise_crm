@@ -52,7 +52,10 @@ class UserAssignedLeadsCubit extends Cubit<UserAssignedLeadsState> {
     }
 
     // 2. Permission guard — link + lead repos must not be touched without view.
-    if (!AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAssigned)) {
+    final hasLeadView =
+        AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAssigned) ||
+        AccessPolicy.hasPermission(_user, CrmPermissions.leadViewAll);
+    if (!hasLeadView) {
       emit(
         const UserAssignedLeadsFailure(
           'lead.view_assigned permission not granted.',

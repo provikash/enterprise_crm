@@ -16,18 +16,26 @@ class UserFollowUpPolicy {
   ///
   /// Requires:
   /// - Calling module assigned
-  /// - `calling.use` permission
+  /// - `calling.followup.manage` or `calling.use` permission
   /// - Lead Management module assigned
-  /// - `lead.view_assigned` permission
+  /// - `lead.view_assigned` or `lead.view_all` permission
   ///
   /// Does NOT require `lead.update`.
   static bool canManageFollowUps(CurrentUser user) {
     if (user.isAdmin) return true;
 
+    final hasCallingPerm =
+        AccessPolicy.hasPermission(user, CrmPermissions.callingFollowUpManage) ||
+        AccessPolicy.hasPermission(user, CrmPermissions.callingUse);
+
+    final hasLeadViewPerm =
+        AccessPolicy.hasPermission(user, CrmPermissions.leadViewAssigned) ||
+        AccessPolicy.hasPermission(user, CrmPermissions.leadViewAll);
+
     return AccessPolicy.canAccessModule(user, CrmModule.calling) &&
-        AccessPolicy.hasPermission(user, CrmPermissions.callingUse) &&
+        hasCallingPerm &&
         AccessPolicy.canAccessModule(user, CrmModule.leadManagement) &&
-        AccessPolicy.hasPermission(user, CrmPermissions.leadViewAssigned);
+        hasLeadViewPerm;
   }
 
   /// Verifies that the user is authorized to perform a lifecycle mutation (`complete`, `cancel`, `reschedule`)
