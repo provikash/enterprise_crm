@@ -47,4 +47,21 @@ class AppConfig {
       PayrollFeature.analytics,
     },
   );
+
+  /// Assembles an [AppConfig] derived from build-time `--dart-define` parameters
+  /// or falls back to standard development defaults.
+  factory AppConfig.fromEnvironment() {
+    const modeStr = String.fromEnvironment('CRM_DATA_SOURCE_MODE', defaultValue: 'mock');
+    const apiUrlStr = String.fromEnvironment(
+      'CRM_API_BASE_URL',
+      defaultValue: 'https://api.crm.vinayenterprise.com',
+    );
+    return AppConfig(
+      dataSourceMode: modeStr.toLowerCase() == 'api'
+          ? DataSourceMode.api
+          : DataSourceMode.mock,
+      apiBaseUri: Uri.tryParse(apiUrlStr),
+      enabledPayrollFeatures: development.enabledPayrollFeatures,
+    );
+  }
 }

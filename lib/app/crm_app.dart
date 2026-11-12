@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'bootstrap/hr_payroll_dependencies.dart';
 import '../core/config/app_config.dart';
+import '../core/localization/crm_localizations.dart';
+import '../core/localization/locale_controller.dart';
+import '../core/logging/crm_logger.dart';
+import '../core/security/auth_token_vault.dart';
 import '../core/theme/app_theme.dart';
 import '../core/theme/theme_mode_controller.dart';
 import '../features/auth/domain/repositories/auth_repository.dart';
@@ -86,6 +91,7 @@ class CrmApp extends StatefulWidget {
   final NotificationRepository? notificationRepository;
   final ApprovalBridge? approvalBridge;
   final NotificationDispatcher? notificationDispatcher;
+  final AuthTokenVault? authTokenVault;
 
   const CrmApp({
     super.key,
@@ -113,6 +119,7 @@ class CrmApp extends StatefulWidget {
     this.notificationRepository,
     this.approvalBridge,
     this.notificationDispatcher,
+    this.authTokenVault,
   }) : assert(
          authRepository == null || userManagementRepository != null,
          'userManagementRepository must be provided when authRepository is enabled',
@@ -347,17 +354,28 @@ class _CrmAppState extends State<CrmApp> {
     Widget app = ValueListenableBuilder<ThemeMode>(
       valueListenable: ThemeModeController.instance,
       builder: (context, themeMode, _) {
-        return MaterialApp(
-          navigatorKey: _navigatorKey,
-          title: 'Vinay Enterprise CRM',
-          debugShowCheckedModeBanner: false,
-          theme: AppTheme.light,
-          darkTheme: AppTheme.dark,
-          themeMode: themeMode,
-          builder: (context, child) {
-            return BlocListener<NotificationToastCubit, NotificationToastState>(
-              listener: (context, toastState) {
-                if (toastState is NotificationToastShow) {
+        return ValueListenableBuilder<Locale>(
+          valueListenable: LocaleController.instance,
+          builder: (context, currentLocale, _) {
+            return MaterialApp(
+              navigatorKey: _navigatorKey,
+              title: 'Vinay Enterprise CRM',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.light,
+              darkTheme: AppTheme.dark,
+              themeMode: themeMode,
+              locale: currentLocale,
+              localizationsDelegates: const [
+                CrmLocalizations.delegate,
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              supportedLocales: CrmLocalizations.supportedLocales,
+              builder: (context, child) {
+                return BlocListener<NotificationToastCubit, NotificationToastState>(
+                  listener: (context, toastState) {
+                    if (toastState is NotificationToastShow) {
                   final notification = toastState.notification;
                   final isCritical =
                       notification.priority == NotificationPriority.critical;
@@ -457,8 +475,10 @@ class _CrmAppState extends State<CrmApp> {
         );
       },
     );
-  },
-);
+        },
+      );
+    },
+  );
 
     if (widget.authRepository != null) {
       app = RepositoryProvider<AuthRepository>.value(
@@ -683,7 +703,9 @@ class _CrmHomeScreenState extends State<CrmHomeScreen> {
       if (context.mounted) {
         try {
           context.read<LeadDetailsCubit>().loadLead(lead.id);
-        } catch (_) {}
+        } catch (e, st) {
+          CrmLogger.warning('CrmApp', 'LeadDetailsCubit not in scope for lead refresh', e, st);
+        }
       }
       if (mounted) {
         _dashboardCubit.loadDashboard();

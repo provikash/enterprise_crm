@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/config/app_config.dart';
+import '../../../../core/logging/crm_logger.dart';
 import '../../../auth/domain/entities/current_user.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../../approvals/domain/services/approval_bridge.dart';
@@ -61,12 +62,16 @@ abstract final class PayrollRoutes {
           ApprovalBridge? approvalBridge;
           try {
             approvalBridge = routeContext.read<ApprovalBridge>();
-          } catch (_) {}
+          } catch (e) {
+            CrmLogger.debug('PayrollRoutes', 'ApprovalBridge not provided in context ($e)');
+          }
           NotificationDispatcher? notificationDispatcher;
           try {
             notificationDispatcher =
                 routeContext.read<NotificationDispatcher>();
-          } catch (_) {}
+          } catch (e) {
+            CrmLogger.debug('PayrollRoutes', 'NotificationDispatcher not provided in context ($e)');
+          }
           return PayrollOperationsCubit(
             operationsRepository,
             approvalBridge: approvalBridge,

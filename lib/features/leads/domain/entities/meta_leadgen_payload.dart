@@ -239,5 +239,5 @@ class MetaLeadgenPayload {
   }
 }
 
-/// Generalized type alias so instructors and integrations can use either name.
+/// Generalized type alias for enterprise ad funnel integrations and webhook consumers.
 typedef AdFunnelLeadPayload = MetaLeadgenPayload;

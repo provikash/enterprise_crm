@@ -16,8 +16,8 @@ class EmployeeDocumentException implements Exception {
 
 /// Abstract contract for Employee Document management.
 ///
-/// Designed to be implemented by a mock store initially and later backed
-/// by the instructor's backend API without altering domain or UI layers.
+/// Designed to be implemented by in-memory repositories for offline testing and
+/// backed by a live REST backend API without altering domain or UI layers.
 abstract interface class EmployeeDocumentRepository {
   /// Retrieves all active documents associated with the given [employeeId].
   Future<List<EmployeeDocument>> getDocumentsForEmployee(String employeeId);

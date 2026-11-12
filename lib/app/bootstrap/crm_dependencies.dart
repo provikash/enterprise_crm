@@ -1,3 +1,6 @@
+import '../../core/security/auth_token_vault.dart';
+import '../../features/approvals/domain/repositories/approval_repository.dart';
+import '../../features/approvals/domain/services/approval_bridge.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/repositories/user_lead_link_repository.dart';
 import '../../features/calling/domain/repositories/lead_call_activity_repository.dart';
@@ -5,12 +8,10 @@ import '../../features/calling/domain/repositories/lead_follow_up_repository.dar
 import '../../features/dispatch/domain/repositories/dispatch_repository.dart';
 import '../../features/inventory/domain/repositories/inventory_repository.dart';
 import '../../features/leads/domain/repositories/lead_repository.dart';
-import '../../features/purchase/domain/repositories/purchase_repository.dart';
-import '../../features/user_management/domain/repositories/user_management_repository.dart';
-import '../../features/approvals/domain/repositories/approval_repository.dart';
-import '../../features/approvals/domain/services/approval_bridge.dart';
 import '../../features/notifications/domain/repositories/notification_repository.dart';
 import '../../features/notifications/domain/services/notification_dispatcher.dart';
+import '../../features/purchase/domain/repositories/purchase_repository.dart';
+import '../../features/user_management/domain/repositories/user_management_repository.dart';
 import '../../features/vendors/domain/repositories/vendor_repository.dart';
 import 'hr_payroll_dependencies.dart';
 
@@ -36,6 +37,7 @@ class CrmDependencies {
   final NotificationRepository? notificationRepository;
   final ApprovalBridge? approvalBridge;
   final NotificationDispatcher? notificationDispatcher;
+  final AuthTokenVault? authTokenVault;
 
   const CrmDependencies({
     required this.leadRepository,
@@ -53,5 +55,6 @@ class CrmDependencies {
     this.notificationRepository,
     this.approvalBridge,
     this.notificationDispatcher,
+    this.authTokenVault,
   });
 }
