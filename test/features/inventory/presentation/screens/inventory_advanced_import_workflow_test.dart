@@ -38,8 +38,8 @@ class _DirectFilePicker implements InventoryImportFilePicker {
 
 Uint8List _loadReferenceWorkbookBytes() {
   final paths = [
-    r'D:\projects\enterprise_crm_inventory_finalization\test\fixtures\inventory_mock_test_data.xlsx',
-    r'C:\Users\vacha\Desktop\inventory_mock_test_data.xlsx',
+    'test/fixtures/inventory_mock_test_data.xlsx',
+    'fixtures/inventory_mock_test_data.xlsx',
   ];
   for (final p in paths) {
     final f = File(p);

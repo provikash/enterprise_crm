@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../failures/failure.dart';
+import '../security/auth_token_vault.dart';
 import 'api_error_mapper.dart';
 import 'auth_interceptor.dart';
 import 'idempotency_interceptor.dart';
@@ -33,6 +34,18 @@ class ApiClient {
       IdempotencyInterceptor(),
     ]);
     return ApiClient._(dio);
+  }
+
+  /// Factory integrating [ApiClient] with secure token storage.
+  factory ApiClient.fromVault({
+    required Uri baseUri,
+    required AuthTokenVault vault,
+  }) {
+    return ApiClient(
+      baseUri: baseUri,
+      accessTokenProvider: vault.getAccessToken,
+      refreshAccessToken: vault.getRefreshToken,
+    );
   }
 
   Future<Result<T>> request<T>(

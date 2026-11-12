@@ -1,3 +1,4 @@
+import '../../../../core/security/auth_token_vault.dart';
 import '../../../../features/user_management/data/mock/mock_account_store.dart';
 import '../../domain/entities/current_user.dart';
 import '../../domain/entities/otp_dispatch_result.dart';
@@ -6,6 +7,7 @@ import '../../domain/repositories/auth_repository.dart';
 /// In-memory mock authentication repository backed by a shared [MockAccountStore].
 class MockAuthRepository implements AuthRepository {
   final MockAccountStore _accountStore;
+  final AuthTokenVault? _vault;
   final String Function()? _otpCodeGenerator;
   final Duration _otpExpiryDuration;
   final Map<String, _MockOtpSession> _otpSessions = {};
@@ -14,12 +16,16 @@ class MockAuthRepository implements AuthRepository {
   MockAuthRepository({
     required MockAccountStore accountStore,
     CurrentUser? initialUser,
+    AuthTokenVault? vault,
     String Function()? otpCodeGenerator,
     Duration otpExpiryDuration = const Duration(minutes: 5),
   }) : _accountStore = accountStore,
+       _vault = vault,
        _currentUser = initialUser,
        _otpCodeGenerator = otpCodeGenerator,
        _otpExpiryDuration = otpExpiryDuration;
+
+  AuthTokenVault? get vault => _vault;
 
   @override
   CurrentUser? get currentUser => _currentUser;
@@ -49,6 +55,14 @@ class MockAuthRepository implements AuthRepository {
     );
 
     _currentUser = user;
+    if (_vault != null) {
+      await _vault.saveSession(
+        accessToken: 'secure_access_token_${user.id}',
+        refreshToken: 'secure_refresh_token_${user.id}',
+        expiresAt: DateTime.now().toUtc().add(const Duration(hours: 8)),
+        userId: user.id,
+      );
+    }
     return user;
   }
 
@@ -56,6 +70,9 @@ class MockAuthRepository implements AuthRepository {
   Future<void> logout() async {
     await Future<void>.delayed(Duration.zero);
     _currentUser = null;
+    if (_vault != null) {
+      await _vault.clearSession();
+    }
   }
 
   @override

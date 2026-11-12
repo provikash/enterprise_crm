@@ -160,6 +160,8 @@ void main() {
         await tester.pumpAndSettle();
 
         // Submit form
+        await tester.ensureVisible(find.text('Create Lead'));
+        await tester.pumpAndSettle();
         await tester.tap(find.text('Create Lead'));
         await tester.pumpAndSettle();
 

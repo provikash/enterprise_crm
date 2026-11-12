@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 
+import '../security/auth_token_vault.dart';
+
 typedef AccessTokenProvider = Future<String?> Function();
 typedef RefreshAccessToken = Future<String?> Function();
 
@@ -14,6 +16,19 @@ class AuthInterceptor extends Interceptor {
     required this.retryClient,
     this.refreshAccessToken,
   });
+
+  /// Factory providing direct integration with [AuthTokenVault] for hardware-backed credentials.
+  factory AuthInterceptor.fromVault({
+    required AuthTokenVault vault,
+    required Dio retryClient,
+    RefreshAccessToken? refreshAccessToken,
+  }) {
+    return AuthInterceptor(
+      accessTokenProvider: vault.getAccessToken,
+      retryClient: retryClient,
+      refreshAccessToken: refreshAccessToken ?? vault.getRefreshToken,
+    );
+  }
 
   @override
   void onRequest(

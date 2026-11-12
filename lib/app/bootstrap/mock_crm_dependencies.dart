@@ -1,3 +1,5 @@
+import '../../core/security/auth_token_vault.dart';
+import '../../core/security/secure_storage_service.dart';
 import '../../features/approvals/data/repositories/mock_approval_repository.dart';
 import '../../features/approvals/data/services/default_approval_bridge.dart';
 import '../../features/auth/data/repositories/mock_auth_repository.dart';
@@ -22,10 +24,17 @@ import 'mock_hr_payroll_dependencies.dart';
 /// within this factory and its referenced mock classes. When the application
 /// runs in API mode, this factory is NEVER invoked, ensuring zero mock data leaks
 /// into live environments.
-CrmDependencies createMockCrmDependencies() {
+CrmDependencies createMockCrmDependencies({
+  AuthTokenVault? authTokenVault,
+}) {
+  final vault = authTokenVault ??
+      AuthTokenVault(storage: InMemorySecureStorageService());
   final leadRepository = MockLeadRepository();
   final accountStore = MockAccountStore.seeded();
-  final authRepository = MockAuthRepository(accountStore: accountStore);
+  final authRepository = MockAuthRepository(
+    accountStore: accountStore,
+    vault: vault,
+  );
   final userManagementRepository = MockUserManagementRepository(
     accountStore: accountStore,
   );
@@ -67,5 +76,6 @@ CrmDependencies createMockCrmDependencies() {
     notificationRepository: notificationRepository,
     approvalBridge: approvalBridge,
     notificationDispatcher: notificationDispatcher,
+    authTokenVault: vault,
   );
 }

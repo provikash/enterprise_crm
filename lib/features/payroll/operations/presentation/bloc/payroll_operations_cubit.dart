@@ -1,5 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../../core/logging/crm_logger.dart';
 import '../../../../approvals/domain/entities/approval_priority.dart';
 import '../../../../approvals/domain/services/approval_bridge.dart';
 import '../../../../auth/domain/entities/account_type.dart';
@@ -125,8 +126,8 @@ class PayrollOperationsCubit extends Cubit<PayrollOperationsState> {
             priority: ApprovalPriority.high,
             metadata: {'runId': runId, 'submittedBy': actor},
           );
-        } catch (_) {
-          // Non-blocking bridge execution
+        } catch (e, st) {
+          CrmLogger.warning('PayrollOperationsCubit', 'Non-blocking bridge execution failed: $e', e, st);
         }
       }
       final dispatcher = _notificationDispatcher;
@@ -139,8 +140,8 @@ class PayrollOperationsCubit extends Cubit<PayrollOperationsState> {
             priority: NotificationPriority.info,
             module: CrmModule.hrPayroll,
           );
-        } catch (_) {
-          // Non-blocking notification dispatch
+        } catch (e, st) {
+          CrmLogger.warning('PayrollOperationsCubit', 'Non-blocking notification dispatch failed: $e', e, st);
         }
       }
       return res;
@@ -169,8 +170,8 @@ class PayrollOperationsCubit extends Cubit<PayrollOperationsState> {
             priority: NotificationPriority.success,
             module: CrmModule.hrPayroll,
           );
-        } catch (_) {
-          // Non-blocking notification dispatch
+        } catch (e, st) {
+          CrmLogger.warning('PayrollOperationsCubit', 'Non-blocking payment notification dispatch failed: $e', e, st);
         }
       }
       return res;

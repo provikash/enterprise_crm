@@ -8,8 +8,7 @@ import 'package:enterprise_crm/features/inventory/presentation/services/inventor
 import 'package:enterprise_crm/features/inventory/domain/entities/inventory_import_models.dart';
 
 void main() {
-  const targetWorkbookPath =
-      r'C:\Users\vacha\Desktop\inventory_mock_test_data.xlsx';
+  const targetWorkbookPath = 'test/fixtures/inventory_mock_test_data.xlsx';
 
   group('INVENTORY-7.9 Exact Workbook Zero Opening Stock Regression', () {
     late Uint8List bytes;
