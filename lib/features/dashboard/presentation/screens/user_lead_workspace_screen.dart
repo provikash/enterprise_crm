@@ -9,6 +9,7 @@ import '../../../auth/domain/repositories/user_lead_link_repository.dart';
 import '../../../auth/presentation/mappers/crm_permission_presentation.dart';
 import '../../../auth/presentation/screens/access_restricted_screen.dart';
 import '../../../calling/data/repositories/mock_lead_follow_up_repository.dart';
+import '../../../calling/domain/policies/user_calling_policy.dart';
 import '../../../calling/domain/repositories/lead_call_activity_repository.dart';
 import '../../../calling/domain/repositories/lead_follow_up_repository.dart';
 import '../../../leads/data/services/lead_export_file_saver.dart';
@@ -17,6 +18,7 @@ import '../../../leads/domain/entities/lead_query.dart';
 import '../../../leads/domain/policies/lead_access_policy.dart';
 import '../../../leads/domain/repositories/lead_repository.dart';
 import '../../../leads/presentation/screens/add_lead_screen.dart';
+import '../../../leads/presentation/screens/lead_details_screen.dart';
 import '../../../leads/presentation/screens/lead_import_workflow_screen.dart';
 import '../../../leads/presentation/screens/lead_list_screen.dart';
 import '../../../leads/presentation/widgets/lead_export_dialog.dart';
@@ -170,16 +172,18 @@ class _UserLeadWorkspaceView extends StatelessWidget {
                 ],
                 const SizedBox(height: 20),
 
-                // ── AUTH-3B.1: Assigned leads list ───────────────────────
+                // ── AUTH-3B.1: Leads list (all or assigned) ──────────────
                 if (canViewAssigned) ...[
                   _SectionHeader(
-                    label: 'MY ASSIGNED LEADS',
+                    label: canViewAll ? 'ALL LEADS' : 'MY ASSIGNED LEADS',
                     colorScheme: colorScheme,
                     theme: theme,
                   ),
                   const SizedBox(height: 12),
                   _AssignedLeadsBody(
                     user: user,
+                    canViewAll: canViewAll,
+                    canAssign: canAssign,
                     linkRepository: linkRepository,
                     leadRepository: leadRepository,
                     callActivityRepository: callActivityRepository,
@@ -609,6 +613,8 @@ class _LeadActionsCard extends StatelessWidget {
 
 class _AssignedLeadsBody extends StatelessWidget {
   final CurrentUser user;
+  final bool canViewAll;
+  final bool canAssign;
   final UserLeadLinkRepository linkRepository;
   final LeadRepository leadRepository;
   final LeadCallActivityRepository callActivityRepository;
@@ -616,6 +622,8 @@ class _AssignedLeadsBody extends StatelessWidget {
 
   const _AssignedLeadsBody({
     required this.user,
+    this.canViewAll = false,
+    this.canAssign = false,
     required this.linkRepository,
     required this.leadRepository,
     required this.callActivityRepository,
@@ -651,12 +659,18 @@ class _AssignedLeadsBody extends StatelessWidget {
         UserAssignedLeadsEmpty() => _InfoPanel(
           key: const Key('user_assigned_leads_empty'),
           icon: Icons.inbox_outlined,
-          message: 'No leads are currently assigned to you.',
-          hint: 'Check back later or contact your administrator.',
+          message: canViewAll
+              ? 'No leads are available yet.'
+              : 'No leads are currently assigned to you.',
+          hint: canViewAll
+              ? 'Create or import leads to view them here.'
+              : 'Check back later or contact your administrator.',
         ),
         UserAssignedLeadsLoaded(:final leads) => _LeadList(
           leads: leads,
           user: user,
+          canViewAll: canViewAll,
+          canAssign: canAssign,
           linkRepository: linkRepository,
           leadRepository: leadRepository,
           callActivityRepository: callActivityRepository,
@@ -776,6 +790,8 @@ class _FailurePanel extends StatelessWidget {
 class _LeadList extends StatelessWidget {
   final List<Lead> leads;
   final CurrentUser user;
+  final bool canViewAll;
+  final bool canAssign;
   final UserLeadLinkRepository linkRepository;
   final LeadRepository leadRepository;
   final LeadCallActivityRepository callActivityRepository;
@@ -784,6 +800,8 @@ class _LeadList extends StatelessWidget {
   const _LeadList({
     required this.leads,
     required this.user,
+    this.canViewAll = false,
+    this.canAssign = false,
     required this.linkRepository,
     required this.leadRepository,
     required this.callActivityRepository,
@@ -792,23 +810,33 @@ class _LeadList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final openFullDetails =
+        canViewAll && (canAssign || !UserCallingPolicy.canUseCalling(user));
+
     return Column(
       key: const Key('user_assigned_leads_list'),
       children: [
         for (final lead in leads) ...[
           _LeadCard(
             lead: lead,
+            showAssignee: canViewAll,
             onTap: () async {
               await Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => UserLeadDetailsScreen(
-                    user: user,
-                    leadId: lead.id,
-                    linkRepository: linkRepository,
-                    leadRepository: leadRepository,
-                    callActivityRepository: callActivityRepository,
-                    leadFollowUpRepository: leadFollowUpRepository,
-                  ),
+                  builder: (_) => openFullDetails
+                      ? LeadDetailsScreen(
+                          leadId: lead.id,
+                          repository: leadRepository,
+                          currentUser: user,
+                        )
+                      : UserLeadDetailsScreen(
+                          user: user,
+                          leadId: lead.id,
+                          linkRepository: linkRepository,
+                          leadRepository: leadRepository,
+                          callActivityRepository: callActivityRepository,
+                          leadFollowUpRepository: leadFollowUpRepository,
+                        ),
                 ),
               );
               if (context.mounted) {
@@ -825,9 +853,14 @@ class _LeadList extends StatelessWidget {
 
 class _LeadCard extends StatelessWidget {
   final Lead lead;
+  final bool showAssignee;
   final VoidCallback? onTap;
 
-  const _LeadCard({required this.lead, this.onTap});
+  const _LeadCard({
+    required this.lead,
+    this.showAssignee = false,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -867,6 +900,17 @@ class _LeadCard extends StatelessWidget {
                       Text(
                         lead.phone ?? lead.email ?? '',
                         style: theme.textTheme.bodySmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                    if (showAssignee) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        lead.isAssigned
+                            ? 'Assigned: ${lead.assignedUserName ?? lead.assignedUserId}'
+                            : 'Unassigned',
+                        style: theme.textTheme.labelSmall?.copyWith(
                           color: colorScheme.onSurfaceVariant,
                         ),
                       ),

@@ -13,6 +13,7 @@ import 'package:enterprise_crm/features/leads/domain/entities/lead_assignee.dart
 import 'package:enterprise_crm/features/leads/domain/entities/lead_query.dart';
 import 'package:enterprise_crm/features/leads/domain/repositories/lead_repository.dart';
 import 'package:enterprise_crm/features/leads/presentation/screens/add_lead_screen.dart';
+import 'package:enterprise_crm/features/leads/presentation/screens/lead_details_screen.dart';
 import 'package:enterprise_crm/features/leads/presentation/screens/lead_list_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -500,6 +501,46 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byType(LeadListScreen), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      'Non-admin user with lead.view_all immediately sees all existing leads (assigned to others & unassigned) and can open lead details',
+      (tester) async {
+        const viewAllUser = CurrentUser(
+          id: 'usr_global_viewer',
+          displayName: 'Global Viewer',
+          accountType: AccountType.user,
+          modules: {CrmModule.leadManagement},
+          permissions: {CrmPermissions.leadViewAll},
+        );
+
+        await tester.pumpWidget(
+          _buildTestApp(
+            viewAllUser,
+            linkRepo: _noLinkRepo,
+            leadRepo: MockLeadRepository(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('ALL LEADS'), findsOneWidget);
+        expect(find.byKey(const Key('lead_perm_view_all')), findsOneWidget);
+        expect(
+          find.byKey(const Key('user_lead_view_all_button')),
+          findsOneWidget,
+        );
+        expect(find.byKey(const Key('user_assigned_leads_list')), findsOneWidget);
+
+        // Existing leads across different assignees & unassigned must be visible.
+        expect(find.text('Aarav Sharma'), findsOneWidget);
+        expect(find.text('Pooja Verma'), findsOneWidget);
+        expect(find.text('Rohan Mehta'), findsOneWidget);
+
+        // Tapping an existing lead opens LeadDetailsScreen cleanly.
+        await tester.tap(find.text('Pooja Verma'));
+        await tester.pumpAndSettle();
+        expect(find.byType(LeadDetailsScreen), findsOneWidget);
       },
     );
   });
